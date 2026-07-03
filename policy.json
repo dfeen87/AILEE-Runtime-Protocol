@@ -1,0 +1,7 @@
+{
+    "max_acceptable_risk_score": 6.0,
+    "max_fee_rate_sats_per_vbyte": 50.0,
+    "min_confidence_required": 0.8,
+    "allowed_regimes": ["neutral", "risk-on"],
+    "block_interval_tolerance_sec": 300.0
+}

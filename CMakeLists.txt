@@ -251,6 +251,13 @@ set(POLICY_SOURCES
     src/config_hot_reload.cpp
 )
 
+set(AILEE_L2_SOURCES
+    src/core_spine/ailee_api.cpp
+    src/posture_engine/posture_engine.cpp
+    src/policy_layer/policy_layer.cpp
+    src/policy_layer/config_parser.cpp
+)
+
 # Main Executable Sources
 set(CORE_SOURCES
     src/main.cpp
@@ -277,6 +284,39 @@ set(CORE_SOURCES
 
 # --- 1. The Main Node Executable ---
 add_executable(ailee_node ${CORE_SOURCES})
+
+# --- Layer-2 Service Executable ---
+add_executable(ailee_service
+    src/integration/ailee_service.cpp
+    ${AILEE_L2_SOURCES}
+)
+
+target_link_libraries(ailee_service
+    PRIVATE
+    Threads::Threads
+)
+if(nlohmann_json_FOUND)
+    target_link_libraries(ailee_service PRIVATE nlohmann_json::nlohmann_json)
+endif()
+
+# --- Layer-2 Examples ---
+add_executable(example_wallet_integration
+    examples/example_wallet_integration.cpp
+    ${AILEE_L2_SOURCES}
+)
+target_link_libraries(example_wallet_integration PRIVATE Threads::Threads)
+if(nlohmann_json_FOUND)
+    target_link_libraries(example_wallet_integration PRIVATE nlohmann_json::nlohmann_json)
+endif()
+
+add_executable(example_node_sidecar
+    examples/example_node_sidecar.cpp
+    ${AILEE_L2_SOURCES}
+)
+target_link_libraries(example_node_sidecar PRIVATE Threads::Threads)
+if(nlohmann_json_FOUND)
+    target_link_libraries(example_node_sidecar PRIVATE nlohmann_json::nlohmann_json)
+endif()
 
 target_link_libraries(ailee_node
     PRIVATE
