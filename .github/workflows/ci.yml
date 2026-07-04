@@ -28,7 +28,8 @@ jobs:
             zlib1g-dev \
             libbz2-dev \
             liblz4-dev \
-            libsnappy-dev
+            libsnappy-dev \
+            libsecp256k1-dev
 
       - name: Configure
         run: |
