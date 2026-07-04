@@ -39,7 +39,10 @@ std::vector<Instruction> BitVMInterpreter::parseScript(const std::vector<uint8_t
         } else if (op == 0x4e) {
             // OP_PUSHDATA4
             if (i + 4 >= scriptBytes.size()) throw std::runtime_error("Invalid OP_PUSHDATA4 length");
-            size_t push_len = scriptBytes[i + 1] | (scriptBytes[i + 2] << 8) | (scriptBytes[i + 3] << 16) | (scriptBytes[i + 4] << 24); // Little endian
+            size_t push_len = static_cast<size_t>(scriptBytes[i + 1]) |
+                              (static_cast<size_t>(scriptBytes[i + 2]) << 8) |
+                              (static_cast<size_t>(scriptBytes[i + 3]) << 16) |
+                              (static_cast<size_t>(scriptBytes[i + 4]) << 24); // Little endian
             if (i + 5 + push_len > scriptBytes.size()) throw std::runtime_error("Invalid OP_PUSHDATA4 data length");
             std::vector<uint8_t> data(scriptBytes.begin() + i + 5, scriptBytes.begin() + i + 5 + push_len);
             instructions.push_back({OpCode::OP_PUSH, data});
