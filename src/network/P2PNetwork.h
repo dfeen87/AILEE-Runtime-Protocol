@@ -16,6 +16,8 @@ namespace ailee::network {
 constexpr const char* TOPIC_L2_STATE_DIFF = "ailee/l2/state_diff";
 constexpr const char* TOPIC_L2_ZK_PROOF = "ailee/l2/zk_proof";
 constexpr const char* TOPIC_AI_TELEMETRY = "ailee/ai/telemetry";
+constexpr const char* TOPIC_PROOF_FRAGMENT = "ailee/l2/proof_fragment";
+constexpr const char* TOPIC_DISPUTE_EVENT = "ailee/l2/dispute_event";
 
 /**
  * Peer information structure
@@ -119,6 +121,11 @@ public:
      */
     bool subscribe(const std::string& topic, MessageHandler handler);
     
+    /**
+     * Handle incoming message from network, checking rate limits
+     */
+    void handleIncomingMessage(const NetworkMessage& msg, double peerReputation = 0.5);
+
     /**
      * Unsubscribe from a topic
      */

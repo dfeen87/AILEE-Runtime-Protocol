@@ -3,6 +3,7 @@
 
 #include "P2PNetwork.h"
 #include "ailee_rust_ffi.h"
+#include "ReputationRateLimiter.h"
 #include <iostream>
 #include <random>
 #include <sstream>
@@ -43,6 +44,7 @@ public:
     std::map<std::string, MessageHandler> subscriptions;
     std::mutex mutex;
     NetworkStats stats{};
+    ReputationRateLimiter rateLimiter;
     
     // Background thread for peer discovery and message handling
     std::thread backgroundThread;
@@ -364,6 +366,33 @@ bool P2PNetwork::unsubscribe(const std::string& topic) {
     return true;
 }
 
+void P2PNetwork::handleIncomingMessage(const NetworkMessage& msg, double peerReputation) {
+    MessageHandler handler;
+    {
+        std::lock_guard<std::mutex> lock(impl_->mutex);
+        if (!impl_->running) return;
+
+        if (!impl_->rateLimiter.allowMessage(msg.senderId, peerReputation, msg.topic, msg.payload)) {
+            std::cout << "[P2PNetwork] Rate limiter dropped message from peer " << msg.senderId
+                      << " on topic " << msg.topic << std::endl;
+            return;
+        }
+
+        auto it = impl_->subscriptions.find(msg.topic);
+        if (it != impl_->subscriptions.end()) {
+            handler = it->second;
+        }
+    }
+
+    if (handler) {
+        try {
+            handler(msg);
+        } catch (const std::exception& e) {
+            std::cerr << "[P2PNetwork] Error in message handler: " << e.what() << std::endl;
+        }
+    }
+}
+
 bool P2PNetwork::publish(const std::string& topic, const std::vector<uint8_t>& payload) {
     std::lock_guard<std::mutex> lock(impl_->mutex);
     
@@ -371,10 +400,18 @@ bool P2PNetwork::publish(const std::string& topic, const std::vector<uint8_t>& p
         std::cerr << "[P2PNetwork] Cannot publish: network not running" << std::endl;
         return false;
     }
+
+    // Since we are publishing locally to the network, we don't strict limit ourselves.
+    // In a full node, incoming messages from peers would hit allowMessage() before
+    // being processed or re-gossiped.
     
     int res = broadcast_message_ffi(topic.c_str(), payload.data(), payload.size());
     return res == 0;
 }
+
+// Add an overloaded publish with rate limit check for incoming messages from peers,
+// or simulate incoming message checking in your libp2p incoming handler when it's fully implemented.
+// Currently P2PNetwork mainly broadcasts out. To limit INCOMING, there should be a receive handler here.
 
 std::optional<std::vector<uint8_t>> P2PNetwork::sendToPeer(
     const std::string& peerId,

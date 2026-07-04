@@ -389,8 +389,64 @@ bool L2StateDiff::verifyDiff(const std::string& zkProofData) const {
     return engine.verifyHalo2Proof(p);
 }
 
-L2StateDiff calculateStateDiff(const L2StateSnapshot& oldState, const L2StateSnapshot& newState) {
+nlohmann::json L2StateDiff::toJson() const {
+    // Convert serialized changes to hex string since the custom nlohmann::json doesn't support binary
+    std::string hexChanges;
+    hexChanges.reserve(serializedChanges.size() * 2);
+    constexpr char hex[] = "0123456789abcdef";
+    for (uint8_t b : serializedChanges) {
+        hexChanges.push_back(hex[b >> 4]);
+        hexChanges.push_back(hex[b & 0xf]);
+    }
+
+    nlohmann::json::array_t refs;
+    for (const auto& ref : proofRefs) {
+        refs.push_back(nlohmann::json(ref));
+    }
+
+    return {
+        {"height", height},
+        {"priorStateRoot", priorStateRoot},
+        {"newStateRoot", newStateRoot},
+        {"diffPayload", hexChanges},
+        {"proofRefs", refs},
+        {"timestampMs", timestampMs}
+    };
+}
+
+L2StateDiff L2StateDiff::fromJson(const nlohmann::json& j) {
     L2StateDiff diff;
+    if (j.contains("height")) diff.height = j["height"].get<std::uint64_t>();
+    if (j.contains("priorStateRoot")) diff.priorStateRoot = j["priorStateRoot"].get<std::string>();
+    if (j.contains("newStateRoot")) diff.newStateRoot = j["newStateRoot"].get<std::string>();
+
+    if (j.contains("diffPayload") && j["diffPayload"].is_string()) {
+        std::string hexChanges = j["diffPayload"].get<std::string>();
+        if (hexChanges.length() % 2 == 0) {
+            for (size_t i = 0; i < hexChanges.length(); i += 2) {
+                std::string byteString = hexChanges.substr(i, 2);
+                uint8_t byte = static_cast<uint8_t>(strtol(byteString.c_str(), nullptr, 16));
+                diff.serializedChanges.push_back(byte);
+            }
+        }
+    }
+
+    if (j.contains("proofRefs") && j["proofRefs"].is_array()) {
+        for (const auto& refJson : j["proofRefs"]) {
+             if (refJson.is_string()) {
+                 diff.proofRefs.push_back(refJson.get<std::string>());
+             }
+        }
+    }
+
+    if (j.contains("timestampMs")) diff.timestampMs = j["timestampMs"].get<std::uint64_t>();
+    return diff;
+}
+
+L2StateDiff calculateStateDiff(const L2StateSnapshot& oldState, const L2StateSnapshot& newState, std::uint64_t height) {
+    L2StateDiff diff;
+    diff.height = height;
+    diff.timestampMs = newState.snapshotTimestampMs;
     diff.priorStateRoot = computeL2StateRoot(oldState);
     diff.newStateRoot = computeL2StateRoot(newState);
 
@@ -398,6 +454,9 @@ L2StateDiff calculateStateDiff(const L2StateSnapshot& oldState, const L2StateSna
     // For now, we simulate a serialized byte payload of changes.
     std::string mockDiff = "DIFF_DATA:" + diff.priorStateRoot + "->" + diff.newStateRoot;
     diff.serializedChanges.assign(mockDiff.begin(), mockDiff.end());
+
+    // Proof refs would be generated based on the transactions included
+    // diff.proofRefs.push_back("...");
 
     return diff;
 }
@@ -412,7 +471,7 @@ bool applyStateDiff(L2StateSnapshot& currentState, const L2StateDiff& diff) {
     // Full logic requires unpacking diff.serializedChanges.
 
     // Advance timestamp heuristically to denote state change if we don't have exactly the target state
-    currentState.snapshotTimestampMs += 1000;
+    currentState.snapshotTimestampMs = diff.timestampMs > 0 ? diff.timestampMs : currentState.snapshotTimestampMs + 1000;
 
     return true;
 }

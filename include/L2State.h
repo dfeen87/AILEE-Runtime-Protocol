@@ -4,6 +4,7 @@
 #include <optional>
 #include <string>
 #include <vector>
+#include <nlohmann/json.hpp>
 
 namespace ailee {
 class SidechainBridge;
@@ -101,18 +102,24 @@ struct L2StateSnapshot {
 // Represents a deterministic difference between two L2StateSnapshots,
 // to be broadcasted to decentralized Data Availability layers.
 struct L2StateDiff {
+    std::uint64_t height = 0;
     std::string priorStateRoot;
     std::string newStateRoot;
     std::vector<uint8_t> serializedChanges;
+    std::vector<std::string> proofRefs;
+    std::uint64_t timestampMs = 0;
 
     // Validates the diff by verifying the attached ZK proof
     bool verifyDiff(const std::string& zkProofData) const;
+
+    nlohmann::json toJson() const;
+    static L2StateDiff fromJson(const nlohmann::json& j);
 };
 
 std::string computeL2StateRoot(const L2StateSnapshot& snapshot);
 
 // Calculates the differential changes between two states
-L2StateDiff calculateStateDiff(const L2StateSnapshot& oldState, const L2StateSnapshot& newState);
+L2StateDiff calculateStateDiff(const L2StateSnapshot& oldState, const L2StateSnapshot& newState, std::uint64_t height);
 
 // Applies a validated state diff to advance an L2StateSnapshot
 bool applyStateDiff(L2StateSnapshot& currentState, const L2StateDiff& diff);
