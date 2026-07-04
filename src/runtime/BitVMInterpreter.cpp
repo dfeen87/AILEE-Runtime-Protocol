@@ -48,7 +48,10 @@ std::vector<Instruction> BitVMInterpreter::parseScript(const std::vector<uint8_t
             instructions.push_back({OpCode::OP_PUSH, data});
             i += 5 + push_len;
         } else {
-            // Other opcodes
+            // Other opcodes (reject 0xff, which collides with the internal OP_PUSH marker)
+            if (op == 0xff) {
+                throw std::runtime_error("Unsupported opcode 0xff");
+            }
             instructions.push_back({static_cast<OpCode>(op), std::nullopt});
             i++;
         }
