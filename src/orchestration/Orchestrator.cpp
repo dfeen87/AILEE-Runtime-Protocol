@@ -211,14 +211,14 @@ Assignment WeightedOrchestrator::optimizeCostPerformance(
 
 Assignment WeightedOrchestrator::assignRoundRobin(const std::vector<NodeMetrics>& candidates) const {
     if (candidates.empty()) {
-        return Assignment{false, "no candidates", "", std::chrono::system_clock::time_point{}, "", "", "", 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, {}};
+        return Assignment{false, "no candidates", "", std::chrono::system_clock::time_point{}, "", "", "", 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, std::chrono::milliseconds(0), {}};
     }
     return buildAssignment(TaskPayload{}, candidates.front(), 1.0);
 }
 
 Assignment WeightedOrchestrator::assignLeastLoaded(const std::vector<NodeMetrics>& candidates) const {
     if (candidates.empty()) {
-        return Assignment{false, "no candidates", "", std::chrono::system_clock::time_point{}, "", "", "", 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, {}};
+        return Assignment{false, "no candidates", "", std::chrono::system_clock::time_point{}, "", "", "", 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, std::chrono::milliseconds(0), {}};
     }
     auto it = std::min_element(candidates.begin(), candidates.end(),
                                [](const NodeMetrics& a, const NodeMetrics& b) {
@@ -229,7 +229,7 @@ Assignment WeightedOrchestrator::assignLeastLoaded(const std::vector<NodeMetrics
 
 Assignment WeightedOrchestrator::assignLowestLatency(const std::vector<NodeMetrics>& candidates) const {
     if (candidates.empty()) {
-        return Assignment{false, "no candidates", "", std::chrono::system_clock::time_point{}, "", "", "", 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, {}};
+        return Assignment{false, "no candidates", "", std::chrono::system_clock::time_point{}, "", "", "", 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, std::chrono::milliseconds(0), {}};
     }
     auto it = std::min_element(candidates.begin(), candidates.end(),
                                [](const NodeMetrics& a, const NodeMetrics& b) {
@@ -240,7 +240,7 @@ Assignment WeightedOrchestrator::assignLowestLatency(const std::vector<NodeMetri
 
 Assignment WeightedOrchestrator::assignHighestReputation(const std::vector<NodeMetrics>& candidates) const {
     if (candidates.empty()) {
-        return Assignment{false, "no candidates", "", std::chrono::system_clock::time_point{}, "", "", "", 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, {}};
+        return Assignment{false, "no candidates", "", std::chrono::system_clock::time_point{}, "", "", "", 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, std::chrono::milliseconds(0), {}};
     }
     double bestScore = -1.0;
     const NodeMetrics* bestNode = nullptr;
@@ -252,14 +252,14 @@ Assignment WeightedOrchestrator::assignHighestReputation(const std::vector<NodeM
         }
     }
     if (!bestNode) {
-        return Assignment{false, "no candidates", "", std::chrono::system_clock::time_point{}, "", "", "", 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, {}};
+        return Assignment{false, "no candidates", "", std::chrono::system_clock::time_point{}, "", "", "", 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, std::chrono::milliseconds(0), {}};
     }
     return buildAssignment(TaskPayload{}, *bestNode, bestScore);
 }
 
 Assignment WeightedOrchestrator::assignLowestCost(const std::vector<NodeMetrics>& candidates) const {
     if (candidates.empty()) {
-        return Assignment{false, "no candidates", "", std::chrono::system_clock::time_point{}, "", "", "", 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, {}};
+        return Assignment{false, "no candidates", "", std::chrono::system_clock::time_point{}, "", "", "", 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, std::chrono::milliseconds(0), {}};
     }
     auto it = std::min_element(candidates.begin(), candidates.end(),
                                [](const NodeMetrics& a, const NodeMetrics& b) {

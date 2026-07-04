@@ -277,6 +277,7 @@ set(AILEE_L2_SOURCES
     src/posture_engine/posture_engine.cpp
     src/policy_layer/policy_layer.cpp
     src/policy_layer/config_parser.cpp
+    src/runtime/BitVMInterpreter.cpp
 )
 
 # Main Executable Sources
@@ -345,6 +346,8 @@ add_executable(ailee_service
 target_link_libraries(ailee_service
     PRIVATE
     Threads::Threads
+    OpenSSL::SSL
+    OpenSSL::Crypto
 )
 if(nlohmann_json_FOUND)
     target_link_libraries(ailee_service PRIVATE nlohmann_json::nlohmann_json)
@@ -355,7 +358,7 @@ add_executable(example_wallet_integration
     examples/example_wallet_integration.cpp
     ${AILEE_L2_SOURCES}
 )
-target_link_libraries(example_wallet_integration PRIVATE Threads::Threads)
+target_link_libraries(example_wallet_integration PRIVATE Threads::Threads OpenSSL::SSL OpenSSL::Crypto)
 if(nlohmann_json_FOUND)
     target_link_libraries(example_wallet_integration PRIVATE nlohmann_json::nlohmann_json)
 endif()
@@ -364,7 +367,7 @@ add_executable(example_node_sidecar
     examples/example_node_sidecar.cpp
     ${AILEE_L2_SOURCES}
 )
-target_link_libraries(example_node_sidecar PRIVATE Threads::Threads)
+target_link_libraries(example_node_sidecar PRIVATE Threads::Threads OpenSSL::SSL OpenSSL::Crypto)
 if(nlohmann_json_FOUND)
     target_link_libraries(example_node_sidecar PRIVATE nlohmann_json::nlohmann_json)
 endif()
@@ -534,6 +537,8 @@ if(BUILD_TESTS)
 
     add_executable(ailee_tests 
         tests/AdapterRegistryTests.cpp
+        tests/BitVMInterpreterTests.cpp
+        src/runtime/BitVMInterpreter.cpp
     )
     
     target_link_libraries(ailee_tests
