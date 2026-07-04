@@ -283,6 +283,33 @@ set(CORE_SOURCES
 # ============================================================================
 
 # --- 1. The Main Node Executable ---
+# ============================================================================
+# Rust Prover Integration
+# ============================================================================
+
+option(AILEE_USE_RUST_PROVER "Build and link the real Rust Halo2 prover instead of C++ fallback" ON)
+
+if(AILEE_USE_RUST_PROVER)
+    message(STATUS "Integrating Rust Halo2 Prover (disabling C++ fallback)")
+
+    # 1. Custom target to run Cargo build
+    add_custom_target(cargo_build_rust_prover ALL
+        COMMAND cargo build --release
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/src/rust_prover
+        COMMENT "Compiling Rust Prover..."
+    )
+
+    # 2. Add imported static library for the built Rust code
+    add_library(ailee_rust_prover STATIC IMPORTED GLOBAL)
+    add_dependencies(ailee_rust_prover cargo_build_rust_prover)
+
+    # Cargo outputs the library here
+    set(RUST_PROVER_LIB_PATH "${CMAKE_CURRENT_SOURCE_DIR}/src/rust_prover/target/release/libailee_rust_prover.a")
+    set_target_properties(ailee_rust_prover PROPERTIES IMPORTED_LOCATION ${RUST_PROVER_LIB_PATH})
+
+else()
+    message(STATUS "Using C++ Mock Fallback for Rust Prover")
+endif()
 add_executable(ailee_node ${CORE_SOURCES})
 
 # --- Layer-2 Service Executable ---
@@ -320,7 +347,7 @@ endif()
 
 target_link_libraries(ailee_node
     PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/rust_prover/target/release/libailee_rust_prover.a
+    $<IF:$<BOOL:${AILEE_USE_RUST_PROVER}>,ailee_rust_prover,ailee_rust_ffi_fallback>
     OpenSSL::SSL
     OpenSSL::Crypto
     ${CURL_LIBRARIES}
@@ -342,7 +369,7 @@ add_executable(ailee_l2_verify
 
 target_link_libraries(ailee_l2_verify
     PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/rust_prover/target/release/libailee_rust_prover.a
+    $<IF:$<BOOL:${AILEE_USE_RUST_PROVER}>,ailee_rust_prover,ailee_rust_ffi_fallback>
     OpenSSL::SSL
     OpenSSL::Crypto
 )
@@ -396,7 +423,7 @@ add_library(ailee_adapters STATIC
 
 target_link_libraries(ailee_adapters
     PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/rust_prover/target/release/libailee_rust_prover.a
+    $<IF:$<BOOL:${AILEE_USE_RUST_PROVER}>,ailee_rust_prover,ailee_rust_ffi_fallback>
     OpenSSL::SSL
     OpenSSL::Crypto
     ${CURL_LIBRARIES}
