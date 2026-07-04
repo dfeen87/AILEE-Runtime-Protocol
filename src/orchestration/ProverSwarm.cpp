@@ -243,9 +243,9 @@ bool ProverSwarm::recordJobSuccess(const std::string& job_id, double latency_ms,
     metrics_.completed_jobs++;
     metrics_.queue_depth = queue_order_.size();
     total_latency_ms_ += latency_ms;
-    if (metrics_.completed_jobs > 0) {
-        metrics_.avg_proof_latency_ms = static_cast<double>(total_latency_ms_) / metrics_.completed_jobs;
-    }
+    metrics_.avg_proof_latency_ms = (metrics_.completed_jobs > 0)
+        ? (total_latency_ms_ / static_cast<double>(metrics_.completed_jobs))
+        : 0.0;
 
     return true;
 }
