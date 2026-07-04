@@ -63,7 +63,9 @@ find_package(yaml-cpp QUIET)
 find_package(Threads REQUIRED)
 
 # Try pkg-config for libsecp256k1 first
-pkg_check_modules(libsecp256k1 QUIET libsecp256k1)
+if(PKG_CONFIG_FOUND)
+    pkg_check_modules(libsecp256k1 QUIET libsecp256k1)
+endif()
 if(NOT libsecp256k1_FOUND)
     # Fallback to normal find_library
     find_library(libsecp256k1_LIBRARY NAMES secp256k1)
@@ -76,6 +78,7 @@ if(NOT libsecp256k1_FOUND)
 endif()
 if(libsecp256k1_FOUND)
     message(STATUS "Found libsecp256k1: ${libsecp256k1_LIBRARIES}")
+    include_directories(${libsecp256k1_INCLUDE_DIRS})
 else()
     message(FATAL_ERROR "libsecp256k1 is required but not found")
 endif()
