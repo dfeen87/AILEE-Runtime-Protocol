@@ -142,7 +142,7 @@ private:
 
     // Metrics
     SwarmMetrics metrics_;
-    std::uint64_t total_latency_ms_ = 0;
+    double total_latency_ms_ = 0.0;
 
     // Persistence helpers
     bool saveQueueOrder(std::string* err = nullptr);
