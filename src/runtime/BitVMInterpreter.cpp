@@ -90,7 +90,13 @@ void BitVMInterpreter::step(InterpreterState& state) const {
             }
             auto top = state.stack.back();
             state.stack.pop_back();
-            condition = !top.empty();
+            condition = false;
+            for (size_t j = 0; j < top.size(); ++j) {
+                if (top[j] != 0) {
+                    condition = !(j == top.size() - 1 && top[j] == 0x80);
+                    break;
+                }
+            }
             if (inst.opcode == OpCode::OP_NOTIF) {
                 condition = !condition;
             }
