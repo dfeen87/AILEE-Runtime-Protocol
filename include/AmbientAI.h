@@ -10,6 +10,7 @@
 #include <chrono>
 #include <optional>
 #include <cstdint>
+#include <nlohmann/json.hpp>
 #include <atomic>
 #include <functional>
 #include <mutex>
@@ -272,9 +273,9 @@ public:
     const LocalSessionManager& sessionManager() const { return *sessionManager_; }
 
     void loadReputation(const std::string& data) {
-        // Mock deserialize
+
         std::lock_guard<std::mutex> lock(mu_);
-        rep_.score = 100.0;
+        try { auto j = nlohmann::json::parse(data); if (j.contains("score") && j["score"].is_number()) { rep_.score = j["score"].get<double>(); } else { rep_.score = 100.0; } } catch (...) { rep_.score = 100.0; }
     }
     std::string toJson() const { return "{\"score\": " + std::to_string(rep_.score) + "}"; }
     Reputation reputation() const {

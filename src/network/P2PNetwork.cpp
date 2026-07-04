@@ -94,7 +94,7 @@ public:
         return true;
 #else
         std::cout << "[P2PNetwork] Running in enhanced stub mode (libp2p not available)" << std::endl;
-        std::cout << "[P2PNetwork] To enable full P2P: Install cpp-libp2p and rebuild with -DAILEE_HAS_LIBP2P=1" << std::endl;
+
         
         // Start background simulation thread
         backgroundThread = std::thread([this]() {

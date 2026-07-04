@@ -292,20 +292,22 @@ option(AILEE_USE_RUST_PROVER "Build and link the real Rust Halo2 prover instead 
 if(AILEE_USE_RUST_PROVER)
     message(STATUS "Integrating Rust Halo2 Prover (disabling C++ fallback)")
 
-    # 1. Custom target to run Cargo build
-    add_custom_target(cargo_build_rust_prover ALL
+    set(RUST_PROVER_LIB_PATH "${CMAKE_CURRENT_SOURCE_DIR}/src/rust_prover/target/release/libailee_rust_prover.a")
+
+    add_custom_command(
+        OUTPUT ${RUST_PROVER_LIB_PATH}
         COMMAND cargo build --release
+        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/src/rust_prover/src/lib.rs ${CMAKE_CURRENT_SOURCE_DIR}/src/rust_prover/Cargo.toml
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/src/rust_prover
         COMMENT "Compiling Rust Prover..."
     )
 
-    # 2. Add imported static library for the built Rust code
+    add_custom_target(cargo_build_rust_prover ALL DEPENDS ${RUST_PROVER_LIB_PATH})
+
     add_library(ailee_rust_prover STATIC IMPORTED GLOBAL)
     add_dependencies(ailee_rust_prover cargo_build_rust_prover)
-
-    # Cargo outputs the library here
-    set(RUST_PROVER_LIB_PATH "${CMAKE_CURRENT_SOURCE_DIR}/src/rust_prover/target/release/libailee_rust_prover.a")
     set_target_properties(ailee_rust_prover PROPERTIES IMPORTED_LOCATION ${RUST_PROVER_LIB_PATH})
+
 
 else()
     message(STATUS "Using C++ Mock Fallback for Rust Prover")

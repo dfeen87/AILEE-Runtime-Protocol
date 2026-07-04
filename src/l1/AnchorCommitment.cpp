@@ -144,7 +144,7 @@ TapTree AnchorCommitment::buildChallengeResponseTree(const std::string& zkProofH
     script2.push_back(0x00); script2.push_back(0x63);
     const auto pushedDispute = pushData(disputeBytes);
     script2.insert(script2.end(), pushedDispute.begin(), pushedDispute.end());
-    script2.push_back(0x93); script2.push_back(0x94); script2.push_back(0xa8); script2.push_back(0x68);
+    script2.push_back(0xa8); script2.push_back(0x68);
     disputeLeaf.script = script2; disputeLeaf.scriptHex = "dispute_path_" + disputePayload;
     tree.leaves.push_back(disputeLeaf);
     tree.computeRoot(); return tree;
