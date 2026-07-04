@@ -55,6 +55,7 @@ pub extern "C" fn generate_halo2_proof_ffi(
         return -1;
     }
 
+    unsafe { *out_proof = std::ptr::null_mut(); }
     let _task_id_str = unsafe { CStr::from_ptr(task_id).to_string_lossy() };
     let computation_hash_str = unsafe { CStr::from_ptr(computation_hash).to_string_lossy() };
 
