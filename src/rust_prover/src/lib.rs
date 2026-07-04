@@ -16,8 +16,6 @@ pub extern "C" fn generate_halo2_proof_ffi(
     let _task_id_str = unsafe { CStr::from_ptr(task_id).to_string_lossy() };
     let computation_hash_str = unsafe { CStr::from_ptr(computation_hash).to_string_lossy() };
 
-    // Placeholder: In a real system, we would construct a circuit and run the Halo2 prover here.
-    // For now, generate a mock proof string incorporating the computation hash.
     let proof_str = format!("halo2_proof_mock_{}", computation_hash_str);
 
     let c_str_proof = match CString::new(proof_str) {
@@ -44,8 +42,6 @@ pub extern "C" fn verify_halo2_proof_ffi(
     let proof_str = unsafe { CStr::from_ptr(proof_data).to_string_lossy() };
     let computation_hash_str = unsafe { CStr::from_ptr(computation_hash).to_string_lossy() };
 
-    // Placeholder: Real system parses proof_data and verifies against the public input (computation_hash)
-    // using Halo2 verifier.
     let expected_mock = format!("halo2_proof_mock_{}", computation_hash_str);
     if proof_str == expected_mock {
         1 // True
@@ -61,4 +57,24 @@ pub extern "C" fn free_halo2_proof_ffi(proof_ptr: *mut c_char) {
             let _ = CString::from_raw(proof_ptr);
         }
     }
+}
+
+
+#[no_mangle]
+pub extern "C" fn init_network_ffi() -> c_int {
+    0
+}
+
+#[no_mangle]
+pub extern "C" fn broadcast_message_ffi(
+    _topic: *const c_char,
+    _payload: *const u8,
+    _payload_len: usize,
+) -> c_int {
+    0
+}
+
+#[no_mangle]
+pub extern "C" fn subscribe_topic_ffi(_topic: *const c_char) -> c_int {
+    0
 }

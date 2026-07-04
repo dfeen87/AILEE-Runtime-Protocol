@@ -394,8 +394,8 @@ struct NodeTelemetryHistory {
 
 class EnhancedAmbientNode : public AmbientNode {
 public:
-    explicit EnhancedAmbientNode(NodeId id, SafetyPolicy policy)
-        : AmbientNode(id, policy),
+    explicit EnhancedAmbientNode(NodeId id, SafetyPolicy policy, std::shared_ptr<ailee::l1::ReorgDetector> db = nullptr)
+        : AmbientNode(id, policy, db),
           energyTelemetry_(std::make_shared<EnergyTelemetry>()) {}
 
     void ingestTelemetry(const TelemetrySample& sample) {

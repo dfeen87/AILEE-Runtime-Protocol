@@ -127,46 +127,27 @@ void TapTree::computeRoot() {
 
 TapTree AnchorCommitment::buildChallengeResponseTree(const std::string& zkProofHash) const {
     TapTree tree;
-
-    // 1. Happy Path Leaf (Optimistic state progression embedding)
-    TapLeaf happyLeaf;
-    happyLeaf.leafVersion = 0xc0;
-    // Script: OP_FALSE OP_IF <StateRoot> <ProofHash> OP_ENDIF (simulated bytes)
+    TapLeaf happyLeaf; happyLeaf.leafVersion = 0xc0;
     const std::string happyPayload = l2StateRoot + ":" + zkProofHash;
     const auto happyBytes = commitmentBytes(happyPayload);
     std::vector<uint8_t> script1;
-    script1.push_back(0x00); // OP_FALSE
-    script1.push_back(0x63); // OP_IF
+    script1.push_back(0x00); script1.push_back(0x63);
     const auto pushedHappy = pushData(happyBytes);
     script1.insert(script1.end(), pushedHappy.begin(), pushedHappy.end());
-    script1.push_back(0x68); // OP_ENDIF
-
-    happyLeaf.script = script1;
-    happyLeaf.scriptHex = "happy_path_" + happyPayload;
-
+    script1.push_back(0x68);
+    happyLeaf.script = script1; happyLeaf.scriptHex = "happy_path_" + happyPayload;
     tree.leaves.push_back(happyLeaf);
-
-    // 2. Disputed Path Leaf (Challenge game - fraud proof entry)
-    TapLeaf disputeLeaf;
-    disputeLeaf.leafVersion = 0xc0;
-    // Script: Simulate bitVM execution opcodes (e.g. state diff checking)
+    TapLeaf disputeLeaf; disputeLeaf.leafVersion = 0xc0;
     const std::string disputePayload = "DISPUTE_EXEC:" + l2StateRoot;
     const auto disputeBytes = commitmentBytes(disputePayload);
     std::vector<uint8_t> script2;
-    script2.push_back(0x00); // OP_FALSE
-    script2.push_back(0x63); // OP_IF
+    script2.push_back(0x00); script2.push_back(0x63);
     const auto pushedDispute = pushData(disputeBytes);
     script2.insert(script2.end(), pushedDispute.begin(), pushedDispute.end());
-    script2.push_back(0x68); // OP_ENDIF
-
-    disputeLeaf.script = script2;
-    disputeLeaf.scriptHex = "dispute_path_" + disputePayload;
-
+    script2.push_back(0x93); script2.push_back(0x94); script2.push_back(0xa8); script2.push_back(0x68);
+    disputeLeaf.script = script2; disputeLeaf.scriptHex = "dispute_path_" + disputePayload;
     tree.leaves.push_back(disputeLeaf);
-
-    tree.computeRoot();
-
-    return tree;
+    tree.computeRoot(); return tree;
 }
 
 } // namespace ailee::global_seven

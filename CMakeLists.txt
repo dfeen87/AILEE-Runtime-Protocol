@@ -320,7 +320,7 @@ endif()
 
 target_link_libraries(ailee_node
     PRIVATE
-    ailee_rust_ffi_fallback
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/rust_prover/target/release/libailee_rust_prover.a
     OpenSSL::SSL
     OpenSSL::Crypto
     ${CURL_LIBRARIES}
@@ -342,7 +342,7 @@ add_executable(ailee_l2_verify
 
 target_link_libraries(ailee_l2_verify
     PRIVATE
-    ailee_rust_ffi_fallback
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/rust_prover/target/release/libailee_rust_prover.a
     OpenSSL::SSL
     OpenSSL::Crypto
 )
@@ -396,7 +396,7 @@ add_library(ailee_adapters STATIC
 
 target_link_libraries(ailee_adapters
     PRIVATE
-    ailee_rust_ffi_fallback
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/rust_prover/target/release/libailee_rust_prover.a
     OpenSSL::SSL
     OpenSSL::Crypto
     ${CURL_LIBRARIES}

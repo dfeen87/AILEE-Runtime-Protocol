@@ -68,23 +68,37 @@ bool ReorgDetector::initialize(std::string* err) {
     rocksdb::Options options;
     options.create_if_missing = true;
     options.error_if_exists = false;
-    
+    std::vector<rocksdb::ColumnFamilyDescriptor> column_families;
+    column_families.push_back(rocksdb::ColumnFamilyDescriptor(rocksdb::kDefaultColumnFamilyName, rocksdb::ColumnFamilyOptions()));
+    column_families.push_back(rocksdb::ColumnFamilyDescriptor("reputation_cf", rocksdb::ColumnFamilyOptions()));
     rocksdb::DB* dbPtr = nullptr;
-    rocksdb::Status status = rocksdb::DB::Open(options, dbPath_, &dbPtr);
-    
+    std::vector<rocksdb::ColumnFamilyHandle*> handles;
+    rocksdb::Status status = rocksdb::DB::Open(options, dbPath_, column_families, &handles, &dbPtr);
     if (!status.ok()) {
-        if (err) {
-            *err = "Failed to open RocksDB: " + status.ToString();
+        rocksdb::Options create_opts = options;
+        status = rocksdb::DB::Open(create_opts, dbPath_, &dbPtr);
+        if (status.ok()) {
+            rocksdb::ColumnFamilyHandle* cf;
+            status = dbPtr->CreateColumnFamily(rocksdb::ColumnFamilyOptions(), "reputation_cf", &cf);
+            if(status.ok()) { dbPtr->DestroyColumnFamilyHandle(cf); }
+            dbPtr->Close(); delete dbPtr;
+            status = rocksdb::DB::Open(options, dbPath_, column_families, &handles, &dbPtr);
         }
-        return false;
+        if (!status.ok()) {
+            if (err) *err = "Failed to open RocksDB with CFs: " + status.ToString();
+            return false;
+        }
     }
-    
-    db_.reset(dbPtr);
+    defaultCf_ = handles[0]; reputationCf_ = handles[1]; db_.reset(dbPtr);
     return true;
 }
 
 void ReorgDetector::close() {
-    db_.reset();
+    if (db_) {
+        if (defaultCf_) { db_->DestroyColumnFamilyHandle(defaultCf_); defaultCf_ = nullptr; }
+        if (reputationCf_) { db_->DestroyColumnFamilyHandle(reputationCf_); reputationCf_ = nullptr; }
+        db_.reset();
+    }
 }
 
 bool ReorgDetector::trackBlock(std::uint64_t height, const std::string& blockHash, 
@@ -533,6 +547,21 @@ std::vector<AnchorCommitmentRecord> ReorgDetector::getAnchorsByStatus(AnchorStat
     
     delete it;
     return result;
+}
+
+
+bool ReorgDetector::setReputation(const std::string& peerId, const std::string& repData, std::string* err) {
+    if (!db_ || !reputationCf_) { if (err) *err = "RocksDB or reputation_cf not initialized"; return false; }
+    rocksdb::Status s = db_->Put(rocksdb::WriteOptions(), reputationCf_, peerId, repData);
+    if (!s.ok() && err) *err = s.ToString();
+    return s.ok();
+}
+std::optional<std::string> ReorgDetector::getReputation(const std::string& peerId) const {
+    if (!db_ || !reputationCf_) return std::nullopt;
+    std::string val;
+    rocksdb::Status s = db_->Get(rocksdb::ReadOptions(), reputationCf_, peerId, &val);
+    if (s.ok()) return val;
+    return std::nullopt;
 }
 
 } // namespace ailee::l1

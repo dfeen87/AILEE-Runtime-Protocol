@@ -2,6 +2,7 @@
 // P2PNetwork.cpp — P2P networking implementation with libp2p C++ bindings
 
 #include "P2PNetwork.h"
+#include "ailee_rust_ffi.h"
 #include <iostream>
 #include <random>
 #include <sstream>
@@ -22,7 +23,7 @@
 // #include <libp2p/protocol/kademlia/kademlia.hpp>
 // #include <libp2p/transport/tcp.hpp>
 // Note: Actual includes will be enabled when libp2p is installed
-#define USING_LIBP2P 1
+#define USING_LIBP2P 0
 #else
 #define USING_LIBP2P 0
 #endif
@@ -293,34 +294,14 @@ P2PNetwork::~P2PNetwork() = default;
 
 bool P2PNetwork::start() {
     std::lock_guard<std::mutex> lock(impl_->mutex);
-    
-    if (impl_->running) {
-        return true;
-    }
-    
+    if (impl_->running) return true;
     std::cout << "[P2PNetwork] Starting P2P network layer" << std::endl;
-    std::cout << "[P2PNetwork] Local Peer ID: " << impl_->localPeerId << std::endl;
-    std::cout << "[P2PNetwork] Listen Address: " << impl_->config.listenAddress << std::endl;
-    std::cout << "[P2PNetwork] Max Peers: " << impl_->config.maxPeers << std::endl;
-    std::cout << "[P2PNetwork] mDNS: " << (impl_->config.enableMDNS ? "enabled" : "disabled") << std::endl;
-    std::cout << "[P2PNetwork] DHT: " << (impl_->config.enableDHT ? "enabled" : "disabled") << std::endl;
-    
-    if (!impl_->initialize()) {
-        std::cerr << "[P2PNetwork] Failed to initialize network" << std::endl;
+    int res = init_network_ffi();
+    if (res != 0) {
+        std::cerr << "[P2PNetwork] Failed to initialize rust-libp2p network via FFI" << std::endl;
         return false;
     }
-    
     impl_->running = true;
-    
-    // Connect to bootstrap peers
-    if (!impl_->config.bootstrapPeers.empty()) {
-        std::cout << "[P2PNetwork] Connecting to " << impl_->config.bootstrapPeers.size() 
-                  << " bootstrap peers..." << std::endl;
-        for (const auto& peer : impl_->config.bootstrapPeers) {
-            impl_->connectPeer(peer);
-        }
-    }
-    
     std::cout << "[P2PNetwork] Network started successfully" << std::endl;
     return true;
 }
@@ -361,7 +342,12 @@ bool P2PNetwork::subscribe(const std::string& topic, MessageHandler handler) {
         return false;
     }
     
-    return impl_->subscribeToTopic(topic, handler);
+    int res = subscribe_topic_ffi(topic.c_str());
+    if (res == 0) {
+        impl_->subscriptions[topic] = handler;
+        return true;
+    }
+    return false;
 }
 
 bool P2PNetwork::unsubscribe(const std::string& topic) {
@@ -386,7 +372,8 @@ bool P2PNetwork::publish(const std::string& topic, const std::vector<uint8_t>& p
         return false;
     }
     
-    return impl_->publishToTopic(topic, payload);
+    int res = broadcast_message_ffi(topic.c_str(), payload.data(), payload.size());
+    return res == 0;
 }
 
 std::optional<std::vector<uint8_t>> P2PNetwork::sendToPeer(

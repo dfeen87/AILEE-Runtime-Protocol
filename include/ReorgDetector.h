@@ -11,6 +11,7 @@
 // Forward declaration to avoid including RocksDB header
 namespace rocksdb {
     class DB;
+    class ColumnFamilyHandle;
 }
 
 namespace ailee::l1 {
@@ -111,6 +112,10 @@ public:
     // Get all anchors with a specific status
     std::vector<AnchorCommitmentRecord> getAnchorsByStatus(AnchorStatus status) const;
 
+    // --- Ambient AI Reputation CF API ---
+    bool setReputation(const std::string& peerId, const std::string& repData, std::string* err = nullptr);
+    std::optional<std::string> getReputation(const std::string& peerId) const;
+
 private:
     std::uint64_t confirmationThreshold_;
     std::uint64_t maxAnchorPendingTime_;
@@ -118,6 +123,8 @@ private:
     
     // RocksDB instance for persistent storage
     std::unique_ptr<rocksdb::DB> db_;
+    rocksdb::ColumnFamilyHandle* defaultCf_ = nullptr;
+    rocksdb::ColumnFamilyHandle* reputationCf_ = nullptr;
     
     // Optional callback for reorg events
     std::function<void(const ReorgEvent&)> reorgCallback_;

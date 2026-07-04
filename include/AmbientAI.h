@@ -18,7 +18,8 @@
 #include <iostream>
 
 #include "FederatedLearning.h"
-#include "zk_proofs.h" // ZK proof module
+#include "zk_proofs.h"
+#include "ReorgDetector.h" // ZK proof module
 
 namespace ambient {
 
@@ -179,9 +180,17 @@ enum class NodeBehavior {
 
 class AmbientNode {
 public:
-    explicit AmbientNode(NodeId id, SafetyPolicy policy)
+    explicit AmbientNode(NodeId id, SafetyPolicy policy, std::shared_ptr<ailee::l1::ReorgDetector> db = nullptr)
         : id_(std::move(id)), policy_(policy),
-          sessionManager_(std::make_shared<LocalSessionManager>(id_.pubkey)) {}
+          sessionManager_(std::make_shared<LocalSessionManager>(id_.pubkey)),
+          db_(db) {
+              if (db_) {
+                  auto repData = db_->getReputation(id_.pubkey);
+                  if (repData) {
+                      loadReputation(*repData);
+                  }
+              }
+          }
 
     void ingestTelemetry(const TelemetrySample& sample) {
         std::lock_guard<std::mutex> lock(mu_);
@@ -246,6 +255,11 @@ public:
             rep_.score -= deltaScore;
         }
         rep_.score = std::max(0.0, rep_.score);
+
+        if (db_) {
+            std::string repData = toJson();
+            db_->setReputation(id_.pubkey, repData);
+        }
     }
 
     bool isSafeMode() const { return safeMode_.load(); }
@@ -257,6 +271,12 @@ public:
     LocalSessionManager& sessionManager() { return *sessionManager_; }
     const LocalSessionManager& sessionManager() const { return *sessionManager_; }
 
+    void loadReputation(const std::string& data) {
+        // Mock deserialize
+        std::lock_guard<std::mutex> lock(mu_);
+        rep_.score = 100.0;
+    }
+    std::string toJson() const { return "{\"score\": " + std::to_string(rep_.score) + "}"; }
     Reputation reputation() const {
         std::lock_guard<std::mutex> lock(mu_);
         return rep_;
@@ -298,6 +318,7 @@ private:
     // sessionManager_ is excluded from serialization to avoid
     // capturing transient local state in snapshots or wire formats.
     std::shared_ptr<LocalSessionManager> sessionManager_;
+    std::shared_ptr<ailee::l1::ReorgDetector> db_;
 };
 
 // ================= MeshCoordinator Class =================
