@@ -98,7 +98,25 @@ struct L2StateSnapshot {
     std::optional<AnchorSnapshot> anchor;
 };
 
+// Represents a deterministic difference between two L2StateSnapshots,
+// to be broadcasted to decentralized Data Availability layers.
+struct L2StateDiff {
+    std::string priorStateRoot;
+    std::string newStateRoot;
+    std::vector<uint8_t> serializedChanges;
+
+    // Validates the diff by verifying the attached ZK proof
+    bool verifyDiff(const std::string& zkProofData) const;
+};
+
 std::string computeL2StateRoot(const L2StateSnapshot& snapshot);
+
+// Calculates the differential changes between two states
+L2StateDiff calculateStateDiff(const L2StateSnapshot& oldState, const L2StateSnapshot& newState);
+
+// Applies a validated state diff to advance an L2StateSnapshot
+bool applyStateDiff(L2StateSnapshot& currentState, const L2StateDiff& diff);
+
 
 bool validateAnchorCommitment(const AnchorSnapshot& anchor,
                               const std::string& expectedStateRoot,

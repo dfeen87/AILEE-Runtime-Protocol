@@ -47,10 +47,10 @@ public:
     std::thread backgroundThread;
     
 #if USING_LIBP2P
-    // libp2p components (when available)
-    // std::shared_ptr<libp2p::Host> host;
-    // std::shared_ptr<libp2p::protocol::Gossipsub> gossipsub;
-    // std::shared_ptr<libp2p::protocol::Kademlia> kademlia;
+    // libp2p components
+    std::shared_ptr<libp2p::Host> host;
+    std::shared_ptr<libp2p::protocol::Gossipsub> gossipsub;
+    std::shared_ptr<libp2p::protocol::Kademlia> kademlia;
 #endif
     
     Impl(const P2PConfig& cfg) : config(cfg) {
@@ -68,7 +68,10 @@ public:
     bool initialize() {
 #if USING_LIBP2P
         std::cout << "[P2PNetwork] Initializing with libp2p C++ bindings" << std::endl;
-        // TODO: Initialize libp2p host
+
+        // Note: Real initialization requires a fully configured libp2p Injector.
+        // For migration prep, we simulate the architecture layout.
+
         // host = libp2p::Host::create(config.listenAddress);
         // if (!host) return false;
         
@@ -78,7 +81,7 @@ public:
         //     kademlia->start();
         // }
         
-        // Initialize GossipSub for pub/sub
+        // Initialize GossipSub for pub/sub (state diffs, zk proofs, telemetry)
         // gossipsub = std::make_shared<libp2p::protocol::Gossipsub>(host);
         // gossipsub->start();
         
@@ -104,9 +107,15 @@ public:
     void cleanup() {
 #if USING_LIBP2P
         // Stop libp2p components
-        // if (gossipsub) gossipsub->stop();
-        // if (kademlia) kademlia->stop();
-        // if (host) host->close();
+        if (gossipsub) {
+            // gossipsub->stop();
+        }
+        if (kademlia) {
+            // kademlia->stop();
+        }
+        if (host) {
+            // host->close();
+        }
 #else
         // Stub cleanup - just mark as stopped
         std::cout << "[P2PNetwork] Cleaning up stub resources" << std::endl;
@@ -116,7 +125,9 @@ public:
     bool subscribeToTopic(const std::string& topic, MessageHandler handler) {
 #if USING_LIBP2P
         // Subscribe via libp2p GossipSub
-        // return gossipsub->subscribe(topic, [handler](const auto& msg) {
+
+        // std::cout << "[P2PNetwork] Subscribing to topic via libp2p: " << topic << std::endl;
+        // return gossipsub->subscribe(topic, [handler, topic](const auto& msg) {
         //     NetworkMessage netMsg;
         //     netMsg.topic = topic;
         //     netMsg.payload = msg.data;
@@ -135,6 +146,7 @@ public:
     bool publishToTopic(const std::string& topic, const std::vector<uint8_t>& payload) {
 #if USING_LIBP2P
         // Publish via libp2p GossipSub
+        // std::cout << "[P2PNetwork] Publishing to topic via libp2p: " << topic << std::endl;
         // return gossipsub->publish(topic, payload);
         return true;
 #else

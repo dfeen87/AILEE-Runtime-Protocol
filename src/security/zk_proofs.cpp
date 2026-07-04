@@ -10,6 +10,7 @@
 #include <chrono>
 #include <functional>
 #include <openssl/sha.h>
+#include "ailee_rust_ffi.h"
 
 namespace ailee::zk {
 
@@ -55,6 +56,25 @@ Proof ZKEngine::generateProof(const std::string& taskId, const std::string& comp
     return proof;
 }
 
+Proof ZKEngine::generateHalo2Proof(const std::string& taskId, const std::string& computationHash) {
+    Proof proof;
+    proof.publicInput = computationHash;
+    proof.timestampMs = currentTimestampMs();
+
+    char* proof_out = nullptr;
+    int res = generate_halo2_proof_ffi(taskId.c_str(), computationHash.c_str(), &proof_out);
+
+    if (res == 0 && proof_out != nullptr) {
+        proof.proofData = std::string(proof_out);
+        proof.verified = true;
+        free_halo2_proof_ffi(proof_out);
+    } else {
+        proof.verified = false;
+        std::cerr << "Failed to generate Halo2 proof via FFI\n";
+    }
+    return proof;
+}
+
 Proof ZKEngine::generateProofWithTimestamp(const std::string& taskId,
                                            const std::string& computationHash,
                                            uint64_t timestampMs) {
@@ -84,6 +104,15 @@ bool ZKEngine::verifyProof(const Proof& proof) {
     std::cout << "[ZK] Verified proof: " << (valid ? "SUCCESS" : "FAILURE") << std::endl;
 
     return valid;
+}
+
+bool ZKEngine::verifyHalo2Proof(const Proof& proof) {
+    if (proof.proofData.empty() || proof.publicInput.empty()) {
+        return false;
+    }
+
+    int res = verify_halo2_proof_ffi(proof.proofData.c_str(), proof.publicInput.c_str());
+    return res == 1;
 }
 
 // -----------------------------

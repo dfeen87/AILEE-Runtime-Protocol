@@ -132,6 +132,24 @@ struct NormalizedTx {
     std::unordered_map<std::string, std::string> metadata; // hints: vaultId, pegTag, oracleStamp
 };
 
+// ---------- Taproot Challenge-Response (BitVM-style) ----------
+struct TapLeaf {
+    uint8_t leafVersion;
+    std::vector<uint8_t> script;
+    std::string scriptHex; // For debugging
+
+    // Hash of this leaf according to BIP 340 / BIP 341
+    std::string getTapLeafHash() const;
+};
+
+struct TapTree {
+    std::vector<TapLeaf> leaves;
+    std::string rootHash;
+
+    // Build a simple MAST root from leaves
+    void computeRoot();
+};
+
 // ---------- Deterministic L2 anchor commitment ----------
 struct AnchorCommitment {
     std::string l2StateRoot;
@@ -147,6 +165,9 @@ struct AnchorCommitment {
 
     AnchorPayload buildOpReturnPayload() const;
     AnchorPayload buildTaprootCommitment() const;
+
+    // Build a BitVM-style Taproot challenge-response tree
+    TapTree buildChallengeResponseTree(const std::string& zkProofHash) const;
 };
 
 struct BlockHeader {

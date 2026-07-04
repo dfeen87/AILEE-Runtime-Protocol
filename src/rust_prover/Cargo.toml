@@ -1,0 +1,12 @@
+[package]
+name = "ailee_rust_prover"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "ailee_rust_prover"
+crate-type = ["cdylib", "staticlib"]
+
+[dependencies]
+# Dependencies for a Halo2-based prover would go here.
+# For example: halo2_proofs = "0.3.0"

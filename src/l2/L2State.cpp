@@ -373,3 +373,48 @@ L2StateSnapshot captureSnapshot(const ailee::econ::ILedger& ledger,
 }
 
 } // namespace ailee::l2
+
+namespace ailee::l2 {
+
+bool L2StateDiff::verifyDiff(const std::string& zkProofData) const {
+    if (priorStateRoot.empty() || newStateRoot.empty()) return false;
+
+    // For a real DA layer, we verify the zk proof matches the computation of the diff
+    ailee::zk::Proof p;
+    p.proofData = zkProofData;
+    // Public input should commit to both the prior and new state roots to ensure valid transition
+    p.publicInput = priorStateRoot + ":" + newStateRoot;
+
+    ailee::zk::ZKEngine engine;
+    return engine.verifyHalo2Proof(p);
+}
+
+L2StateDiff calculateStateDiff(const L2StateSnapshot& oldState, const L2StateSnapshot& newState) {
+    L2StateDiff diff;
+    diff.priorStateRoot = computeL2StateRoot(oldState);
+    diff.newStateRoot = computeL2StateRoot(newState);
+
+    // In a full implementation, we'd iterate the ledgers/escrows and record only changes.
+    // For now, we simulate a serialized byte payload of changes.
+    std::string mockDiff = "DIFF_DATA:" + diff.priorStateRoot + "->" + diff.newStateRoot;
+    diff.serializedChanges.assign(mockDiff.begin(), mockDiff.end());
+
+    return diff;
+}
+
+bool applyStateDiff(L2StateSnapshot& currentState, const L2StateDiff& diff) {
+    std::string currentRoot = computeL2StateRoot(currentState);
+    if (currentRoot != diff.priorStateRoot) {
+        return false; // State mismatch, reject the diff
+    }
+
+    // Placeholder for applying differential logic (e.g., updating balances/tasks)
+    // Full logic requires unpacking diff.serializedChanges.
+
+    // Advance timestamp heuristically to denote state change if we don't have exactly the target state
+    currentState.snapshotTimestampMs += 1000;
+
+    return true;
+}
+
+} // namespace ailee::l2

@@ -12,6 +12,11 @@
 
 namespace ailee::network {
 
+// Standard Gossipsub Topics for Validator Workflows
+constexpr const char* TOPIC_L2_STATE_DIFF = "ailee/l2/state_diff";
+constexpr const char* TOPIC_L2_ZK_PROOF = "ailee/l2/zk_proof";
+constexpr const char* TOPIC_AI_TELEMETRY = "ailee/ai/telemetry";
+
 /**
  * Peer information structure
  */

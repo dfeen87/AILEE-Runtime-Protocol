@@ -320,6 +320,7 @@ endif()
 
 target_link_libraries(ailee_node
     PRIVATE
+    ailee_rust_ffi_fallback
     OpenSSL::SSL
     OpenSSL::Crypto
     ${CURL_LIBRARIES}
@@ -341,6 +342,7 @@ add_executable(ailee_l2_verify
 
 target_link_libraries(ailee_l2_verify
     PRIVATE
+    ailee_rust_ffi_fallback
     OpenSSL::SSL
     OpenSSL::Crypto
 )
@@ -394,6 +396,7 @@ add_library(ailee_adapters STATIC
 
 target_link_libraries(ailee_adapters
     PRIVATE
+    ailee_rust_ffi_fallback
     OpenSSL::SSL
     OpenSSL::Crypto
     ${CURL_LIBRARIES}
@@ -599,3 +602,7 @@ if(NOT ZeroMQ_FOUND)
     message(STATUS "    Install: sudo apt-get install libzmq3-dev libcppzmq-dev")
     message(STATUS "")
 endif()
+
+# Add fallback FFI implementation so the codebase compiles
+add_library(ailee_rust_ffi_fallback STATIC src/security/ailee_rust_ffi_fallback.cpp)
+target_include_directories(ailee_rust_ffi_fallback PUBLIC include)

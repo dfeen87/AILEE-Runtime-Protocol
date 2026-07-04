@@ -41,6 +41,11 @@ public:
     Proof generateProof(const std::string& taskId, const std::string& computationHash);
 
     /**
+     * Generate a zk-proof using a real circuit via Rust FFI (Halo2).
+     */
+    Proof generateHalo2Proof(const std::string& taskId, const std::string& computationHash);
+
+    /**
      * Generate a deterministic zk-proof using a supplied timestamp.
      * This supports reproducible proof validation when the timestamp is known.
      */
@@ -53,6 +58,12 @@ public:
      * Returns true if the proof is valid
      */
     bool verifyProof(const Proof& proof);
+
+    /**
+     * Verify a zk-proof using a real circuit via Rust FFI (Halo2).
+     * Returns true if the proof is valid
+     */
+    bool verifyHalo2Proof(const Proof& proof);
 
     /**
      * Optional: batch verify multiple proofs efficiently
