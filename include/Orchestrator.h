@@ -707,10 +707,10 @@ public:
     {
         orchestrator_.setStrategy(config_.performance.defaultStrategy);
 
-        ailee::orchestration::ProverSwarmConfig swarm_cfg;
-        swarm_cfg.db_path = "./swarm_db"; // Can be integrated to Config
-        proverSwarm_ = std::make_unique<ailee::orchestration::ProverSwarm>(swarm_cfg);
-        proverSwarm_->initialize();
+        std::string swarm_err;
+        if (!proverSwarm_->initialize(&swarm_err)) {
+            proverSwarm_.reset();
+        }
     }
     
     ~Engine() {
