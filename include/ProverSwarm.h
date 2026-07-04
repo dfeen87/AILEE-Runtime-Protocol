@@ -64,7 +64,7 @@ struct ProverJob {
             {"assigned_prover", assigned_prover},
             {"assigned_at_ms", assigned_at_ms},
             {"completed", completed},
-            {"retry_count", static_cast<int>(retry_count)}
+            {"retry_count", static_cast<uint64_t>(retry_count)}
         };
     }
 
