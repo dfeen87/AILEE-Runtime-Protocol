@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.16)
 project(AILEE_Core VERSION 5.3.0 LANGUAGES CXX)
 
 # ============================================================================
@@ -316,17 +316,19 @@ option(AILEE_USE_RUST_PROVER "Build and link the real Rust Halo2 prover instead 
 if(AILEE_USE_RUST_PROVER)
     message(STATUS "Integrating Rust Halo2 Prover (disabling C++ fallback)")
 
-    set(RUST_PROVER_LIB_PATH "${CMAKE_CURRENT_SOURCE_DIR}/src/rust_prover/target/release/libailee_rust_prover.a")
+    set(RUST_PROVER_LIB_PATH "${CMAKE_BINARY_DIR}/libailee_rust_prover.a")
 
-    add_custom_command(
-        OUTPUT ${RUST_PROVER_LIB_PATH}
+    add_custom_target(cargo_build_rust_prover ALL
         COMMAND cargo build --release
-        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/src/rust_prover/src/lib.rs ${CMAKE_CURRENT_SOURCE_DIR}/src/rust_prover/Cargo.toml
-        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/src/rust_prover
-        COMMENT "Compiling Rust Prover..."
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/src/rust_prover
     )
 
-    add_custom_target(cargo_build_rust_prover ALL DEPENDS ${RUST_PROVER_LIB_PATH})
+    add_custom_command(
+        TARGET cargo_build_rust_prover POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+                ${CMAKE_SOURCE_DIR}/src/rust_prover/target/release/libailee_rust_prover.a
+                ${RUST_PROVER_LIB_PATH}
+    )
 
     add_library(ailee_rust_prover STATIC IMPORTED GLOBAL)
     add_dependencies(ailee_rust_prover cargo_build_rust_prover)
@@ -336,13 +338,51 @@ if(AILEE_USE_RUST_PROVER)
 else()
     message(STATUS "Using C++ Mock Fallback for Rust Prover")
 endif()
+
+include_directories(${CMAKE_BINARY_DIR})
+
+add_custom_command(
+    OUTPUT ${CMAKE_BINARY_DIR}/build_metadata.hpp
+    COMMAND python3 ${CMAKE_SOURCE_DIR}/scripts/generate_build_metadata.py
+            --out-json /dev/null
+            --out-hpp ${CMAKE_BINARY_DIR}/build_metadata.hpp
+            --rust-prover-lib ${CMAKE_BINARY_DIR}/libailee_rust_prover.a
+    DEPENDS cargo_build_rust_prover
+)
+
+add_custom_target(generate_metadata_hpp DEPENDS ${CMAKE_BINARY_DIR}/build_metadata.hpp)
+
+add_custom_command(
+    OUTPUT ${CMAKE_BINARY_DIR}/metadata.json
+    COMMAND python3 ${CMAKE_SOURCE_DIR}/scripts/generate_build_metadata.py
+            --out-json ${CMAKE_BINARY_DIR}/metadata.json
+            --out-hpp /dev/null
+            --node-bin ${CMAKE_BINARY_DIR}/ailee_node
+            --service-bin ${CMAKE_BINARY_DIR}/ailee_service
+            --rust-prover-lib ${CMAKE_BINARY_DIR}/libailee_rust_prover.a
+    DEPENDS ailee_node ailee_service cargo_build_rust_prover
+)
+
+add_custom_target(generate_metadata ALL DEPENDS ${CMAKE_BINARY_DIR}/metadata.json)
+
+add_custom_target(verify_build ALL
+    COMMAND python3 ${CMAKE_SOURCE_DIR}/scripts/verify_build_hashes.py
+            --metadata ${CMAKE_BINARY_DIR}/metadata.json
+            --node ${CMAKE_BINARY_DIR}/ailee_node
+            --service ${CMAKE_BINARY_DIR}/ailee_service
+            --rust-prover ${CMAKE_BINARY_DIR}/libailee_rust_prover.a
+    DEPENDS generate_metadata ailee_node ailee_service cargo_build_rust_prover
+)
+
 add_executable(ailee_node ${CORE_SOURCES})
+add_dependencies(ailee_node generate_metadata_hpp)
 
 # --- Layer-2 Service Executable ---
 add_executable(ailee_service
     src/integration/ailee_service.cpp
     ${AILEE_L2_SOURCES}
 )
+add_dependencies(ailee_service generate_metadata_hpp)
 
 target_link_libraries(ailee_service
     PRIVATE

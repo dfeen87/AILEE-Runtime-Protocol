@@ -2,6 +2,7 @@
 #include "httplib.h"
 #include <nlohmann/json.hpp>
 #include <iostream>
+#include "build_metadata.hpp"
 
 using json = nlohmann::json;
 
@@ -90,6 +91,9 @@ json advisory_to_json(const ailee::Advisory& adv) {
 } // namespace
 
 int main(int argc, char** argv) {
+    std::cout << "AILEE build id: " << AILEE_BUILD_ID << "\n";
+    std::cout << "Rust prover hash: " << AILEE_RUST_PROVER_HASH << "\n";
+
     httplib::Server svr;
 
     ailee::AileeConfig config = ailee::load_config("ailee_config.json");
