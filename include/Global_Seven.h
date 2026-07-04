@@ -35,6 +35,7 @@ using ::ailee::l1::AILEENetworkAdapter;
 
 struct ETHState;
 struct BTCState;
+class BTCInternal;
 
 // ---------- Canonical chain set (extensible) ----------
 

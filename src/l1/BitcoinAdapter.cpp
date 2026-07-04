@@ -32,6 +32,11 @@
 namespace ailee {
 namespace global_seven {
 
+// Forward decl for when !AILEE_HAS_JSONCPP
+struct BTCState;
+
+std::shared_ptr<BTCState> BitcoinAdapter::state_;
+
 #if !defined(AILEE_HAS_JSONCPP)
 static inline void logEvt(Severity s, const std::string& msg, const std::string& comp, ErrorCallback cb) {
     if (cb) cb(AdapterError{s, msg, comp, 0});
@@ -72,29 +77,6 @@ void BitcoinAdapter::attachMempoolAdapter(std::unique_ptr<AILEEMempoolAdapter>) 
 void BitcoinAdapter::attachNetworkAdapter(std::unique_ptr<AILEENetworkAdapter>) {}
 
 void BitcoinAdapter::attachEnergyAdapter(std::unique_ptr<AILEEEnergyAdapter>) {}
-
-AnchorCommitment BitcoinAdapter::buildAnchorCommitment(const std::string& l2StateRoot,
-                                                       uint64_t timestampMs,
-                                                       const std::string& recoveryMetadata) const {
-    AnchorCommitment commitment;
-    commitment.l2StateRoot = l2StateRoot;
-    commitment.timestampMs = timestampMs;
-    commitment.recoveryMetadata = recoveryMetadata;
-    commitment.payload = l2StateRoot + ":" + std::to_string(timestampMs) + ":" + recoveryMetadata;
-    commitment.hash = ailee::zk::sha256Hex(commitment.payload);
-
-    // If an internal pubkey is configured, generate tweaked key
-    if (state_ && !state_->cfg.internal_pubkey.empty() && !commitment.commitmentBytes.empty()) {
-        std::vector<uint8_t> pubkeyBytes;
-        for (size_t i = 0; i < state_->cfg.internal_pubkey.length(); i += 2) {
-            std::string byteString = state_->cfg.internal_pubkey.substr(i, 2);
-            pubkeyBytes.push_back(static_cast<uint8_t>(strtol(byteString.c_str(), nullptr, 16)));
-        }
-        commitment.computeTweakedKey(pubkeyBytes);
-    }
-
-    return commitment;
-}
 
 #else
 // ============================================================================
@@ -930,7 +912,6 @@ AnchorCommitment BitcoinAdapter::buildAnchorCommitment(const std::string& l2Stat
 }
 
 // Static member initialization
-std::shared_ptr<BTCState> BitcoinAdapter::state_;
 
 // ============================================================================
 // AILEE Adapter Attachment (Optional, Read-Only)

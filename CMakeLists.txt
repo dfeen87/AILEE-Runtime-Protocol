@@ -283,6 +283,7 @@ set(AILEE_L2_SOURCES
 set(CORE_SOURCES
     src/main.cpp
     src/orchestration/Orchestrator.cpp
+    src/orchestration/ProverSwarm.cpp
     src/security/ailee_circuit_breaker.cpp
     src/security/zk_proofs.cpp
     src/l1/AnchorCommitment.cpp
