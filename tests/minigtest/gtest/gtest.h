@@ -8,6 +8,7 @@
 #include <type_traits>
 #include <utility>
 #include <vector>
+#include <cstdint>
 
 namespace testing {
 
@@ -39,6 +40,25 @@ struct TestState {
 TestState& CurrentState();
 void ReportFailure(const std::string& message, const char* file, int line);
 
+inline std::string ToString(const std::string& value) {
+    return "\"" + value + "\"";
+}
+
+inline std::string ToString(const char* value) {
+    return value ? "\"" + std::string(value) + "\"" : "<null>";
+}
+
+inline std::string ToString(const std::vector<uint8_t>& vec) {
+    std::ostringstream oss;
+    oss << "[";
+    for (size_t i = 0; i < vec.size(); ++i) {
+        oss << std::hex << (int)vec[i];
+        if (i < vec.size() - 1) oss << ", ";
+    }
+    oss << std::dec << "]";
+    return oss.str();
+}
+
 template <typename T, typename std::enable_if_t<!std::is_enum_v<T>, int> = 0>
 std::string ToString(const T& value) {
     std::ostringstream oss;
@@ -50,14 +70,6 @@ template <typename T, typename std::enable_if_t<std::is_enum_v<T>, int> = 0>
 std::string ToString(const T& value) {
     using Underlying = std::underlying_type_t<T>;
     return std::to_string(static_cast<Underlying>(value));
-}
-
-inline std::string ToString(const std::string& value) {
-    return "\"" + value + "\"";
-}
-
-inline std::string ToString(const char* value) {
-    return value ? "\"" + std::string(value) + "\"" : "<null>";
 }
 
 template <typename A, typename B>
