@@ -35,8 +35,16 @@
 #include "zk_proofs.h"
 #include <openssl/sha.h>
 #include <openssl/ripemd.h>
+#include <secp256k1.h>
+#include <nlohmann/json.hpp>
+#include "../storage/PersistentStorage.h"
 
 namespace ailee {
+
+inline secp256k1_context* getBridgeSecp256k1VerifyContext() {
+    static secp256k1_context* ctx = secp256k1_context_create(SECP256K1_CONTEXT_VERIFY);
+    return ctx;
+}
 
 // Bridge configuration constants
 constexpr size_t MIN_CONFIRMATIONS_PEGIN = 6;      // Bitcoin confirmations required
@@ -205,6 +213,32 @@ public:
         uint64_t total = data_.signatureCount + data_.missedSignatures;
         if (total == 0) return 1.0;
         return static_cast<double>(data_.signatureCount) / total;
+    }
+
+    nlohmann::json to_json() const {
+        return nlohmann::json{
+            {"signerId", data_.signerId},
+            {"publicKey", data_.publicKey},
+            {"btcAddress", data_.btcAddress},
+            {"stake", data_.stake},
+            {"reputationScore", data_.reputationScore},
+            {"signatureCount", data_.signatureCount},
+            {"missedSignatures", data_.missedSignatures},
+            {"active", data_.active},
+            {"joinedTime", data_.joinedTime}
+        };
+    }
+
+    void from_json(const nlohmann::json& j) {
+        data_.signerId = j.value("signerId", "");
+        data_.publicKey = j.value("publicKey", "");
+        data_.btcAddress = j.value("btcAddress", "");
+        data_.stake = j.value("stake", 0ULL);
+        data_.reputationScore = j.value("reputationScore", 100ULL);
+        data_.signatureCount = j.value("signatureCount", 0ULL);
+        data_.missedSignatures = j.value("missedSignatures", 0ULL);
+        data_.active = j.value("active", true);
+        data_.joinedTime = j.value("joinedTime", 0ULL);
     }
 
     const SignerData& getData() const { return data_; }
@@ -459,6 +493,64 @@ public:
         return true;
     }
 
+    nlohmann::json to_json() const {
+        nlohmann::json sigs(nlohmann::json::object_t{});
+        for (const auto& [k, v] : data_.signatures) {
+            std::string sigHex;
+            sigHex.reserve(v.size() * 2);
+            for (uint8_t byte : v) {
+                char buf[3];
+                snprintf(buf, sizeof(buf), "%02x", byte);
+                sigHex += buf;
+            }
+            sigs[k] = sigHex;
+        }
+
+        return nlohmann::json{
+            {"pegId", data_.pegId},
+            {"aileeSourceAddress", data_.aileeSourceAddress},
+            {"btcDestAddress", data_.btcDestAddress},
+            {"aileeBurnAmount", data_.aileeBurnAmount},
+            {"btcReleaseAmount", data_.btcReleaseAmount},
+            {"aileeBurnTxHeight", data_.aileeBurnTxHeight},
+            {"aileeConfirmations", data_.aileeConfirmations},
+            {"btcReleaseTxId", data_.btcReleaseTxId},
+            {"anchorCommitmentHash", data_.anchorCommitmentHash},
+            {"initiatedTime", data_.initiatedTime},
+            {"completedTime", data_.completedTime},
+            {"status", static_cast<int>(data_.status)},
+            {"signatures", sigs}
+        };
+    }
+
+    void from_json(const nlohmann::json& j) {
+        data_.pegId = j.value("pegId", "");
+        data_.aileeSourceAddress = j.value("aileeSourceAddress", "");
+        data_.btcDestAddress = j.value("btcDestAddress", "");
+        data_.aileeBurnAmount = j.value("aileeBurnAmount", 0ULL);
+        data_.btcReleaseAmount = j.value("btcReleaseAmount", 0ULL);
+        data_.aileeBurnTxHeight = j.value("aileeBurnTxHeight", 0ULL);
+        data_.aileeConfirmations = j.value("aileeConfirmations", 0ULL);
+        data_.btcReleaseTxId = j.value("btcReleaseTxId", "");
+        data_.anchorCommitmentHash = j.value("anchorCommitmentHash", "");
+        data_.initiatedTime = j.value("initiatedTime", 0ULL);
+        data_.completedTime = j.value("completedTime", 0ULL);
+        data_.status = static_cast<PegStatus>(j.value("status", 0));
+
+        if (j.contains("signatures")) {
+            for (auto it = j["signatures"].begin(); it != j["signatures"].end(); ++it) {
+                std::string sigHex = it.value().get<std::string>();
+                std::vector<uint8_t> sigBytes;
+                sigBytes.reserve(sigHex.length() / 2);
+                for (size_t i = 0; i < sigHex.length(); i += 2) {
+                    std::string byteString = sigHex.substr(i, 2);
+                    sigBytes.push_back(static_cast<uint8_t>(strtol(byteString.c_str(), nullptr, 16)));
+                }
+                data_.signatures[it.key()] = sigBytes;
+            }
+        }
+    }
+
     const PegOutData& getData() const { return data_; }
     PegStatus getStatus() const { return data_.status; }
 
@@ -688,10 +780,83 @@ private:
  */
 class SidechainBridge {
 public:
-    SidechainBridge() 
+    SidechainBridge(ailee::storage::PersistentStorage* storage = nullptr)
         : federation_(std::make_unique<FederationManager>()),
           statistics_(std::make_unique<BridgeStatistics>()),
-          emergencyMode_(false) {}
+          emergencyMode_(false),
+          storage_(storage) {
+        recoverState();
+    }
+
+    void recoverState() {
+        if (!storage_) return;
+
+        auto idxOpt = storage_->get("bridge/federation/signer_index");
+        if (idxOpt) {
+            try {
+                auto arr = nlohmann::json::parse(*idxOpt);
+                for (const auto& id_json : arr) {
+                    std::string id = id_json.get<std::string>();
+                    auto signerOpt = storage_->get("bridge/federation/signer/" + id);
+                    if (signerOpt) {
+                        auto signer_j = nlohmann::json::parse(*signerOpt);
+                        auto signer = std::make_shared<FederationSigner>("", "", "", 0);
+                        signer->from_json(signer_j);
+                        federation_->addSigner(signer);
+                    }
+                }
+            } catch (...) {}
+        }
+
+        auto pegoutIdxOpt = storage_->get("bridge/pegout_index");
+        if (pegoutIdxOpt) {
+            try {
+                auto arr = nlohmann::json::parse(*pegoutIdxOpt);
+                for (const auto& id_json : arr) {
+                    std::string id = id_json.get<std::string>();
+                    auto pegoutOpt = storage_->get("bridge/pegout/" + id);
+                    if (pegoutOpt) {
+                        auto pegout_j = nlohmann::json::parse(*pegoutOpt);
+                        auto pegout = std::make_shared<PegOutTransaction>("", "", 0, "");
+                        pegout->from_json(pegout_j);
+                        pegouts_[id] = pegout;
+                    }
+                }
+            } catch (...) {}
+        }
+    }
+
+
+void persistSigners(const std::vector<std::string>& signerIds) {
+        if (!storage_) return;
+        std::vector<ailee::storage::PersistentStorage::BatchOp> ops;
+        ops.reserve(signerIds.size() + 1);
+        for (const auto& id : signerIds) {
+            auto signer = federation_->getSigner(id);
+            if (signer) {
+                ailee::storage::PersistentStorage::BatchOp op;
+                op.type = ailee::storage::PersistentStorage::BatchOpType::PUT;
+                op.key = "bridge/federation/signer/" + id;
+                op.value = signer->to_json().dump();
+                ops.push_back(op);
+            }
+        }
+
+        auto active_signers = federation_->getActiveSigners();
+        nlohmann::json::array_t arr;
+        for (const auto& s : active_signers) {
+            arr.push_back(s);
+        }
+        ailee::storage::PersistentStorage::BatchOp idxOp;
+        idxOp.type = ailee::storage::PersistentStorage::BatchOpType::PUT;
+        idxOp.key = "bridge/federation/signer_index";
+        idxOp.value = nlohmann::json(arr).dump();
+        ops.push_back(idxOp);
+
+        if (!ops.empty()) {
+            storage_->executeBatch(ops);
+        }
+    }
 
     // Federation management
     bool addFederationSigner(
@@ -701,7 +866,20 @@ public:
         uint64_t stake
     ) {
         auto signer = std::make_shared<FederationSigner>(id, pubKey, btcAddr, stake);
-        return federation_->addSigner(signer);
+        if (storage_) {
+            auto signerOpt = storage_->get("bridge/federation/signer/" + id);
+            if (signerOpt) {
+                try {
+                    auto signer_j = nlohmann::json::parse(*signerOpt);
+                    signer->from_json(signer_j);
+                } catch (...) {}
+            }
+        }
+        if (federation_->addSigner(signer)) {
+            persistSigners({id});
+            return true;
+        }
+        return false;
     }
 
     // Peg-in operations
@@ -794,6 +972,66 @@ public:
         return it->second->updateConfirmations(burnHeight, currentHeight);
     }
 
+bool verifyPegOutSignature(
+        const std::string& pegId,
+        const std::string& aileeSourceAddress,
+        const std::string& btcDestAddress,
+        uint64_t aileeBurnAmount,
+        uint64_t btcReleaseAmount,
+        const std::string& anchorCommitmentHash,
+        const std::string& signerPubKeyHex,
+        const std::vector<uint8_t>& signature
+    ) const {
+        if (signature.size() < 64) return false;
+
+        std::string payload = pegId + "|" + aileeSourceAddress + "|" + btcDestAddress + "|" +
+                              std::to_string(aileeBurnAmount) + "|" + std::to_string(btcReleaseAmount) + "|" +
+                              anchorCommitmentHash;
+
+        unsigned char hash1[SHA256_DIGEST_LENGTH];
+        SHA256(reinterpret_cast<const unsigned char*>(payload.data()), payload.size(), hash1);
+        unsigned char hash2[SHA256_DIGEST_LENGTH];
+        SHA256(hash1, SHA256_DIGEST_LENGTH, hash2);
+
+        secp256k1_context* ctx = getBridgeSecp256k1VerifyContext();
+
+        std::vector<uint8_t> pubKeyBytes;
+        pubKeyBytes.reserve(signerPubKeyHex.length() / 2);
+        for (size_t i = 0; i < signerPubKeyHex.length(); i += 2) {
+            std::string byteString = signerPubKeyHex.substr(i, 2);
+            pubKeyBytes.push_back(static_cast<uint8_t>(strtol(byteString.c_str(), nullptr, 16)));
+        }
+
+        secp256k1_pubkey pubkey;
+        if (secp256k1_ec_pubkey_parse(ctx, &pubkey, pubKeyBytes.data(), pubKeyBytes.size()) != 1) {
+            return false;
+        }
+
+        secp256k1_ecdsa_signature sig;
+        bool parsed = false;
+
+        if (signature.size() == 64) {
+            if (secp256k1_ecdsa_signature_parse_compact(ctx, &sig, signature.data()) == 1) {
+                parsed = true;
+            }
+        }
+
+        if (!parsed) {
+            if (secp256k1_ecdsa_signature_parse_der(ctx, &sig, signature.data(), signature.size()) == 1) {
+                parsed = true;
+            }
+        }
+
+        if (!parsed) {
+            return false;
+        }
+
+        secp256k1_ecdsa_signature normalized_sig;
+        secp256k1_ecdsa_signature_normalize(ctx, &normalized_sig, &sig);
+
+        return secp256k1_ecdsa_verify(ctx, &normalized_sig, hash2, &pubkey) == 1;
+    }
+
     bool signPegOut(
         const std::string& pegId,
         const std::string& signerId,
@@ -805,6 +1043,13 @@ public:
 
         auto signer = federation_->getSigner(signerId);
         if (!signer || !signer->isActive()) return false;
+
+        const auto& data = pegoutIt->second->getData();
+        if (!verifyPegOutSignature(pegId, data.aileeSourceAddress, data.btcDestAddress,
+                                   data.aileeBurnAmount, data.btcReleaseAmount,
+                                   data.anchorCommitmentHash, signer->getData().publicKey, signature)) {
+            return false;
+        }
 
         if (pegoutIt->second->addSignature(signerId, signature)) {
             signer->recordSignature();
@@ -826,6 +1071,40 @@ public:
             auto& data = it->second->getData();
             uint64_t duration = data.completedTime - data.initiatedTime;
             statistics_->recordPegout(data.aileeBurnAmount, duration);
+
+            if (storage_) {
+                std::vector<ailee::storage::PersistentStorage::BatchOp> ops;
+
+                ailee::storage::PersistentStorage::BatchOp pegOp;
+                pegOp.type = ailee::storage::PersistentStorage::BatchOpType::PUT;
+                pegOp.key = "bridge/pegout/" + pegId;
+                pegOp.value = it->second->to_json().dump();
+                ops.push_back(pegOp);
+
+                nlohmann::json::array_t arr;
+                for (const auto& [id, _] : pegouts_) {
+                    arr.push_back(id);
+                }
+                ailee::storage::PersistentStorage::BatchOp idxOp;
+                idxOp.type = ailee::storage::PersistentStorage::BatchOpType::PUT;
+                idxOp.key = "bridge/pegout_index";
+                idxOp.value = nlohmann::json(arr).dump();
+                ops.push_back(idxOp);
+
+                for (const auto& [signerId, signature] : data.signatures) {
+                    auto signer = federation_->getSigner(signerId);
+                    if (signer) {
+                        ailee::storage::PersistentStorage::BatchOp sigOp;
+                        sigOp.type = ailee::storage::PersistentStorage::BatchOpType::PUT;
+                        sigOp.key = "bridge/federation/signer/" + signerId;
+                        sigOp.value = signer->to_json().dump();
+                        ops.push_back(sigOp);
+                    }
+                }
+
+                storage_->executeBatch(ops);
+            }
+
             return true;
         }
 
@@ -984,6 +1263,7 @@ private:
     std::map<std::string, std::shared_ptr<AtomicSwap>> atomicSwaps_;
     std::map<std::string, ailee::global_seven::AnchorCommitment> anchorCommitments_;
     bool emergencyMode_;
+    ailee::storage::PersistentStorage* storage_;
 
     static uint64_t getCurrentTimestamp() {
         return static_cast<uint64_t>(
