@@ -24,7 +24,8 @@
 #include <mutex>
 #include <thread>
 #include <chrono>
-#include <curl/curl.h> // Requires libcurl
+#include <curl/curl.h>
+#include <nlohmann/json.hpp> // Requires libcurl
 
 namespace ailee {
 
@@ -71,14 +72,34 @@ public:
         
         if (executeRPC(payload, response)) {
             try {
-                // In production, use a JSON parser like nlohmann/json. 
-                // Here we do a naive parse for the prototype.
-                size_t resultPos = response.find("\"result\":");
-                if (resultPos != std::string::npos) {
-                    return std::stol(response.substr(resultPos + 9));
+                auto j = nlohmann::json::parse(response);
+                if (j.contains("result") && !j["result"].is_null()) {
+                    return j["result"].get<long>();
                 }
             } catch (...) {
                 std::cerr << "[RPC] Failed to parse block count." << std::endl;
+            }
+        }
+        return -1;
+    }
+
+    long getTxConfirmations(const std::string& txId) {
+        std::string params = "\"" + txId + "\", true";
+        std::string payload = buildJsonPayload("getrawtransaction", params);
+        std::string response;
+
+        if (executeRPC(payload, response)) {
+            try {
+                auto j = nlohmann::json::parse(response);
+                if (j.contains("result") && !j["result"].is_null()) {
+                    if (j["result"].contains("confirmations")) {
+                        return j["result"]["confirmations"].get<long>();
+                    } else {
+                        return 0;
+                    }
+                }
+            } catch (...) {
+                std::cerr << "[RPC] Failed to parse getrawtransaction response for " << txId << std::endl;
             }
         }
         return -1;
