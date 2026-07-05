@@ -212,7 +212,7 @@ public:
         auto proof = zkEngine.generateProof(id_.pubkey,
                                             std::to_string(sample.compute.cpuUtilization));
         lastProof_ = { "telemetry_circuit", proof.proofData,
-                       zkEngine.verifyProof(proof), proof.timestampMs };
+                       zkEngine.verifyProof(proof), static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count()) };
     }
 
     FederatedUpdate runLocalTraining(const ailee::fl::FLTask& task,
@@ -231,7 +231,7 @@ public:
         p.circuitId = circuitId;
         p.proofHash = proof.proofData;
         p.verified  = zkEngine.verifyProof(proof);
-        p.timestampMs = proof.timestampMs;
+        p.timestampMs = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count());
 
         lastProof_ = p;
         return p;

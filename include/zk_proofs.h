@@ -26,7 +26,6 @@ struct Proof {
     std::string publicInput;  // Hash of computation or telemetry
     std::optional<std::string> anchorCommitmentHash; // Optional L2 anchor hash for verification
     bool verified = false;
-    uint64_t timestampMs = 0;
     std::vector<uint8_t> commitmentBytes; // 96-byte commitment from Halo2
 };
 
@@ -45,14 +44,6 @@ public:
      * Generate a zk-proof using a real circuit via Rust FFI (Halo2).
      */
     Proof generateHalo2Proof(const std::string& taskId, const std::string& computationHash);
-
-    /**
-     * Generate a deterministic zk-proof using a supplied timestamp.
-     * This supports reproducible proof validation when the timestamp is known.
-     */
-    Proof generateProofWithTimestamp(const std::string& taskId,
-                                     const std::string& computationHash,
-                                     uint64_t timestampMs);
 
     /**
      * Verify a zk-proof

@@ -453,7 +453,7 @@ public:
         p.circuitId = circuitId;
         p.proofHash = proof.proofData;
         p.verified = zkEngine_.verifyProof(proof);
-        p.timestampMs = proof.timestampMs;
+        p.timestampMs = timestampMs();
         lastZKProof_ = p;
         return p;
     }

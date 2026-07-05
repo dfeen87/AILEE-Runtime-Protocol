@@ -28,30 +28,20 @@ std::string sha256Hex(const std::string& input) {
 }
 
 // -----------------------------
-// Utility: get current timestamp
-// -----------------------------
-static uint64_t currentTimestampMs() {
-    return static_cast<uint64_t>(
-        std::chrono::duration_cast<std::chrono::milliseconds>(
-            std::chrono::system_clock::now().time_since_epoch()
-        ).count()
-    );
-}
-
-// -----------------------------
 // Generate Proof (stub)
 // -----------------------------
 Proof ZKEngine::generateProof(const std::string& taskId, const std::string& computationHash) {
     Proof proof;
     proof.publicInput = taskId + ":" + computationHash;
-    proof.timestampMs = currentTimestampMs();
 
-    // Deterministic proof commitment: hash(publicInput || timestamp)
-    proof.proofData = sha256Hex(proof.publicInput + ":" + std::to_string(proof.timestampMs));
+    // Deterministic proof commitment without timestamp or randomness.
+    // TODO: Replace this mock implementation with an actual ZK library call (e.g., libsnark or Halo2)
+    // that outputs a real proof blob.
+    proof.proofData = sha256Hex("MOCK_ZK_PROOF:" + proof.publicInput);
     proof.verified = true;
 
     // Debug
-    std::cout << "[ZK] Generated proof for task " << taskId << ": " << proof.proofData << std::endl;
+    std::cout << "[ZK] Generated mock proof for task " << taskId << ": " << proof.proofData << std::endl;
 
     return proof;
 }
@@ -59,7 +49,6 @@ Proof ZKEngine::generateProof(const std::string& taskId, const std::string& comp
 Proof ZKEngine::generateHalo2Proof(const std::string& taskId, const std::string& computationHash) {
     Proof proof;
     proof.publicInput = computationHash;
-    proof.timestampMs = currentTimestampMs();
 
     Halo2ProofOutput* proof_out = nullptr;
     int res = generate_halo2_proof_ffi(taskId.c_str(), computationHash.c_str(), &proof_out);
@@ -76,21 +65,6 @@ Proof ZKEngine::generateHalo2Proof(const std::string& taskId, const std::string&
     return proof;
 }
 
-Proof ZKEngine::generateProofWithTimestamp(const std::string& taskId,
-                                           const std::string& computationHash,
-                                           uint64_t timestampMs) {
-    Proof proof;
-    proof.publicInput = taskId + ":" + computationHash;
-    proof.timestampMs = timestampMs;
-    proof.proofData = sha256Hex(proof.publicInput + ":" + std::to_string(proof.timestampMs));
-    proof.verified = true;
-
-    std::cout << "[ZK] Generated proof for task " << taskId
-              << " @ " << proof.timestampMs << ": " << proof.proofData << std::endl;
-
-    return proof;
-}
-
 // -----------------------------
 // Verify Proof (Simulated)
 // -----------------------------
@@ -98,7 +72,7 @@ bool ZKEngine::verifyProof(const Proof& proof) {
     if (proof.proofData.empty() || proof.publicInput.empty()) return false;
 
     // TODO: Replace with real ZK-SNARK/STARK verifier (e.g. libsnark::r1cs_gg_ppzksnark_verifier_strong_IC).
-    const std::string expected = sha256Hex(proof.publicInput + ":" + std::to_string(proof.timestampMs));
+    const std::string expected = sha256Hex("MOCK_ZK_PROOF:" + proof.publicInput);
     bool valid = (proof.proofData == expected);
 
     // Debug

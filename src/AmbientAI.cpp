@@ -110,9 +110,7 @@ bool verifyComputationProof(const TelemetrySample& sample) {
                            sample.node.pubkey + ":" + inputHash,
                            std::nullopt,
                            false,
-                           static_cast<uint64_t>(
-                               std::chrono::duration_cast<std::chrono::milliseconds>(
-                                   sample.timestamp.time_since_epoch()).count()), {}};
+                           {}};
     return zkEngine.verifyProof(proof);
 }
 
