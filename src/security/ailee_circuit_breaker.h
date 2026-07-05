@@ -23,31 +23,42 @@ enum class SystemState {
     CRITICAL
 };
 
+constexpr uint64_t CB_SCALE = 10000;
+
 struct BreakerReport {
     SystemState state;
     std::string reason;
-    double eis;
-    double entropyDelta;
-    double driftScore;
+    uint64_t eisScaled;
+    uint64_t entropyDeltaScaled;
+    uint64_t driftScoreScaled;
 };
 
-constexpr double MAX_SAFE_BLOCK_SIZE_MB = 4.0;
-constexpr double MAX_LATENCY_TOLERANCE_MS = 2000.0;
+struct BreakerState {
+    SystemState lastState = SystemState::OPTIMIZED;
+    uint64_t lastTransitionHeight = 0;
+};
+
+// Scaled thresholds (value * CB_SCALE)
+constexpr uint64_t MAX_SAFE_BLOCK_SIZE_SCALED = 40000;      // 4.0
+constexpr uint64_t MAX_LATENCY_TOLERANCE_SCALED = 20000000; // 2000.0
 constexpr int MIN_PEER_COUNT = 8;
-constexpr double MAX_ENTROPY_SURGE_DELTA = 0.35;
-constexpr double MIN_EIS_FOR_OPTIMIZATION = 0.2;
-constexpr double MAX_AI_DRIFT_SCORE = 0.6;
+constexpr uint64_t MAX_ENTROPY_SURGE_DELTA_SCALED = 3500;   // 0.35
+constexpr uint64_t MIN_EIS_FOR_OPTIMIZATION_SCALED = 2000;  // 0.2
+constexpr uint64_t MAX_AI_DRIFT_SCORE_SCALED = 6000;        // 0.6
 
 class CircuitBreaker {
 public:
-    static double computeAIDrift(double targetBlockSize, double proposedBlockSize);
+    static uint64_t computeAIDrift(uint64_t targetBlockSizeScaled, uint64_t proposedBlockSizeScaled);
     static BreakerReport monitor(
-        double proposedBlockSize,
-        double currentLatency,
+        BreakerState& state,
+        uint64_t blockHeight,
+        uint64_t proposedBlockSizeScaled,
+        uint64_t currentLatencyScaled,
         int peerCount,
-        double targetBlockSize,
-        const EnergyAnalysis& energy,
-        double previousEIS
+        uint64_t targetBlockSizeScaled,
+        uint64_t currentEISScaled,
+        uint64_t sensorConfidenceScaled,
+        uint64_t previousEISScaled
     );
 };
 

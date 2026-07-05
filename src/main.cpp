@@ -489,12 +489,15 @@ public:
 
             // Enhanced Circuit Breaker v1.4 with EIS
             auto breaker = ailee::CircuitBreaker::monitor(
-                1.5,                              // proposedBlockSize
-                100.0,                            // currentLatency
+                breakerState_,
+                breakerTestBlockHeight_++,        // incrementing blockHeight
+                15000,                            // proposedBlockSizeScaled (1.5 * 10000)
+                1000000,                          // currentLatencyScaled (100.0 * 10000)
                 100,                              // peerCount
-                1.0,                              // targetBlockSize
-                analysis,                         // energy analysis with EIS
-                0.5                               // previousEIS
+                10000,                            // targetBlockSizeScaled (1.0 * 10000)
+                static_cast<uint64_t>(std::round(analysis.energyIntegrityScore * 10000)), // currentEISScaled
+                static_cast<uint64_t>(std::round(analysis.sensorConfidence * 10000)),     // sensorConfidenceScaled
+                5000                              // previousEISScaled (0.5 * 10000)
             );
 
             switch(breaker.state) {
@@ -716,6 +719,9 @@ private:
     std::atomic<bool> shutdownCalled_;
     std::chrono::steady_clock::time_point startTime_;
     
+    ailee::BreakerState breakerState_;
+    uint64_t breakerTestBlockHeight_ = 1;
+
     void initZMQListener() {
         try {
             zmqListener_ = std::make_unique<ailee::BitcoinZMQListener>(cfg_.bitcoinZmqEndpoint);
