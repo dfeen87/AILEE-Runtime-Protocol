@@ -31,11 +31,13 @@
 
 namespace ailee {
 
+class SidechainBridge;
+
 class BitcoinZMQListener {
 public:
 #if defined(AILEE_HAS_ZMQ)
     explicit BitcoinZMQListener(const std::string& endpoint = "tcp://127.0.0.1:28332")
-        : context_(1), subscriber_(context_, ZMQ_SUB), running_(false), endpoint_(endpoint), reorgDetector_(nullptr) {}
+        : context_(1), subscriber_(context_, ZMQ_SUB), running_(false), endpoint_(endpoint), reorgDetector_(nullptr), bridge_(nullptr) {}
 
     ~BitcoinZMQListener() {
         if (running_) stop();
@@ -43,6 +45,11 @@ public:
 
     void setReorgDetector(ailee::l1::ReorgDetector* detector) {
         reorgDetector_ = detector;
+    }
+
+    void setSidechainBridge(ailee::SidechainBridge* bridge, const std::vector<uint8_t>& bridgeAddress) {
+        bridge_ = bridge;
+        bridgeAddressBytes_ = bridgeAddress;
     }
 
     // Initialize with Hardened Socket Options
@@ -127,6 +134,8 @@ private:
     int reconnect_attempts_ = 0;
     std::atomic<uint64_t> zmqBlockSeq_{0};
     ailee::l1::ReorgDetector* reorgDetector_ = nullptr;
+    ailee::SidechainBridge* bridge_ = nullptr;
+    std::vector<uint8_t> bridgeAddressBytes_;
 
     // Helper: Convert Raw Bytes to Hex String (for Logs/Bridge)
     std::string toHex(const void* data, size_t size) {
@@ -139,14 +148,11 @@ private:
         return ss.str();
     }
 
+    void checkPegIn(const zmq::message_t& payload);
+
     // Handler: Raw Transaction
     void handleTransaction(const zmq::message_t& payload) {
-        // In production: Send this hex to a decoding queue
-        // Don't do heavy processing here (it blocks the listener)
-        std::cout << "[ZMQ] TX DETECTED | Size: " << payload.size() << " bytes" << std::endl;
-        
-        // This is where we would check if funds were sent to the AILEE Bridge Address
-        // checkPegIn(payload);
+        checkPegIn(payload);
     }
 
     // Handler: Block Hash
@@ -205,6 +211,11 @@ private:
         reorgDetector_ = detector;
     }
 
+    void setSidechainBridge(ailee::SidechainBridge* bridge, const std::vector<uint8_t>& bridgeAddress) {
+        bridge_ = bridge;
+        bridgeAddressBytes_ = bridgeAddress;
+    }
+
     void init() {
         std::cerr << "[ZMQ] ZeroMQ support not compiled; listener disabled." << std::endl;
     }
@@ -218,6 +229,8 @@ private:
 private:
     std::string endpoint_;
     ailee::l1::ReorgDetector* reorgDetector_;
+    ailee::SidechainBridge* bridge_ = nullptr;
+    std::vector<uint8_t> bridgeAddressBytes_;
 #endif
 };
 

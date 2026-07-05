@@ -229,6 +229,7 @@ set(POLICY_HEADERS
 
 # Adapter implementation sources
 set(ADAPTER_SOURCES
+    src/l1/BitcoinZMQListener.cpp
     src/l1/BitcoinAdapter.cpp
     src/l1/EthereumAdapter.cpp
     src/l1/PolygonAdapter.cpp
