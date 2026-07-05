@@ -24,6 +24,9 @@
 
 namespace ambient {
 
+// ================= Constants =================
+constexpr uint64_t FIXED_POINT_SCALE = 10000;
+
 // ================= Core Data Models =================
 
 struct NodeId {
@@ -33,28 +36,28 @@ struct NodeId {
 };
 
 struct EnergyProfile {
-    double inputPowerW = 0.0;
-    double wasteHeatRecoveredW = 0.0;
-    double temperatureC = 0.0;
-    double ambientTempC = 0.0;
-    double carbonIntensity_gCO2_kWh = 0.0;
-    double computeEfficiency_GFLOPS_W = 0.0; // Efficiency metric
+    uint64_t inputPowerWFp = 0;
+    uint64_t wasteHeatRecoveredWFp = 0;
+    uint64_t temperatureCFp = 0;
+    uint64_t ambientTempCFp = 0;
+    uint64_t carbonIntensity_gCO2_kWhFp = 0;
+    uint64_t computeEfficiency_GFLOPS_WFp = 0; // Efficiency metric
 };
 
 struct ComputeProfile {
-    double cpuUtilization = 0.0;
-    double npuUtilization = 0.0;
-    double gpuUtilization = 0.0;
-    double availableMemMB = 0.0;
-    double bandwidthMbps = 0.0;
-    double latencyMs = 0.0;
-    double instantaneousPower_GFLOPS = 0.0; // For reward calculations
+    uint64_t cpuUtilizationFp = 0;
+    uint64_t npuUtilizationFp = 0;
+    uint64_t gpuUtilizationFp = 0;
+    uint64_t availableMemMBFp = 0;
+    uint64_t bandwidthMbpsFp = 0;
+    uint64_t latencyMsFp = 0;
+    uint64_t instantaneousPower_GFLOPSFp = 0; // For reward calculations
 };
 
 struct PrivacyBudget {
-    double epsilon = 1.0;
-    double delta  = 1e-5;
-    double privacyBudgetRemaining = 1.0; // %
+    uint64_t epsilonFp = FIXED_POINT_SCALE; // defaults to 1.0 scaled
+    uint64_t deltaFp  = 0; // scaled
+    uint64_t privacyBudgetRemainingFp = FIXED_POINT_SCALE; // 100% scaled
     bool homomorphicEncryptionEnabled = false;
     bool zeroKnowledgeProofEnabled = false;
 };
@@ -63,7 +66,7 @@ struct TelemetrySample {
     NodeId node;
     EnergyProfile energy;
     ComputeProfile compute;
-    std::chrono::system_clock::time_point timestamp;
+    uint64_t protocolTimestampMs = 0;
     PrivacyBudget privacy;
     std::string cryptographicVerificationHash;
 };
@@ -86,13 +89,13 @@ struct ZKProofStub {
 struct IncentiveRecord {
     std::string taskId;
     NodeId node;
-    double rewardTokens = 0.0;
+    uint64_t rewardTokensFp = 0;
     bool distributed = false;
 };
 
 struct Reputation {
     NodeId node;
-    double score = 0.0;
+    uint64_t scoreFp = 0;
     uint64_t completedTasks = 0;
     uint64_t disputes = 0;
 };
@@ -107,18 +110,18 @@ public:
         std::string nodeId;
         bool connected = false;
         uint64_t sessionToken = 0;
-        std::chrono::system_clock::time_point lastActivity;
+        uint64_t lastActivityMs = 0;
         std::vector<std::string> activityLog;
     };
 
-    explicit LocalSessionManager(const std::string& nodeId) {
+    explicit LocalSessionManager(const std::string& nodeId, uint64_t currentTimestampMs = 0) {
         state_.nodeId = nodeId;
-        state_.lastActivity = std::chrono::system_clock::now();
+        state_.lastActivityMs = currentTimestampMs;
     }
 
-    void recordActivity(const std::string& event) {
+    void recordActivity(const std::string& event, uint64_t currentTimestampMs) {
         std::lock_guard<std::mutex> lock(mu_);
-        state_.lastActivity = std::chrono::system_clock::now();
+        state_.lastActivityMs = currentTimestampMs;
         state_.activityLog.push_back(event);
         if (state_.activityLog.size() > kMaxLogEntries) {
             state_.activityLog.erase(state_.activityLog.begin());
@@ -141,10 +144,10 @@ public:
     }
 
     // Maintenance tick: keeps session alive even when disconnected from the API endpoint.
-    void runMaintenanceTick() {
+    void runMaintenanceTick(uint64_t currentTimestampMs) {
         std::lock_guard<std::mutex> lock(mu_);
         state_.sessionToken++;
-        state_.lastActivity = std::chrono::system_clock::now();
+        state_.lastActivityMs = currentTimestampMs;
         if (!state_.connected) {
             state_.activityLog.push_back("[offline-keepalive] session maintained");
             if (state_.activityLog.size() > kMaxLogEntries) {
@@ -162,10 +165,10 @@ private:
 // ================= Safety / Circuit-Breaker Policy =================
 
 struct SafetyPolicy {
-    double maxTemperatureC = 80.0;
-    double maxLatencyMs    = 300.0;
-    double maxBlockMB      = 8.0;
-    int    maxErrorCount   = 25;
+    uint64_t maxTemperatureCFp = 80 * FIXED_POINT_SCALE;
+    uint64_t maxLatencyMsFp    = 300 * FIXED_POINT_SCALE;
+    uint64_t maxBlockMBFp      = 8 * FIXED_POINT_SCALE;
+    int      maxErrorCount     = 25;
 };
 
 // ================= Byzantine Behavior =================
@@ -181,9 +184,9 @@ enum class NodeBehavior {
 
 class AmbientNode {
 public:
-    explicit AmbientNode(NodeId id, SafetyPolicy policy, std::shared_ptr<ailee::l1::ReorgDetector> db = nullptr)
+    explicit AmbientNode(NodeId id, SafetyPolicy policy, std::shared_ptr<ailee::l1::ReorgDetector> db = nullptr, uint64_t creationTimestampMs = 0)
         : id_(std::move(id)), policy_(policy),
-          sessionManager_(std::make_shared<LocalSessionManager>(id_.pubkey)),
+          sessionManager_(std::make_shared<LocalSessionManager>(id_.pubkey, creationTimestampMs)),
           db_(db) {
               if (db_) {
                   auto repData = db_->getReputation(id_.pubkey);
@@ -198,8 +201,8 @@ public:
         lastSample_ = sample;
 
         // Safe-mode toggle
-        safeMode_.store(sample.energy.temperatureC > policy_.maxTemperatureC ||
-                        sample.compute.latencyMs > policy_.maxLatencyMs);
+        safeMode_.store(sample.energy.temperatureCFp > policy_.maxTemperatureCFp ||
+                        sample.compute.latencyMsFp > policy_.maxLatencyMsFp);
 
         // Event logging
         if (safeMode_.load()) {
@@ -210,20 +213,22 @@ public:
         // Generate ZK proof automatically
         ailee::zk::ZKEngine zkEngine;
         auto proof = zkEngine.generateProof(id_.pubkey,
-                                            std::to_string(sample.compute.cpuUtilization));
+                                            std::to_string(sample.compute.cpuUtilizationFp));
         lastProof_ = { "telemetry_circuit", proof.proofData,
-                       zkEngine.verifyProof(proof), static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count()) };
+                       zkEngine.verifyProof(proof), sample.protocolTimestampMs };
     }
 
     FederatedUpdate runLocalTraining(const ailee::fl::FLTask& task,
                                      const std::vector<uint8_t>& deltaBytes,
                                      std::size_t numSamplesTrained,
-                                     double trainingLoss,
-                                     std::chrono::milliseconds computeTime);
+                                     uint64_t trainingLossFp,
+                                     uint64_t computeTimeMs,
+                                     uint64_t protocolTimestampMs);
 
     ZKProofStub verifyComputation(const std::string& taskId,
                                   const std::string& circuitId,
-                                  const std::string& resultHash) {
+                                  const std::string& resultHash,
+                                  uint64_t protocolTimestampMs) {
         ailee::zk::ZKEngine zkEngine;
         auto proof = zkEngine.generateProof(taskId, resultHash);
 
@@ -231,31 +236,38 @@ public:
         p.circuitId = circuitId;
         p.proofHash = proof.proofData;
         p.verified  = zkEngine.verifyProof(proof);
-        p.timestampMs = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count());
+        p.timestampMs = protocolTimestampMs;
 
         lastProof_ = p;
         return p;
     }
 
-    IncentiveRecord accrueReward(const std::string& taskId, double tokens) const {
+    IncentiveRecord accrueReward(const std::string& taskId, uint64_t rewardTokensFp) const {
         IncentiveRecord rec;
         rec.taskId = taskId;
         rec.node = id_;
-        rec.rewardTokens = tokens;
+        rec.rewardTokensFp = rewardTokensFp;
         rec.distributed = false;
         return rec;
     }
 
-    void updateReputation(bool success, double deltaScore) {
+    void updateReputation(bool success, uint64_t deltaScoreFp) {
         std::lock_guard<std::mutex> lock(mu_);
         if (success) {
             rep_.completedTasks++;
-            rep_.score += deltaScore;
+            rep_.scoreFp += deltaScoreFp;
+            // Cap at 1.0 scaled
+            if (rep_.scoreFp > FIXED_POINT_SCALE) {
+                rep_.scoreFp = FIXED_POINT_SCALE;
+            }
         } else {
             rep_.disputes++;
-            rep_.score -= deltaScore;
+            if (rep_.scoreFp >= deltaScoreFp) {
+                rep_.scoreFp -= deltaScoreFp;
+            } else {
+                rep_.scoreFp = 0;
+            }
         }
-        rep_.score = std::max(0.0, rep_.score);
 
         if (db_) {
             std::string repData = toJson();
@@ -273,11 +285,22 @@ public:
     const LocalSessionManager& sessionManager() const { return *sessionManager_; }
 
     void loadReputation(const std::string& data) {
-
         std::lock_guard<std::mutex> lock(mu_);
-        try { auto j = nlohmann::json::parse(data); if (j.contains("score") && j["score"].is_number()) { rep_.score = j["score"].get<double>(); } else { rep_.score = 100.0; } } catch (...) { rep_.score = 100.0; }
+        try {
+            auto j = nlohmann::json::parse(data);
+            if (j.contains("scoreFp") && j["scoreFp"].is_number()) {
+                rep_.scoreFp = j["scoreFp"].get<uint64_t>();
+            } else if (j.contains("score") && j["score"].is_number()) {
+                // Migrate from double score
+                rep_.scoreFp = static_cast<uint64_t>(j["score"].get<double>() * FIXED_POINT_SCALE);
+            } else {
+                rep_.scoreFp = FIXED_POINT_SCALE; // default to 1.0 scaled
+            }
+        } catch (...) {
+            rep_.scoreFp = FIXED_POINT_SCALE;
+        }
     }
-    std::string toJson() const { return "{\"score\": " + std::to_string(rep_.score) + "}"; }
+    std::string toJson() const { return "{\"scoreFp\": " + std::to_string(rep_.scoreFp) + "}"; }
     Reputation reputation() const {
         std::lock_guard<std::mutex> lock(mu_);
         return rep_;
@@ -294,18 +317,22 @@ public:
     }
 
     // ================= Health Scoring =================
-    double healthScore() const {
+    int64_t healthScoreFp() const {
         std::lock_guard<std::mutex> lock(mu_);
-        if (!lastSample_.has_value()) return 0.0;
+        if (!lastSample_.has_value()) return 0;
 
         const auto& s = lastSample_.value();
-        double score = 0.0;
-        score += s.compute.bandwidthMbps * 0.4;      // bandwidth
-        score += -s.compute.latencyMs * 0.3;         // latency penalty
-        score += s.energy.computeEfficiency_GFLOPS_W * 0.2; // compute efficiency
-        score += rep_.score * 0.1;                   // reputation weight
-        if (safeMode_.load()) score *= 0.5;          // safe mode penalty
-        return std::max(0.0, score);
+        int64_t scoreFp = 0;
+        scoreFp += (s.compute.bandwidthMbpsFp * 4) / 10;      // bandwidth weight 0.4
+        scoreFp -= (s.compute.latencyMsFp * 3) / 10;         // latency penalty 0.3
+        scoreFp += (s.energy.computeEfficiency_GFLOPS_WFp * 2) / 10; // compute efficiency 0.2
+        scoreFp += (rep_.scoreFp * 1) / 10;                   // reputation weight 0.1
+
+        if (safeMode_.load()) {
+            scoreFp = scoreFp / 2; // safe mode penalty 0.5
+        }
+
+        return std::max<int64_t>(0, scoreFp);
     }
 
 private:
@@ -314,7 +341,7 @@ private:
     mutable std::mutex mu_;
     std::optional<TelemetrySample> lastSample_;
     ZKProofStub lastProof_;
-    Reputation rep_{id_, 0.0, 0, 0};
+    Reputation rep_{id_, 0, 0, 0};
     std::atomic<bool> safeMode_{false};
     // sessionManager_ is excluded from serialization to avoid
     // capturing transient local state in snapshots or wire formats.
@@ -337,7 +364,7 @@ public:
     AmbientNode* selectNodeForTask(bool requireValidProof = true) {
         std::lock_guard<std::mutex> lock(mu_);
         AmbientNode* best = nullptr;
-        double bestScore = -1.0;
+        int64_t bestScoreFp = -1;
 
         for (auto* n : nodes_) {
             if (n->isSafeMode()) continue;
@@ -350,29 +377,33 @@ public:
                 if (!proof.has_value() || !proof->verified) continue;
             }
 
-            double score = n->healthScore();
-            if (score > bestScore) { bestScore = score; best = n; }
+            int64_t scoreFp = n->healthScoreFp();
+            if (scoreFp > bestScoreFp) { bestScoreFp = scoreFp; best = n; }
         }
         return best;
     }
 
     template<typename TaskFn>
-    IncentiveRecord dispatchAndReward(const std::string& taskId, TaskFn fn, double baseRewardTokens) {
+    IncentiveRecord dispatchAndReward(const std::string& taskId, TaskFn fn, uint64_t baseRewardTokensFp) {
         AmbientNode* n = selectNodeForTask();
-        if (!n) return IncentiveRecord{taskId, NodeId{"", "", ""}, 0.0, false};
+        if (!n) return IncentiveRecord{taskId, NodeId{"", "", ""}, 0, false};
 
-        double multiplier = fn(*n);
-        double reward = baseRewardTokens * multiplier;
+        uint64_t multiplierFp = fn(*n);
+        uint64_t rewardFp = (baseRewardTokensFp * multiplierFp) / FIXED_POINT_SCALE;
 
         // Scale reward based on privacy compliance and compute efficiency
         auto lastTelemetry = n->last();
         if (lastTelemetry.has_value()) {
             const auto& s = lastTelemetry.value();
-            reward *= s.energy.computeEfficiency_GFLOPS_W;
-            reward *= std::clamp(s.privacy.privacyBudgetRemaining, 0.0, 1.0);
+            rewardFp = (rewardFp * s.energy.computeEfficiency_GFLOPS_WFp) / FIXED_POINT_SCALE;
+
+            uint64_t privacyRemainingFp = s.privacy.privacyBudgetRemainingFp;
+            if (privacyRemainingFp > FIXED_POINT_SCALE) privacyRemainingFp = FIXED_POINT_SCALE;
+
+            rewardFp = (rewardFp * privacyRemainingFp) / FIXED_POINT_SCALE;
         }
 
-        return n->accrueReward(taskId, reward);
+        return n->accrueReward(taskId, rewardFp);
     }
 
     std::string clusterId() const { return clusterId_; }

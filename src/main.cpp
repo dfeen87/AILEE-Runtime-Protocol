@@ -530,28 +530,29 @@ public:
         log(LogLevel::INFO, "[AmbientAI] Running Ambient Mesh intelligence demo");
 
         try {
-            ambient::SafetyPolicy policy{80.0, 250.0, 8.0, 25};
+            ambient::SafetyPolicy policy{80 * ambient::FIXED_POINT_SCALE, 250 * ambient::FIXED_POINT_SCALE, 8 * ambient::FIXED_POINT_SCALE, 25};
 
-            ambient::AmbientNode nodeA({"pubA", cfg_.region, "gateway"}, policy);
-            ambient::AmbientNode nodeB({"pubB", cfg_.region, "smartphone"}, policy);
+            uint64_t currentTimestampMs = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count());
+            ambient::AmbientNode nodeA({"pubA", cfg_.region, "gateway"}, policy, nullptr, currentTimestampMs);
+            ambient::AmbientNode nodeB({"pubB", cfg_.region, "smartphone"}, policy, nullptr, currentTimestampMs);
 
             // Sample telemetry for gateway node
             ambient::TelemetrySample sampleA{
                 {"pubA", cfg_.region, "gateway"},
-                {1200.0, 300.0, 55.0, 22.0, 350.0},          // energy
-                {35.0, 10.0, 5.0, 2048.0, 150.0, 40.0},      // compute
-                std::chrono::system_clock::now(),
-                {1.0, 1e-5},                                  // privacy
+                {1200 * ambient::FIXED_POINT_SCALE, 300 * ambient::FIXED_POINT_SCALE, 55 * ambient::FIXED_POINT_SCALE, 22 * ambient::FIXED_POINT_SCALE, 350 * ambient::FIXED_POINT_SCALE},          // energy
+                {35 * ambient::FIXED_POINT_SCALE, 10 * ambient::FIXED_POINT_SCALE, 5 * ambient::FIXED_POINT_SCALE, 2048 * ambient::FIXED_POINT_SCALE, 150 * ambient::FIXED_POINT_SCALE, 40 * ambient::FIXED_POINT_SCALE},      // compute
+                currentTimestampMs,
+                {1 * ambient::FIXED_POINT_SCALE, 0, 1 * ambient::FIXED_POINT_SCALE, true, true},                                  // privacy
                 ""                                            // cryptographicVerificationHash
             };
 
             // Sample telemetry for smartphone node
             ambient::TelemetrySample sampleB{
                 {"pubB", cfg_.region, "smartphone"},
-                {8.5, 1.2, 42.0, 22.0, 200.0},               // energy
-                {25.0, 20.0, 0.0, 512.0, 25.0, 30.0},        // compute
-                std::chrono::system_clock::now(),
-                {1.0, 1e-5},                                  // privacy
+                {8 * ambient::FIXED_POINT_SCALE + 5000, 1 * ambient::FIXED_POINT_SCALE + 2000, 42 * ambient::FIXED_POINT_SCALE, 22 * ambient::FIXED_POINT_SCALE, 200 * ambient::FIXED_POINT_SCALE},               // energy
+                {25 * ambient::FIXED_POINT_SCALE, 20 * ambient::FIXED_POINT_SCALE, 0, 512 * ambient::FIXED_POINT_SCALE, 25 * ambient::FIXED_POINT_SCALE, 30 * ambient::FIXED_POINT_SCALE},        // compute
+                currentTimestampMs,
+                {1 * ambient::FIXED_POINT_SCALE, 0, 1 * ambient::FIXED_POINT_SCALE, false, false},                                  // privacy
                 ""                                            // cryptographicVerificationHash
             };
 
@@ -563,20 +564,21 @@ public:
             mesh.registerNode(&nodeB);
 
             // Performance-based reward calculation
-            auto perfFn = [](const ambient::AmbientNode& n) -> double {
+            auto perfFn = [](const ambient::AmbientNode& n) -> uint64_t {
                 auto last = n.last();
-                if (!last.has_value()) return 0.0;
+                if (!last.has_value()) return 0;
 
-                double score = (last->compute.bandwidthMbps / 50.0) - 
-                              (last->compute.latencyMs / 500.0);
-                return std::clamp(score, 0.1, 2.0);
+                int64_t scoreFp = (last->compute.bandwidthMbpsFp * ambient::FIXED_POINT_SCALE) / (50 * ambient::FIXED_POINT_SCALE) -
+                                  (last->compute.latencyMsFp * ambient::FIXED_POINT_SCALE) / (500 * ambient::FIXED_POINT_SCALE);
+
+                return std::clamp<uint64_t>(static_cast<uint64_t>(std::max<int64_t>(0, scoreFp)), 1000, 20000); // 0.1 to 2.0 scaled
             };
 
-            auto rewardRec = mesh.dispatchAndReward("task-entropy-infer", perfFn, 10.0);
+            auto rewardRec = mesh.dispatchAndReward("task-entropy-infer", perfFn, 10 * ambient::FIXED_POINT_SCALE);
 
             log(LogLevel::INFO, 
                 "[AmbientAI] Reward dispatched: node=" + rewardRec.node.pubkey +
-                " tokens=" + std::to_string(rewardRec.rewardTokens));
+                " tokens=" + std::to_string(rewardRec.rewardTokensFp / ambient::FIXED_POINT_SCALE));
 
             // Register ambient nodes in orchestration network
             if (orchestrationEngine_) {
@@ -586,7 +588,7 @@ public:
             ailee::RecoveryProtocol::recordIncident(
                 "AmbientMeshReward",
                 "Node=" + rewardRec.node.pubkey + 
-                " Tokens=" + std::to_string(rewardRec.rewardTokens));
+                " Tokens=" + std::to_string(rewardRec.rewardTokensFp / ambient::FIXED_POINT_SCALE));
             
             // Layer-2 NetFlow relay
             if (cfg_.enableNetFlow) {
@@ -925,9 +927,9 @@ private:
                 ailee::sched::NodeMetrics metricsA;
                 metricsA.peerId = lastA->node.pubkey;
                 metricsA.region = lastA->node.region;
-                metricsA.bandwidthMbps = lastA->compute.bandwidthMbps;
-                metricsA.latencyMs = lastA->compute.latencyMs;
-                metricsA.cpuUtilization = lastA->compute.cpuUtilization / 100.0;
+                metricsA.bandwidthMbps = static_cast<double>(lastA->compute.bandwidthMbpsFp) / ambient::FIXED_POINT_SCALE;
+                metricsA.latencyMs = static_cast<double>(lastA->compute.latencyMsFp) / ambient::FIXED_POINT_SCALE;
+                metricsA.cpuUtilization = static_cast<double>(lastA->compute.cpuUtilizationFp) / (ambient::FIXED_POINT_SCALE * 100.0);
                 metricsA.capacityScore = 0.7;
                 
                 orchestrationEngine_->registerNode(metricsA);
@@ -937,9 +939,9 @@ private:
                 ailee::sched::NodeMetrics metricsB;
                 metricsB.peerId = lastB->node.pubkey;
                 metricsB.region = lastB->node.region;
-                metricsB.bandwidthMbps = lastB->compute.bandwidthMbps;
-                metricsB.latencyMs = lastB->compute.latencyMs;
-                metricsB.cpuUtilization = lastB->compute.cpuUtilization / 100.0;
+                metricsB.bandwidthMbps = static_cast<double>(lastB->compute.bandwidthMbpsFp) / ambient::FIXED_POINT_SCALE;
+                metricsB.latencyMs = static_cast<double>(lastB->compute.latencyMsFp) / ambient::FIXED_POINT_SCALE;
+                metricsB.cpuUtilization = static_cast<double>(lastB->compute.cpuUtilizationFp) / (ambient::FIXED_POINT_SCALE * 100.0);
                 metricsB.capacityScore = 0.6;
                 
                 orchestrationEngine_->registerNode(metricsB);

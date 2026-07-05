@@ -237,8 +237,9 @@ int main(int argc, char** argv) {
     SafetyPolicy policy;
     // node is a shared_ptr so both the maintenance loop and the observability
     // server operate on the *same* live object.
-    auto node = std::make_shared<AmbientNode>(id, policy);
-    node->sessionManager().recordActivity("[startup] ambient-vcp-cli started");
+    uint64_t startupTimeMs = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count());
+    auto node = std::make_shared<AmbientNode>(id, policy, nullptr, startupTimeMs);
+    node->sessionManager().recordActivity("[startup] ambient-vcp-cli started", startupTimeMs);
 
     // When an endpoint is given, start as disconnected so the first
     // successful probe fires the "reconnected" transition log entry.
@@ -259,25 +260,26 @@ int main(int argc, char** argv) {
     //      the node hardware is unreachable.
     bool prevConnected = false;
     while (g_running) {
+        uint64_t loopTimestampMs = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count());
         if (probeEnabled) {
             bool nowConnected = probeHardwareHealth(probeHost, probePort);
 
             if (nowConnected && !prevConnected) {
                 node->sessionManager().setConnected(true);
                 node->sessionManager().recordActivity(
-                    "[reconnected] hardware at " + endpointUrl + " is online");
+                    "[reconnected] hardware at " + endpointUrl + " is online", loopTimestampMs);
                 std::cout << "[ambient-vcp-cli] Node hardware online — session reconnected.\n";
             } else if (!nowConnected && prevConnected) {
                 node->sessionManager().setConnected(false);
                 node->sessionManager().recordActivity(
-                    "[offline] hardware at " + endpointUrl + " unreachable — keepalive active");
+                    "[offline] hardware at " + endpointUrl + " unreachable — keepalive active", loopTimestampMs);
                 std::cout << "[ambient-vcp-cli] Node hardware offline — keepalive active.\n";
             }
 
             prevConnected = nowConnected;
         }
 
-        node->sessionManager().runMaintenanceTick();
+        node->sessionManager().runMaintenanceTick(loopTimestampMs);
         observability.printStatus();
 
         for (int s = 0; s < intervalSecs && g_running; ++s) {
@@ -285,7 +287,8 @@ int main(int argc, char** argv) {
         }
     }
 
-    node->sessionManager().recordActivity("[shutdown] ambient-vcp-cli stopped");
+    uint64_t shutdownTimeMs = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count());
+    node->sessionManager().recordActivity("[shutdown] ambient-vcp-cli stopped", shutdownTimeMs);
     std::cout << "[ambient-vcp-cli] Maintenance loop stopped.\n";
     return 0;
 }

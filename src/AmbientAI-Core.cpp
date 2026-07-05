@@ -39,18 +39,6 @@ namespace ambient {
 // UTILITY FUNCTIONS
 // ============================================================================
 
-inline double randomNoise(double scale = 1.0) {
-    static thread_local std::mt19937 gen(std::random_device{}());
-    std::uniform_real_distribution<double> dist(-scale, scale);
-    return dist(gen);
-}
-
-inline uint64_t timestampMs() {
-    return std::chrono::duration_cast<std::chrono::milliseconds>(
-        std::chrono::system_clock::now().time_since_epoch()
-    ).count();
-}
-
 // ============================================================================
 // ENERGY TELEMETRY WITH VERIFICATION (NEW)
 // ============================================================================
@@ -62,10 +50,10 @@ inline uint64_t timestampMs() {
 struct EnergyProof {
     std::string meterSerialNumber;
     uint64_t proofTimestampMs;  // renamed from timestampMs to avoid shadowing the free function
-    double kWhGenerated;
-    double kWhToGrid;
-    double wasteHeatRecovered;
-    double thermodynamicEfficiency;
+    uint64_t kWhGeneratedFp;
+    uint64_t kWhToGridFp;
+    uint64_t wasteHeatRecoveredFp;
+    uint64_t thermodynamicEfficiencyFp;
     
     // Cryptographic verification
     std::vector<uint8_t> smartMeterSignature;
@@ -73,8 +61,8 @@ struct EnergyProof {
     std::string oracleAttestation;
     
     // Geographic location for grid routing
-    double latitude;
-    double longitude;
+    int64_t latitudeFp;
+    int64_t longitudeFp;
     std::string gridRegion;
     
     bool verifySignature() const {
@@ -98,28 +86,26 @@ struct EnergyProof {
         return !oracleAttestation.empty();
     }
     
-    bool isPhysicallyPlausible() const {
-        // Sanity checks for energy readings
-        if (kWhGenerated < 0 || kWhToGrid < 0) return false;
-        if (kWhToGrid > kWhGenerated) return false;  // Can't output more than generated
-        if (thermodynamicEfficiency < 0 || thermodynamicEfficiency > 1.0) return false;
-        if (wasteHeatRecovered < 0) return false;
+    bool isPhysicallyPlausible(uint64_t protocolTimestampMs) const {
+        // Sanity checks for energy readings using fixed point scaled uint64_t
+        // Removed negative checks since uint64_t cannot be negative
+        if (kWhToGridFp > kWhGeneratedFp) return false;  // Can't output more than generated
+        if (thermodynamicEfficiencyFp > FIXED_POINT_SCALE) return false; // Max 1.0 scaled
         
         // Check timestamp is recent (within 5 minutes)
-        uint64_t currentTime = timestampMs();
         uint64_t fiveMinutes = 5 * 60 * 1000;
-        if (currentTime < proofTimestampMs || 
-            (currentTime - proofTimestampMs) > fiveMinutes) {
+        if (protocolTimestampMs < proofTimestampMs ||
+            (protocolTimestampMs - proofTimestampMs) > fiveMinutes) {
             return false;
         }
         
         return true;
     }
     
-    bool isValid() const {
+    bool isValid(uint64_t protocolTimestampMs) const {
         return verifySignature() && 
                verifyOracleAttestation() && 
-               isPhysicallyPlausible();
+               isPhysicallyPlausible(protocolTimestampMs);
     }
 };
 
@@ -130,15 +116,15 @@ class EnergyTelemetry {
 public:
     struct GridContribution {
         std::string nodeId;
-        double totalKWhContributed;
-        double totalTokensEarned;
+        uint64_t totalKWhContributedFp;
+        uint64_t totalTokensEarnedFp;
         uint64_t firstContribution;
         uint64_t lastContribution;
         std::vector<EnergyProof> proofs;
     };
     
-    bool verifyEnergyContribution(const EnergyProof& proof) {
-        if (!proof.isValid()) {
+    bool verifyEnergyContribution(const EnergyProof& proof, uint64_t protocolTimestampMs) {
+        if (!proof.isValid(protocolTimestampMs)) {
             recordIncident("ENERGY_PROOF_INVALID", 
                 "Meter: " + proof.meterSerialNumber + " - Failed validation");
             return false;
@@ -149,7 +135,7 @@ public:
         
         auto& contrib = contributions_[proof.meterSerialNumber];
         contrib.nodeId = proof.meterSerialNumber;
-        contrib.totalKWhContributed += proof.kWhToGrid;
+        contrib.totalKWhContributedFp += proof.kWhToGridFp;
         contrib.proofs.push_back(proof);
         
         if (contrib.firstContribution == 0) {
@@ -159,19 +145,21 @@ public:
         
         recordIncident("ENERGY_VERIFIED", 
             "Meter: " + proof.meterSerialNumber + 
-            " contributed " + std::to_string(proof.kWhToGrid) + " kWh");
+            " contributed " + std::to_string(proof.kWhToGridFp) + " kWh (scaled)");
         
         return true;
     }
     
-    double calculateTokenReward(const EnergyProof& proof, double baseRate = 0.001) const {
+    uint64_t calculateTokenReward(const EnergyProof& proof, uint64_t baseRateFp = 10) const {
         // Token reward formula:
         // reward = kWh * baseRate * efficiency_multiplier * grid_demand_multiplier
         
-        double efficiencyMultiplier = 1.0 + proof.thermodynamicEfficiency;
-        double gridDemandMultiplier = 1.0;  // Would be based on real-time grid demand
+        uint64_t efficiencyMultiplierFp = FIXED_POINT_SCALE + proof.thermodynamicEfficiencyFp;
+        uint64_t gridDemandMultiplierFp = FIXED_POINT_SCALE;  // Would be based on real-time grid demand
         
-        return proof.kWhToGrid * baseRate * efficiencyMultiplier * gridDemandMultiplier;
+        uint64_t baseRewardFp = (proof.kWhToGridFp * baseRateFp) / FIXED_POINT_SCALE;
+        uint64_t rewardPhase1Fp = (baseRewardFp * efficiencyMultiplierFp) / FIXED_POINT_SCALE;
+        return (rewardPhase1Fp * gridDemandMultiplierFp) / FIXED_POINT_SCALE;
     }
     
     const std::map<std::string, GridContribution>& getContributions() const {
@@ -208,7 +196,7 @@ public:
         TelemetrySample consensusSample;
         size_t agreementCount;
         size_t totalNodes;
-        double consensusConfidence;
+        uint64_t consensusConfidenceFp;
         std::vector<std::string> byzantineNodes;
     };
     
@@ -242,16 +230,16 @@ public:
         }
         
         // Step 2: Calculate median values for key metrics
-        std::vector<double> latencies, cpuUtils, energies;
+        std::vector<uint64_t> latencies, cpuUtils, energies;
         for (const auto& sample : validSamples) {
-            latencies.push_back(sample.compute.latencyMs);
-            cpuUtils.push_back(sample.compute.cpuUtilization);
-            energies.push_back(sample.energy.inputPowerW);
+            latencies.push_back(sample.compute.latencyMsFp);
+            cpuUtils.push_back(sample.compute.cpuUtilizationFp);
+            energies.push_back(sample.energy.inputPowerWFp);
         }
         
-        result.consensusSample.compute.latencyMs = calculateMedian(latencies);
-        result.consensusSample.compute.cpuUtilization = calculateMedian(cpuUtils);
-        result.consensusSample.energy.inputPowerW = calculateMedian(energies);
+        result.consensusSample.compute.latencyMsFp = calculateMedianFp(latencies);
+        result.consensusSample.compute.cpuUtilizationFp = calculateMedianFp(cpuUtils);
+        result.consensusSample.energy.inputPowerWFp = calculateMedianFp(energies);
         
         // Step 3: Identify Byzantine nodes (outliers from consensus)
         for (size_t i = 0; i < samples.size(); ++i) {
@@ -263,13 +251,13 @@ public:
         }
         
         // Step 4: Calculate confidence (percentage of agreeing nodes)
-        result.consensusConfidence = static_cast<double>(result.agreementCount) / 
-                                     static_cast<double>(result.totalNodes);
+        result.consensusConfidenceFp = (result.agreementCount * FIXED_POINT_SCALE) / result.totalNodes;
         
         // Require 2f+1 agreement (>66% for Byzantine tolerance)
-        if (result.consensusConfidence < 0.67) {
+        // 0.67 is 6700 scaled
+        if (result.consensusConfidenceFp < 6700) {
             recordIncident("CONSENSUS_FAILURE", 
-                "Only " + std::to_string(result.consensusConfidence * 100) + 
+                "Only " + std::to_string(result.consensusConfidenceFp / 100) +
                 "% agreement - below Byzantine threshold");
         }
         
@@ -289,11 +277,10 @@ public:
         bool executed;
     };
     
-    bool validateMultiSig(const MultiSigDecision& decision) const {
+    bool validateMultiSig(const MultiSigDecision& decision, uint64_t protocolTimestampMs) const {
         if (decision.executed) return false;
         
-        uint64_t currentTime = timestampMs();
-        if (currentTime > decision.deadline) return false;
+        if (protocolTimestampMs > decision.deadline) return false;
         
         size_t approvals = 0;
         for (const auto& sig : decision.signatures) {
@@ -310,12 +297,12 @@ private:
         return !st.nodeSignature.empty() && !st.nodePublicKey.empty();
     }
     
-    double calculateMedian(std::vector<double> values) const {
-        if (values.empty()) return 0.0;
+    uint64_t calculateMedianFp(std::vector<uint64_t> values) const {
+        if (values.empty()) return 0;
         std::sort(values.begin(), values.end());
         size_t mid = values.size() / 2;
         if (values.size() % 2 == 0) {
-            return (values[mid - 1] + values[mid]) / 2.0;
+            return (values[mid - 1] + values[mid]) / 2;
         }
         return values[mid];
     }
@@ -323,15 +310,19 @@ private:
     bool isByzantine(const TelemetrySample& sample, 
                      const TelemetrySample& consensus) const {
         // Modified Z-score approach for outlier detection
-        double latencyDiff = std::abs(sample.compute.latencyMs - 
-                                      consensus.compute.latencyMs);
-        double cpuDiff = std::abs(sample.compute.cpuUtilization - 
-                                  consensus.compute.cpuUtilization);
+        uint64_t sampleLatencyFp = sample.compute.latencyMsFp;
+        uint64_t consLatencyFp = consensus.compute.latencyMsFp;
+        uint64_t latencyDiffFp = (sampleLatencyFp > consLatencyFp) ? (sampleLatencyFp - consLatencyFp) : (consLatencyFp - sampleLatencyFp);
         
-        // Threshold: 3 standard deviations
-        double threshold = 3.0 * consensus.compute.latencyMs * 0.1;  // 30% variance
+        uint64_t sampleCpuFp = sample.compute.cpuUtilizationFp;
+        uint64_t consCpuFp = consensus.compute.cpuUtilizationFp;
+        uint64_t cpuDiffFp = (sampleCpuFp > consCpuFp) ? (sampleCpuFp - consCpuFp) : (consCpuFp - sampleCpuFp);
         
-        return (latencyDiff > threshold) || (cpuDiff > 0.3);
+        // Threshold: 3 standard deviations (approximated here as 30% of consensus latency)
+        uint64_t thresholdFp = (3000 * consLatencyFp) / FIXED_POINT_SCALE;  // 3.0 * 0.1 = 0.3 -> 3000 scaled
+
+        // cpu threshold > 0.3 (3000 scaled)
+        return (latencyDiffFp > thresholdFp) || (cpuDiffFp > 3000);
     }
     
     static void recordIncident(const std::string& type, const std::string& details) {
@@ -352,38 +343,39 @@ struct NodeTelemetryHistory {
         history.push_back(sample);
     }
 
-    double avgLatency() const {
-        if (history.empty()) return 0.0;
-        double sum = 0.0;
-        for (const auto& s : history) sum += s.compute.latencyMs;
+    uint64_t avgLatencyFp() const {
+        if (history.empty()) return 0;
+        uint64_t sum = 0;
+        for (const auto& s : history) sum += s.compute.latencyMsFp;
         return sum / history.size();
     }
 
-    double avgCompute() const {
-        if (history.empty()) return 0.0;
-        double sum = 0.0;
+    uint64_t avgComputeFp() const {
+        if (history.empty()) return 0;
+        uint64_t sum = 0;
         for (const auto& s : history) {
-            sum += s.compute.cpuUtilization + 
-                   s.compute.npuUtilization + 
-                   s.compute.gpuUtilization;
+            sum += s.compute.cpuUtilizationFp +
+                   s.compute.npuUtilizationFp +
+                   s.compute.gpuUtilizationFp;
         }
         return sum / history.size();
     }
 
-    double avgEnergyEfficiency() const {
-        if (history.empty()) return 0.0;
-        double sum = 0.0;
+    uint64_t avgEnergyEfficiencyFp() const {
+        if (history.empty()) return 0;
+        uint64_t sum = 0;
         for (const auto& s : history) {
-            sum += s.energy.inputPowerW > 0 ? 
-                   s.compute.cpuUtilization / s.energy.inputPowerW : 0.0;
+            if (s.energy.inputPowerWFp > 0) {
+                sum += (s.compute.cpuUtilizationFp * FIXED_POINT_SCALE) / s.energy.inputPowerWFp;
+            }
         }
         return sum / history.size();
     }
 
-    double avgPrivacyBudget() const {
-        if (history.empty()) return 0.0;
-        double sum = 0.0;
-        for (const auto& s : history) sum += s.privacy.epsilon;
+    uint64_t avgPrivacyBudgetFp() const {
+        if (history.empty()) return 0;
+        uint64_t sum = 0;
+        for (const auto& s : history) sum += s.privacy.epsilonFp;
         return sum / history.size();
     }
 };
@@ -413,30 +405,35 @@ public:
     /**
      * NEW: Submit energy contribution with cryptographic proof
      */
-    bool submitEnergyContribution(const EnergyProof& proof) {
-        if (!energyTelemetry_->verifyEnergyContribution(proof)) {
+    bool submitEnergyContribution(const EnergyProof& proof, uint64_t protocolTimestampMs) {
+        if (!energyTelemetry_->verifyEnergyContribution(proof, protocolTimestampMs)) {
             return false;
         }
         
         // Calculate and accrue token reward
-        double reward = energyTelemetry_->calculateTokenReward(proof);
-        accrueReward("energy_contribution", reward);
+        uint64_t rewardFp = energyTelemetry_->calculateTokenReward(proof);
+        accrueReward("energy_contribution", rewardFp);
         
         return true;
     }
 
     FederatedUpdate runLocalTraining(
         const std::string& modelId, 
-        const std::vector<float>& miniBatch
+        const std::vector<float>& miniBatch,
+        uint64_t computeTimeMs,
+        uint64_t protocolTimestampMs
     ) {
         FederatedUpdate up;
         up.taskId = modelId;
         auto lastSample = last();
-        double epsilon = lastSample.has_value() ? lastSample->privacy.epsilon : 1.0;
-        up.epsilonSpent = epsilon;
+        uint64_t epsilonFp = lastSample.has_value() ? lastSample->privacy.epsilonFp : FIXED_POINT_SCALE;
+        up.epsilonSpent = static_cast<double>(epsilonFp) / FIXED_POINT_SCALE; // Keep FederatedUpdate interface if needed or fix later
+        up.computeTime = std::chrono::milliseconds(computeTimeMs);
+        up.submissionTime = std::chrono::system_clock::time_point(std::chrono::milliseconds(protocolTimestampMs));
 
         float sum = std::accumulate(miniBatch.begin(), miniBatch.end(), 0.0f);
-        sum += static_cast<float>(randomNoise(1.0 / epsilon));
+        // Removed non-deterministic random noise.
+
         // Store gradient as raw bytes in deltaBytes
         up.deltaBytes.resize(sizeof(float));
         std::memcpy(up.deltaBytes.data(), &sum, sizeof(float));
@@ -446,14 +443,15 @@ public:
     ZKProofStub verifyComputation(
         const std::string& taskId,
         const std::string& circuitId,
-        const std::string& resultHash
+        const std::string& resultHash,
+        uint64_t protocolTimestampMs
     ) {
         auto proof = zkEngine_.generateProof(taskId, resultHash);
         ZKProofStub p;
         p.circuitId = circuitId;
         p.proofHash = proof.proofData;
         p.verified = zkEngine_.verifyProof(proof);
-        p.timestampMs = timestampMs();
+        p.timestampMs = protocolTimestampMs;
         lastZKProof_ = p;
         return p;
     }
@@ -478,7 +476,7 @@ private:
 
 class EnhancedMeshCoordinator : public MeshCoordinator {
 public:
-    using TaskFn = std::function<double(const EnhancedAmbientNode&)>;
+    using TaskFn = std::function<uint64_t(const EnhancedAmbientNode&)>;
 
     explicit EnhancedMeshCoordinator(std::string clusterId)
         : MeshCoordinator(clusterId),
@@ -502,7 +500,7 @@ public:
                 ConsensusMechanism::SignedTelemetry st;
                 st.sample = *last;
                 st.nodePublicKey = node->id().pubkey;
-                st.signatureTimestamp = timestampMs();
+                st.signatureTimestamp = st.sample.protocolTimestampMs;
                 // In production: Actually sign with node's private key
                 st.nodeSignature = {0x01, 0x02, 0x03};
                 samples.push_back(st);
@@ -515,25 +513,25 @@ public:
     EnhancedAmbientNode* selectNodeForTask() {
         std::lock_guard<std::mutex> lock(mu_);
         EnhancedAmbientNode* best = nullptr;
-        double bestScore = -1.0;
+        int64_t bestScoreFp = -1;
 
         for (auto* n : nodes_) {
             auto last = n->last();
             if (!last.has_value()) continue;
             if (n->isSafeMode()) continue;
 
-            double efficiency = n->getHistory().avgEnergyEfficiency();
-            double latency = n->getHistory().avgLatency();
-            double privacy = n->getHistory().avgPrivacyBudget();
-            double reputation = n->reputation().score;
+            uint64_t efficiencyFp = n->getHistory().avgEnergyEfficiencyFp();
+            uint64_t latencyFp = n->getHistory().avgLatencyFp();
+            uint64_t privacyFp = n->getHistory().avgPrivacyBudgetFp();
+            uint64_t reputationFp = n->reputation().scoreFp;
 
-            double score = efficiency * 0.4 + 
-                          reputation * 0.3 + 
-                          privacy * 0.2 - 
-                          latency * 0.1;
+            int64_t scoreFp = (efficiencyFp * 4) / 10 +
+                              (reputationFp * 3) / 10 +
+                              (privacyFp * 2) / 10 -
+                              (latencyFp * 1) / 10;
                           
-            if (score > bestScore) { 
-                bestScore = score; 
+            if (scoreFp > bestScoreFp) {
+                bestScoreFp = scoreFp;
                 best = n; 
             }
         }
@@ -543,16 +541,16 @@ public:
     IncentiveRecord dispatchAndReward(
         const std::string& taskId, 
         TaskFn fn, 
-        double baseRewardTokens
+        uint64_t baseRewardTokensFp
     ) {
         EnhancedAmbientNode* n = selectNodeForTask();
         if (!n) {
-            return IncentiveRecord{taskId, NodeId{"", "", ""}, 0.0, false};
+            return IncentiveRecord{taskId, NodeId{"", "", ""}, 0, false};
         }
 
-        double multiplier = fn(*n);
-        double reward = baseRewardTokens * multiplier;
-        return n->accrueReward(taskId, reward);
+        uint64_t multiplierFp = fn(*n);
+        uint64_t rewardFp = (baseRewardTokensFp * multiplierFp) / FIXED_POINT_SCALE;
+        return n->accrueReward(taskId, rewardFp);
     }
 
 private:
@@ -565,33 +563,37 @@ private:
 // BYZANTINE FAULT DETECTION
 // ============================================================================
 
-bool detectByzantineNode(
+bool detectByzantineNodeFp(
     const TelemetrySample& sample,
     const std::vector<TelemetrySample>& peerSamples,
-    double threshold = 3.0
+    uint64_t thresholdFp = 30000 // 3.0 scaled
 ) {
     if (peerSamples.size() < 3) return false;
 
-    std::vector<double> computeVals;
+    std::vector<uint64_t> computeVals;
     for (const auto& peer : peerSamples) {
-        computeVals.push_back(peer.compute.cpuUtilization);
+        computeVals.push_back(peer.compute.cpuUtilizationFp);
     }
 
     std::sort(computeVals.begin(), computeVals.end());
-    double median = computeVals[computeVals.size() / 2];
+    uint64_t medianFp = computeVals[computeVals.size() / 2];
 
-    std::vector<double> deviations;
-    for (double val : computeVals) {
-        deviations.push_back(std::abs(val - median));
+    std::vector<uint64_t> deviations;
+    for (uint64_t val : computeVals) {
+        deviations.push_back((val > medianFp) ? (val - medianFp) : (medianFp - val));
     }
     std::sort(deviations.begin(), deviations.end());
-    double mad = deviations[deviations.size() / 2];
+    uint64_t madFp = deviations[deviations.size() / 2];
 
-    double modifiedZ = 0.6745 * 
-                      std::abs(sample.compute.cpuUtilization - median) / 
-                      (mad + 1e-9);
+    uint64_t sampleValFp = sample.compute.cpuUtilizationFp;
+    uint64_t diffFp = (sampleValFp > medianFp) ? (sampleValFp - medianFp) : (medianFp - sampleValFp);
+
+    uint64_t denominatorFp = madFp + 1; // +1 to avoid div zero
+
+    // 0.6745 is 6745 / 10000
+    uint64_t modifiedZFp = (6745 * diffFp) / denominatorFp;
                       
-    return modifiedZ > threshold;
+    return modifiedZFp > thresholdFp;
 }
 
 // ============================================================================
@@ -600,7 +602,7 @@ bool detectByzantineNode(
 
 struct TokenReward {
     std::string recipientPubkey;
-    double tokenAmount;
+    uint64_t tokenAmountFp;
     uint64_t timestampMs;
     std::string txHash;
     std::string rewardType;  // "compute", "energy", "validation"
@@ -608,26 +610,31 @@ struct TokenReward {
 
 TokenReward calculateTokenReward(
     const TelemetrySample& sample, 
-    double baseRewardRate = 0.001
+    uint64_t baseRewardRateFp = 10 // defaults to 0.001 scaled
 ) {
     TokenReward reward;
     reward.recipientPubkey = sample.node.pubkey;
-    reward.timestampMs = timestampMs();
+    reward.timestampMs = sample.protocolTimestampMs;
     reward.rewardType = "compute";
 
-    double computeContribution = sample.compute.cpuUtilization;
-    double efficiencyMultiplier = 1.0 + 
-        computeContribution / std::max(0.01, sample.energy.inputPowerW);
-    double reputationMultiplier = 1.0;  // reputation tracked separately in Reputation::score
+    uint64_t computeContributionFp = sample.compute.cpuUtilizationFp;
 
-    reward.tokenAmount = computeContribution * 
-                        baseRewardRate * 
-                        efficiencyMultiplier * 
-                        reputationMultiplier;
+    uint64_t efficiencyMultiplierFp = FIXED_POINT_SCALE;
+    uint64_t inputPowerWFp = sample.energy.inputPowerWFp;
+    if (inputPowerWFp < (FIXED_POINT_SCALE / 100)) {
+        inputPowerWFp = FIXED_POINT_SCALE / 100; // max(0.01 scaled)
+    }
+    efficiencyMultiplierFp += (computeContributionFp * FIXED_POINT_SCALE) / inputPowerWFp;
+
+    uint64_t reputationMultiplierFp = FIXED_POINT_SCALE;
+
+    uint64_t amount1 = (computeContributionFp * baseRewardRateFp) / FIXED_POINT_SCALE;
+    uint64_t amount2 = (amount1 * efficiencyMultiplierFp) / FIXED_POINT_SCALE;
+    reward.tokenAmountFp = (amount2 * reputationMultiplierFp) / FIXED_POINT_SCALE;
 
     std::ostringstream ss;
     ss << "0x" << std::hash<std::string>{}(
-        sample.node.pubkey + std::to_string(timestampMs())
+        sample.node.pubkey + std::to_string(sample.protocolTimestampMs)
     );
     reward.txHash = ss.str();
 
@@ -639,46 +646,47 @@ TokenReward calculateTokenReward(
 // ============================================================================
 
 struct SystemHealth {
-    double avgLatency_ms;
-    double totalComputePower;
-    double networkEfficiency;
+    uint64_t avgLatencyMsFp;
+    uint64_t totalComputePowerFp;
+    uint64_t networkEfficiencyFp;
     int activeNodes;
     int byzantineNodesDetected;
-    double avgPrivacyBudget;
-    double consensusConfidence;
-    double totalEnergyContributed_kWh;
-    uint64_t timestamp;
+    uint64_t avgPrivacyBudgetFp;
+    uint64_t consensusConfidenceFp;
+    uint64_t totalEnergyContributed_kWhFp;
+    uint64_t timestampMs;
 };
 
 SystemHealth analyzeSystemHealth(
     const std::vector<TelemetrySample>& networkState,
-    const ConsensusMechanism::ConsensusResult& consensus
+    const ConsensusMechanism::ConsensusResult& consensus,
+    uint64_t protocolTimestampMs
 ) {
     SystemHealth health{0,0,0,0,0,0,0,0,0};
-    health.timestamp = timestampMs();
+    health.timestampMs = protocolTimestampMs;
 
     if (networkState.empty()) return health;
 
     health.activeNodes = networkState.size();
-    health.consensusConfidence = consensus.consensusConfidence;
+    health.consensusConfidenceFp = consensus.consensusConfidenceFp;
     health.byzantineNodesDetected = consensus.byzantineNodes.size();
     
-    double totalPower = 0.0;
+    uint64_t totalPowerFp = 0;
 
     for (const auto& sample : networkState) {
-        health.avgLatency_ms += sample.compute.latencyMs;
-        health.totalComputePower += sample.compute.cpuUtilization;
-        health.avgPrivacyBudget += sample.privacy.epsilon;
-        totalPower += sample.energy.inputPowerW;
+        health.avgLatencyMsFp += sample.compute.latencyMsFp;
+        health.totalComputePowerFp += sample.compute.cpuUtilizationFp;
+        health.avgPrivacyBudgetFp += sample.privacy.epsilonFp;
+        totalPowerFp += sample.energy.inputPowerWFp;
     }
 
     if (health.activeNodes > 0) {
-        health.avgLatency_ms /= health.activeNodes;
-        health.avgPrivacyBudget /= health.activeNodes;
+        health.avgLatencyMsFp /= health.activeNodes;
+        health.avgPrivacyBudgetFp /= health.activeNodes;
     }
     
-    health.networkEfficiency = totalPower > 0 ? 
-        health.totalComputePower / totalPower : 0.0;
+    health.networkEfficiencyFp = totalPowerFp > 0 ?
+        (health.totalComputePowerFp * FIXED_POINT_SCALE) / totalPowerFp : 0;
 
     return health;
 }
@@ -689,15 +697,15 @@ SystemHealth analyzeSystemHealth(
 std::string exportHealthToJSON(const SystemHealth& health) {
     std::ostringstream json;
     json << "{\n";
-    json << "  \"timestamp\": " << health.timestamp << ",\n";
+    json << "  \"timestampMs\": " << health.timestampMs << ",\n";
     json << "  \"activeNodes\": " << health.activeNodes << ",\n";
-    json << "  \"avgLatency_ms\": " << health.avgLatency_ms << ",\n";
-    json << "  \"totalComputePower\": " << health.totalComputePower << ",\n";
-    json << "  \"networkEfficiency\": " << health.networkEfficiency << ",\n";
+    json << "  \"avgLatencyMsFp\": " << health.avgLatencyMsFp << ",\n";
+    json << "  \"totalComputePowerFp\": " << health.totalComputePowerFp << ",\n";
+    json << "  \"networkEfficiencyFp\": " << health.networkEfficiencyFp << ",\n";
     json << "  \"byzantineNodes\": " << health.byzantineNodesDetected << ",\n";
-    json << "  \"consensusConfidence\": " << health.consensusConfidence << ",\n";
-    json << "  \"totalEnergyContributed_kWh\": " 
-         << health.totalEnergyContributed_kWh << "\n";
+    json << "  \"consensusConfidenceFp\": " << health.consensusConfidenceFp << ",\n";
+    json << "  \"totalEnergyContributed_kWhFp\": "
+         << health.totalEnergyContributed_kWhFp << "\n";
     json << "}";
     return json.str();
 }
