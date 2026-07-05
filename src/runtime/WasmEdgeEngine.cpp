@@ -150,7 +150,7 @@ WasmResult WasmEdgeEngine::executeInternal(const WasmCall& call, bool recordTrac
     // Deterministic fail-closed for WasmEdge integration
     result.success = false;
     result.error = "NOT_IMPLEMENTED_WASM";
-    result.errorCode = static_cast<uint32_t>(WasmErrorCode::INVALID_MODULE); // Or appropriate code
+    result.errorCode = static_cast<uint32_t>(static_cast<uint32_t>(1)); // Or appropriate code
     
     auto endTime = std::chrono::high_resolution_clock::now();
     result.metrics.executionTime = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);

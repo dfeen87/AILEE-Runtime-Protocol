@@ -250,6 +250,17 @@ set(POLICY_HEADERS
 )
 
 # Adapter implementation sources
+file(GLOB AMBIENT_NODE_SOURCES "src/ambient_node/*.cpp")
+file(GLOB AMBIENT_MESH_SOURCES "src/ambient_mesh/*.cpp")
+file(GLOB PARTICIPATION_SOURCES "src/participation/*.cpp")
+file(GLOB CONSENSUS_SOURCES "src/consensus/*.cpp")
+file(GLOB RUNTIME_SOURCES "src/runtime/ambient_*.cpp" "src/runtime/BitVM*.cpp" "src/runtime/Wasm*.cpp")
+file(GLOB PROTOCOL_SOURCES "src/protocol/*.cpp")
+file(GLOB ENERGY_SOURCES "src/energy/*.cpp")
+file(GLOB AMBIENT_SOURCES_2 "src/ambient/*.cpp")
+file(GLOB ANCHORING_SOURCES "src/anchoring/*.cpp")
+file(GLOB IDENTITY_SOURCES "src/identity/*.cpp")
+
 set(ADAPTER_SOURCES
     src/l1/BitcoinZMQListener.cpp
     src/l1/BitcoinAdapter.cpp
@@ -320,6 +331,16 @@ set(CORE_SOURCES
     src/l2/Mempool.cpp
     src/AILEEWebServer.cpp
     ${ADAPTER_SOURCES}
+    ${AMBIENT_NODE_SOURCES}
+    ${AMBIENT_MESH_SOURCES}
+    ${PARTICIPATION_SOURCES}
+    ${CONSENSUS_SOURCES}
+    ${RUNTIME_SOURCES}
+    ${PROTOCOL_SOURCES}
+    ${ENERGY_SOURCES}
+    ${AMBIENT_SOURCES_2}
+    ${ANCHORING_SOURCES}
+    ${IDENTITY_SOURCES}
     ${AMBIENT_SOURCES}
     ${INFRASTRUCTURE_SOURCES}
     ${POLICY_SOURCES}
@@ -519,6 +540,16 @@ endif()
 # Useful for testing adapters without running the full node
 add_library(ailee_adapters STATIC 
     ${ADAPTER_SOURCES}
+    ${AMBIENT_NODE_SOURCES}
+    ${AMBIENT_MESH_SOURCES}
+    ${PARTICIPATION_SOURCES}
+    ${CONSENSUS_SOURCES}
+    ${RUNTIME_SOURCES}
+    ${PROTOCOL_SOURCES}
+    ${ENERGY_SOURCES}
+    ${AMBIENT_SOURCES_2}
+    ${ANCHORING_SOURCES}
+    ${IDENTITY_SOURCES}
     ${AMBIENT_SOURCES}
     ${INFRASTRUCTURE_SOURCES}
     ${POLICY_SOURCES}
