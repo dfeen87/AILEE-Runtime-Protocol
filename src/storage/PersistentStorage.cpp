@@ -139,4 +139,34 @@ bool PersistentStorage::exists(const std::string& key) {
 #endif
 }
 
+bool PersistentStorage::executeBatch(const std::vector<BatchOp>& ops) {
+#ifdef AILEE_HAS_ROCKSDB
+    if (!impl_->db) {
+        return false;
+    }
+
+    rocksdb::WriteBatch batch;
+    for (const auto& op : ops) {
+        if (op.type == BatchOpType::PUT) {
+            batch.Put(op.key, op.value);
+        } else if (op.type == BatchOpType::DEL) {
+            batch.Delete(op.key);
+        }
+    }
+
+    rocksdb::WriteOptions writeOptions;
+    writeOptions.sync = true; // Ensure data is synced to disk for batch operations
+
+    rocksdb::Status status = impl_->db->Write(writeOptions, &batch);
+    if (!status.ok()) {
+        std::cerr << "[PersistentStorage] WriteBatch failed: " << status.ToString() << std::endl;
+        return false;
+    }
+    return true;
+#else
+    (void)ops;
+    return false;
+#endif
+}
+
 } // namespace ailee::storage

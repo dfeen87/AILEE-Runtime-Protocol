@@ -24,6 +24,11 @@
 #include <openssl/sha.h>
 #include <openssl/evp.h>
 
+#include <nlohmann/json.hpp>
+#include "../storage/PersistentStorage.h"
+#include "../l1/BitcoinRPCClient.h"
+
+
 namespace ailee {
 
 // Configuration constants
@@ -170,42 +175,52 @@ public:
         loc.address = address;
         loc.totalWeightOz = 0.0;
         loc.lastRestockTimestamp = getCurrentTimestamp();
-        locations_[locationId] = loc;
+
+        storage_->put("gold_inv_loc_" + locationId, loc_to_json(loc).dump());
+        auto idxOpt = storage_->get("gold_inv_locs_index");
+        std::vector<std::string> locs;
+        if (idxOpt) {
+            auto arr_j = nlohmann::json::parse(*idxOpt);
+            for (const auto& val : arr_j) locs.push_back(val.get<std::string>());
+        }
+        if (std::find(locs.begin(), locs.end(), locationId) == locs.end()) {
+            locs.push_back(locationId);
+            nlohmann::json::array_t locs_arr;
+            for(const auto& str : locs) locs_arr.push_back(nlohmann::json(str));
+            storage_->put("gold_inv_locs_index", nlohmann::json(locs_arr).dump());
+        }
     }
 
     bool addGoldCoin(const std::string& locationId, 
                      const InventoryItem& item) {
-        auto it = locations_.find(locationId);
-        if (it == locations_.end()) return false;
-
-        it->second.items.push_back(item);
-        it->second.totalWeightOz += item.weightOz;
+        auto locOpt = storage_->get("gold_inv_loc_" + locationId);
+        if (!locOpt) return false;
+        auto loc = loc_from_json(nlohmann::json::parse(*locOpt));
+        loc.items.push_back(item);
+        loc.totalWeightOz += item.weightOz;
+        storage_->put("gold_inv_loc_" + locationId, loc_to_json(loc).dump());
         return true;
     }
 
     std::optional<InventoryItem> reserveGold(GoldDenomination denom,
                                              const std::string& preferredLocation = "") {
-        // Try preferred location first
         if (!preferredLocation.empty()) {
             auto item = findAndReserve(preferredLocation, denom);
             if (item.has_value()) return item;
         }
-
-        // Search all locations
-        for (auto& loc : locations_) {
-            auto item = findAndReserve(loc.first, denom);
+        for (const auto& locId : getLocations()) {
+            auto item = findAndReserve(locId, denom);
             if (item.has_value()) return item;
         }
-
-        return std::nullopt; // Out of stock
+        return std::nullopt;
     }
 
     double getAvailableWeight(const std::string& locationId) const {
-        auto it = locations_.find(locationId);
-        if (it == locations_.end()) return 0.0;
-
+        auto locOpt = storage_->get("gold_inv_loc_" + locationId);
+        if (!locOpt) return 0.0;
+        auto loc = loc_from_json(nlohmann::json::parse(*locOpt));
         double available = 0.0;
-        for (const auto& item : it->second.items) {
+        for (const auto& item : loc.items) {
             if (item.available) {
                 available += item.weightOz;
             }
@@ -214,27 +229,106 @@ public:
     }
 
     std::vector<std::string> getLocations() const {
+        auto idxOpt = storage_->get("gold_inv_locs_index");
         std::vector<std::string> locs;
-        for (const auto& pair : locations_) {
-            locs.push_back(pair.first);
-        }
+        if (!idxOpt) return locs;
+        auto arr_j = nlohmann::json::parse(*idxOpt);
+        for (const auto& val : arr_j) locs.push_back(val.get<std::string>());
         return locs;
     }
 
     bool markAsDispensed(const std::string& serialNumber) {
-        for (auto& loc : locations_) {
-            for (auto& item : loc.second.items) {
-                if (item.serialNumber == serialNumber) {
-                    item.available = false;
-                    return true;
-                }
-            }
-        }
+        auto op = getMarkAsDispensedOp(serialNumber);
+        if (op) return storage_->put(op->key, op->value);
         return false;
     }
 
+public:
+    GoldInventory(ailee::storage::PersistentStorage* storage) : storage_(storage) {
+        if (!storage_) throw std::runtime_error("Storage uninitialized");
+    }
+
+    nlohmann::json item_to_json(const InventoryItem& i) const {
+        nlohmann::json j(nlohmann::json::object_t{});
+        j["serialNumber"] = i.serialNumber;
+        j["denomination"] = static_cast<int>(i.denomination);
+        j["weightOz"] = i.weightOz;
+        j["location"] = i.location;
+        j["available"] = i.available;
+        j["lastAuditTimestamp"] = static_cast<double>(i.lastAuditTimestamp);
+        return j;
+    }
+
+    InventoryItem item_from_json(const nlohmann::json& j) const {
+        InventoryItem i;
+        i.serialNumber = j.value("serialNumber", std::string());
+        i.denomination = static_cast<GoldDenomination>(static_cast<int>(j.value("denomination", 0.0)));
+        i.weightOz = j.value("weightOz", 0.0);
+        i.location = j.value("location", std::string());
+        i.available = j.value("available", false);
+        i.lastAuditTimestamp = static_cast<uint64_t>(j.value("lastAuditTimestamp", 0.0));
+        return i;
+    }
+
+    nlohmann::json loc_to_json(const LocationInventory& l) const {
+        nlohmann::json j(nlohmann::json::object_t{});
+        j["locationId"] = l.locationId;
+        j["address"] = l.address;
+
+        nlohmann::json::array_t items_arr;
+        for (const auto& item : l.items) {
+            items_arr.push_back(item_to_json(item));
+        }
+        j["items"] = nlohmann::json(items_arr);
+        j["totalWeightOz"] = l.totalWeightOz;
+        j["lastRestockTimestamp"] = static_cast<double>(l.lastRestockTimestamp);
+        return j;
+    }
+
+    LocationInventory loc_from_json(const nlohmann::json& j) const {
+        LocationInventory l;
+        if (j.contains("locationId")) l.locationId = j["locationId"].get<std::string>();
+        if (j.contains("address")) l.address = j["address"].get<std::string>();
+
+        if (j.contains("items")) {
+            for (const auto& item_j : j["items"]) {
+                l.items.push_back(item_from_json(item_j));
+            }
+        }
+
+        if (j.contains("totalWeightOz")) l.totalWeightOz = j["totalWeightOz"].get<double>();
+        if (j.contains("lastRestockTimestamp")) l.lastRestockTimestamp = static_cast<uint64_t>(j["lastRestockTimestamp"].get<double>());
+        return l;
+    }
+
+    std::optional<ailee::storage::PersistentStorage::BatchOp> getMarkAsDispensedOp(const std::string& serialNumber) {
+        if (!storage_) throw std::runtime_error("Storage uninitialized");
+        for (const auto& locId : getLocations()) {
+            auto locOpt = storage_->get("gold_inv_loc_" + locId);
+            if (!locOpt) continue;
+
+            auto loc = loc_from_json(nlohmann::json::parse(*locOpt));
+            bool found = false;
+            for (auto& item : loc.items) {
+                if (item.serialNumber == serialNumber) {
+                    item.available = false;
+                    found = true;
+                    break;
+                }
+            }
+            if (found) {
+                ailee::storage::PersistentStorage::BatchOp op;
+                op.type = ailee::storage::PersistentStorage::BatchOpType::PUT;
+                op.key = "gold_inv_loc_" + locId;
+                op.value = loc_to_json(loc).dump();
+                return op;
+            }
+        }
+        return std::nullopt;
+    }
+
 private:
-    std::map<std::string, LocationInventory> locations_;
+    ailee::storage::PersistentStorage* storage_;
 
     uint64_t getCurrentTimestamp() const {
         return static_cast<uint64_t>(
@@ -244,13 +338,11 @@ private:
 
     std::optional<InventoryItem> findAndReserve(const std::string& locationId,
                                                 GoldDenomination denom) {
-        auto it = locations_.find(locationId);
-        if (it == locations_.end()) return std::nullopt;
-
-        for (auto& item : it->second.items) {
-            if (item.available && item.denomination == denom) {
-                return item;
-            }
+        auto locOpt = storage_->get("gold_inv_loc_" + locationId);
+        if (!locOpt) return std::nullopt;
+        auto loc = loc_from_json(nlohmann::json::parse(*locOpt));
+        for (auto& item : loc.items) {
+            if (item.available && item.denomination == denom) return item;
         }
         return std::nullopt;
     }
@@ -297,26 +389,22 @@ public:
         return proof;
     }
 
-    static bool verifyBurnProof(const BurnProof& proof, size_t minConfirmations) {
-        (void)minConfirmations; // Muted unused parameter warning
-        // Verify burn address is provably unspendable
-        if (!isValidBurnAddress(proof.burnAddress)) {
-            return false;
+    static bool verifyBurnProof(const BurnProof& proof, size_t minConfirmations, ailee::BitcoinRPCClient* rpcClient = nullptr) {
+        if (!isValidBurnAddress(proof.burnAddress)) return false;
+
+        std::string proofData = proof.txId + std::to_string(proof.voutIndex) + std::to_string(proof.amountSatoshis);
+        auto expectedHash = sha256Hash(std::vector<uint8_t>(proofData.begin(), proofData.end()));
+
+        if (expectedHash != proof.merkleProof) return false;
+
+        if (rpcClient) {
+            long confirmations = rpcClient->getTxConfirmations(proof.txId);
+            if (confirmations < 0) return false;
+            if (static_cast<size_t>(confirmations) < minConfirmations) return false;
+            return true;
         }
 
-        // Verify Merkle proof (simplified verification)
-        std::string proofData = proof.txId + std::to_string(proof.voutIndex) 
-                              + std::to_string(proof.amountSatoshis);
-        auto expectedHash = sha256Hash(
-            std::vector<uint8_t>(proofData.begin(), proofData.end())
-        );
-
-        if (expectedHash != proof.merkleProof) {
-            return false;
-        }
-
-        // In production, verify confirmations on Bitcoin blockchain
-        return true;
+        return false;
     }
 
 private:
@@ -325,19 +413,19 @@ private:
         return "1BitcoinEaterAddressDontSendf59kuE";
     }
 
-    static bool isValidBurnAddress(const std::string& address) {
+    static inline bool isValidBurnAddress(const std::string& address) {
         // Verify it's a known burn address pattern
         return address.find("BitcoinEater") != std::string::npos ||
                address.find("1111111111111111111114oLvT2") != std::string::npos;
     }
 
-    static uint64_t getCurrentTimestamp() {
+    static inline uint64_t getCurrentTimestamp() {
         return static_cast<uint64_t>(
             std::chrono::system_clock::now().time_since_epoch().count() / 1000000000
         );
     }
 
-    static std::vector<uint8_t> sha256Hash(const std::vector<uint8_t>& data) {
+    static inline std::vector<uint8_t> sha256Hash(const std::vector<uint8_t>& data) {
         std::vector<uint8_t> hash(SHA256_DIGEST_LENGTH);
         SHA256(data.data(), data.size(), hash.data());
         return hash;
@@ -365,6 +453,108 @@ public:
         const std::string& ownerAddress,
         const GoldInventory::InventoryItem& backingGold
     ) {
+        auto opsPair = getIssueTokenOps(ownerAddress, backingGold);
+        storage_->executeBatch(opsPair.second);
+        return opsPair.first;
+    }
+
+    bool redeemToken(const std::string& tokenId, const std::string& claimant) {
+        auto tokenOpt = storage_->get("gold_token_" + tokenId);
+        if (!tokenOpt) return false;
+        
+        auto token = token_from_json(nlohmann::json::parse(*tokenOpt));
+        if (token.redeemed) return false;
+        if (token.ownerAddress != claimant) return false;
+
+        std::string oldOwner = token.ownerAddress;
+        token.redeemed = true;
+        token.ownerAddress = "REDEEMED";
+        
+        std::vector<ailee::storage::PersistentStorage::BatchOp> ops;
+        ailee::storage::PersistentStorage::BatchOp tokenOp;
+        tokenOp.type = ailee::storage::PersistentStorage::BatchOpType::PUT;
+        tokenOp.key = "gold_token_" + tokenId;
+        tokenOp.value = token_to_json(token).dump();
+        ops.push_back(tokenOp);
+
+        auto ownerTokensOpt = storage_->get("gold_owner_" + oldOwner);
+        if (ownerTokensOpt) {
+            auto arr_j = nlohmann::json::parse(*ownerTokensOpt);
+            std::vector<std::string> owned;
+            for (const auto& val : arr_j) owned.push_back(val.get<std::string>());
+
+            auto it = std::find(owned.begin(), owned.end(), tokenId);
+            if (it != owned.end()) {
+                owned.erase(it);
+                nlohmann::json::array_t owned_arr;
+                for(const auto& str : owned) owned_arr.push_back(nlohmann::json(str));
+                ailee::storage::PersistentStorage::BatchOp ownerOp;
+                ownerOp.type = ailee::storage::PersistentStorage::BatchOpType::PUT;
+                ownerOp.key = "gold_owner_" + oldOwner;
+                ownerOp.value = nlohmann::json(owned_arr).dump();
+                ops.push_back(ownerOp);
+            }
+        }
+        return storage_->executeBatch(ops);
+    }
+
+    std::optional<GoldToken> getToken(const std::string& tokenId) const {
+        auto tokenOpt = storage_->get("gold_token_" + tokenId);
+        if (!tokenOpt) return std::nullopt;
+        return token_from_json(nlohmann::json::parse(*tokenOpt));
+    }
+
+    std::vector<GoldToken> getTokensByOwner(const std::string& owner) const {
+        std::vector<GoldToken> result;
+        auto ownerTokensOpt = storage_->get("gold_owner_" + owner);
+        if (!ownerTokensOpt) return result;
+
+        auto arr_j = nlohmann::json::parse(*ownerTokensOpt);
+        for (const auto& val : arr_j) {
+            auto tokenId = val.get<std::string>();
+            auto token = getToken(tokenId);
+            if (token && !token->redeemed) {
+                result.push_back(*token);
+            }
+        }
+        return result;
+    }
+
+public:
+    TokenizedGold(ailee::storage::PersistentStorage* storage) : storage_(storage) {
+        if (!storage_) throw std::runtime_error("Storage uninitialized");
+    }
+
+    nlohmann::json token_to_json(const GoldToken& t) const {
+        nlohmann::json j(nlohmann::json::object_t{});
+        j["tokenId"] = t.tokenId;
+        j["ownerAddress"] = t.ownerAddress;
+        j["weightOz"] = t.weightOz;
+        j["denomination"] = static_cast<int>(t.denomination);
+        j["backedBySerial"] = t.backedBySerial;
+        j["custodianLocation"] = t.custodianLocation;
+        j["issuanceTimestamp"] = static_cast<double>(t.issuanceTimestamp);
+        j["redeemed"] = t.redeemed;
+        return j;
+    }
+
+    GoldToken token_from_json(const nlohmann::json& j) const {
+        GoldToken t;
+        if (j.contains("tokenId")) t.tokenId = j["tokenId"].get<std::string>();
+        if (j.contains("ownerAddress")) t.ownerAddress = j["ownerAddress"].get<std::string>();
+        if (j.contains("weightOz")) t.weightOz = j["weightOz"].get<double>();
+        if (j.contains("denomination")) t.denomination = static_cast<GoldDenomination>(static_cast<int>(j["denomination"].get<double>()));
+        if (j.contains("backedBySerial")) t.backedBySerial = j["backedBySerial"].get<std::string>();
+        if (j.contains("custodianLocation")) t.custodianLocation = j["custodianLocation"].get<std::string>();
+        if (j.contains("issuanceTimestamp")) t.issuanceTimestamp = static_cast<uint64_t>(j["issuanceTimestamp"].get<double>());
+        if (j.contains("redeemed")) t.redeemed = j["redeemed"].get<bool>();
+        return t;
+    }
+
+    std::pair<std::string, std::vector<ailee::storage::PersistentStorage::BatchOp>> getIssueTokenOps(
+        const std::string& ownerAddress,
+        const GoldInventory::InventoryItem& backingGold
+    ) {
         GoldToken token;
         token.tokenId = generateTokenId(ownerAddress, backingGold.serialNumber);
         token.ownerAddress = ownerAddress;
@@ -375,43 +565,34 @@ public:
         token.issuanceTimestamp = getCurrentTimestamp();
         token.redeemed = false;
 
-        tokens_[token.tokenId] = token;
-        return token.tokenId;
-    }
+        std::vector<ailee::storage::PersistentStorage::BatchOp> ops;
+        ailee::storage::PersistentStorage::BatchOp tokenOp;
+        tokenOp.type = ailee::storage::PersistentStorage::BatchOpType::PUT;
+        tokenOp.key = "gold_token_" + token.tokenId;
+        tokenOp.value = token_to_json(token).dump();
+        ops.push_back(tokenOp);
 
-    bool redeemToken(const std::string& tokenId, const std::string& claimant) {
-        auto it = tokens_.find(tokenId);
-        if (it == tokens_.end()) return false;
-
-        GoldToken& token = it->second;
-        
-        if (token.redeemed) return false;
-        if (token.ownerAddress != claimant) return false;
-
-        token.redeemed = true;
-        token.ownerAddress = "REDEEMED";
-        
-        return true;
-    }
-
-    std::optional<GoldToken> getToken(const std::string& tokenId) const {
-        auto it = tokens_.find(tokenId);
-        if (it == tokens_.end()) return std::nullopt;
-        return it->second;
-    }
-
-    std::vector<GoldToken> getTokensByOwner(const std::string& owner) const {
-        std::vector<GoldToken> owned;
-        for (const auto& pair : tokens_) {
-            if (pair.second.ownerAddress == owner && !pair.second.redeemed) {
-                owned.push_back(pair.second);
-            }
+        std::vector<std::string> owned;
+        auto ownerTokensOpt = storage_->get("gold_owner_" + ownerAddress);
+        if (ownerTokensOpt) {
+            auto arr_j = nlohmann::json::parse(*ownerTokensOpt);
+            for (const auto& val : arr_j) owned.push_back(val.get<std::string>());
         }
-        return owned;
+        owned.push_back(token.tokenId);
+
+        nlohmann::json::array_t owned_arr;
+        for(const auto& str : owned) owned_arr.push_back(nlohmann::json(str));
+
+        ailee::storage::PersistentStorage::BatchOp ownerOp;
+        ownerOp.type = ailee::storage::PersistentStorage::BatchOpType::PUT;
+        ownerOp.key = "gold_owner_" + ownerAddress;
+        ownerOp.value = nlohmann::json(owned_arr).dump();
+        ops.push_back(ownerOp);
+        return {token.tokenId, ops};
     }
 
 private:
-    std::map<std::string, GoldToken> tokens_;
+    ailee::storage::PersistentStorage* storage_;
 
     uint64_t getCurrentTimestamp() const {
         return static_cast<uint64_t>(
@@ -534,6 +715,13 @@ public:
         return true;
     }
 
+    bool markTokenIssued(const std::string& tokenId) {
+        if (data_.status != Status::GOLD_RESERVED) return false;
+        data_.goldTokenId = tokenId;
+        data_.status = Status::TOKEN_ISSUED;
+        return true;
+    }
+
     bool completePhysicalDispense() {
         if (data_.status != Status::TOKEN_ISSUED) return false;
 
@@ -579,10 +767,12 @@ private:
  */
 class GoldBridge {
 public:
-    GoldBridge() 
-        : priceOracle_(std::make_unique<PriceOracle>()),
-          inventory_(std::make_unique<GoldInventory>()),
-          tokenSystem_(std::make_unique<TokenizedGold>()) {}
+    GoldBridge(ailee::storage::PersistentStorage* storage = nullptr, ailee::BitcoinRPCClient* rpcClient = nullptr)
+        : storage_(storage),
+          rpcClient_(rpcClient),
+          priceOracle_(std::make_unique<PriceOracle>()),
+          inventory_(std::make_unique<GoldInventory>(storage)),
+          tokenSystem_(std::make_unique<TokenizedGold>(storage)) {}
 
     std::string initiateConversion(
         const std::string& userAddress,
@@ -620,22 +810,33 @@ public:
 
         auto& tx = it->second;
 
-        // Lock price
+        if (tx->getData().burnOption) {
+            if (!ProofOfBurn::verifyBurnProof(tx->getData().burnProof, MIN_CONFIRMATIONS, rpcClient_)) {
+                return false;
+            }
+        }
+
         auto priceData = priceOracle_->getAggregatedPrice();
         if (!tx->lockPrice(priceData)) return false;
 
-        // Reserve gold
         if (!tx->reserveGold(*inventory_, denomination)) return false;
 
-        // Issue token
         auto item = inventory_->reserveGold(denomination);
         if (!item.has_value()) return false;
         
-        if (!tx->issueToken(*tokenSystem_, item.value())) return false;
+        if (storage_) {
+            std::vector<ailee::storage::PersistentStorage::BatchOp> batchOps;
+            auto dispenseOp = inventory_->getMarkAsDispensedOp(item->serialNumber);
+            if (!dispenseOp) return false;
+            batchOps.push_back(*dispenseOp);
 
-        // Mark as dispensed
-        inventory_->markAsDispensed(item->serialNumber);
-        
+            auto opsPair = tokenSystem_->getIssueTokenOps(tx->getData().userAddress, item.value());
+            batchOps.insert(batchOps.end(), opsPair.second.begin(), opsPair.second.end());
+
+            if (!storage_->executeBatch(batchOps)) return false;
+            tx->markTokenIssued(opsPair.first);
+        }
+
         return tx->completePhysicalDispense();
     }
 
@@ -654,6 +855,8 @@ public:
     TokenizedGold* getTokenSystem() { return tokenSystem_.get(); }
 
 private:
+    ailee::storage::PersistentStorage* storage_;
+    ailee::BitcoinRPCClient* rpcClient_;
     std::unique_ptr<PriceOracle> priceOracle_;
     std::unique_ptr<GoldInventory> inventory_;
     std::unique_ptr<TokenizedGold> tokenSystem_;

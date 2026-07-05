@@ -52,6 +52,14 @@ public:
     bool remove(const std::string& key);
     bool exists(const std::string& key);
 
+    enum class BatchOpType { PUT, DEL };
+    struct BatchOp {
+        BatchOpType type;
+        std::string key;
+        std::string value; // Only used for PUT
+    };
+    bool executeBatch(const std::vector<BatchOp>& ops);
+
 private:
     class Impl;
     std::unique_ptr<Impl> impl_;
