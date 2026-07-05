@@ -139,9 +139,83 @@ bool PersistentStorage::exists(const std::string& key) {
 #endif
 }
 
-bool PersistentStorage::executeBatch(const std::vector<BatchOp>& ops) {
+class PersistentStorage::WriteBatch::Impl {
+public:
+#ifdef AILEE_HAS_ROCKSDB
+    rocksdb::WriteBatch batch;
+#endif
+    size_t count = 0;
+};
+
+PersistentStorage::WriteBatch::WriteBatch() : impl_(std::make_unique<Impl>()) {}
+PersistentStorage::WriteBatch::~WriteBatch() = default;
+PersistentStorage::WriteBatch::WriteBatch(WriteBatch&&) noexcept = default;
+PersistentStorage::WriteBatch& PersistentStorage::WriteBatch::operator=(WriteBatch&&) noexcept = default;
+
+void PersistentStorage::WriteBatch::put(const std::string& key, const std::string& value) {
+#ifdef AILEE_HAS_ROCKSDB
+    impl_->batch.Put(key, value);
+#else
+    (void)key;
+    (void)value;
+#endif
+    impl_->count++;
+}
+
+void PersistentStorage::WriteBatch::remove(const std::string& key) {
+#ifdef AILEE_HAS_ROCKSDB
+    impl_->batch.Delete(key);
+#else
+    (void)key;
+#endif
+    impl_->count++;
+}
+
+void PersistentStorage::WriteBatch::clear() {
+#ifdef AILEE_HAS_ROCKSDB
+    impl_->batch.Clear();
+#endif
+    impl_->count = 0;
+}
+
+bool PersistentStorage::commitBatch(const WriteBatch& batch) {
+    if (!batch.getImpl() || batch.getImpl()->count == 0) {
+        std::cerr << "[PersistentStorage] commitBatch failed: empty or malformed batch" << std::endl;
+        return false;
+    }
 #ifdef AILEE_HAS_ROCKSDB
     if (!impl_->db) {
+        std::cerr << "[PersistentStorage] commitBatch failed: database not open" << std::endl;
+        return false;
+    }
+
+    rocksdb::WriteOptions writeOptions;
+    writeOptions.sync = true; // Ensure deterministic atomicity
+
+    // Const-cast away the constness of WriteBatch because RocksDB's Write()
+    // signature confusingly takes a non-const WriteBatch pointer (even though
+    // it conceptually just reads the batch to write it).
+    rocksdb::WriteBatch* mutableBatch = const_cast<rocksdb::WriteBatch*>(&batch.getImpl()->batch);
+    rocksdb::Status status = impl_->db->Write(writeOptions, mutableBatch);
+    if (!status.ok()) {
+        std::cerr << "[PersistentStorage] commitBatch failed: " << status.ToString() << std::endl;
+        return false;
+    }
+    return true;
+#else
+    (void)batch;
+    return false;
+#endif
+}
+
+bool PersistentStorage::executeBatch(const std::vector<BatchOp>& ops) {
+    if (ops.empty()) {
+        std::cerr << "[PersistentStorage] executeBatch failed: empty or malformed batch" << std::endl;
+        return false;
+    }
+#ifdef AILEE_HAS_ROCKSDB
+    if (!impl_->db) {
+        std::cerr << "[PersistentStorage] executeBatch failed: database not open" << std::endl;
         return false;
     }
 
@@ -159,7 +233,7 @@ bool PersistentStorage::executeBatch(const std::vector<BatchOp>& ops) {
 
     rocksdb::Status status = impl_->db->Write(writeOptions, &batch);
     if (!status.ok()) {
-        std::cerr << "[PersistentStorage] WriteBatch failed: " << status.ToString() << std::endl;
+        std::cerr << "[PersistentStorage] executeBatch failed: " << status.ToString() << std::endl;
         return false;
     }
     return true;

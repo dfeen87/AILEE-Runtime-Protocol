@@ -60,6 +60,30 @@ public:
     };
     bool executeBatch(const std::vector<BatchOp>& ops);
 
+    class WriteBatch {
+    public:
+        WriteBatch();
+        ~WriteBatch();
+
+        // Disable copy, allow move
+        WriteBatch(const WriteBatch&) = delete;
+        WriteBatch& operator=(const WriteBatch&) = delete;
+        WriteBatch(WriteBatch&&) noexcept;
+        WriteBatch& operator=(WriteBatch&&) noexcept;
+
+        void put(const std::string& key, const std::string& value);
+        void remove(const std::string& key);
+        void clear();
+
+        class Impl;
+        const Impl* getImpl() const { return impl_.get(); }
+
+    private:
+        std::unique_ptr<Impl> impl_;
+    };
+
+    bool commitBatch(const WriteBatch& batch);
+
 private:
     class Impl;
     std::unique_ptr<Impl> impl_;
