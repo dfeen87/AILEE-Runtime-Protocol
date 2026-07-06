@@ -43,6 +43,54 @@
 
 ---
 
+## Version 12 — Deterministic Release & Wave Native Network Integration
+
+V12 marks a pivotal evolution in the AILEE Protocol Core, introducing strict determinism across the entire system. By decoupling the protocol from local machine dependencies, wall-clock timing, and non-deterministic execution environments, V12 ensures that every state transition is 100% reproducible. This release seamlessly integrates the **Wave Native Network (WNN)**, a foundational architecture for phase-coherent distributed coordination.
+
+### Wave Native Network (WNN) Integration
+
+The **Wave Native Network (WNN)** is a paradigm shift in how decentralized nodes coordinate. Instead of relying on fragile, localized wall-clock timestamps (`std::chrono`) or non-deterministic peer-to-peer gossiping, WNN anchors node communication to a universal, phase-coherent clock signal.
+
+**What it is and why it matters:**
+WNN introduces a globally synchronized, deterministic oscillator network. It provides a foundational heartbeat for the AILEE L2, allowing distributed nodes to achieve **timing stability** and **identity coherence** without centralized coordination. WNN ensures that all nodes operate within mathematically precise, collision-resistant phase boundaries.
+
+**Integration into AILEE Core Bitcoin L2:**
+Within AILEE Core, WNN guarantees that consensus loops, block production, and federated learning updates occur at precisely verifiable intervals. This eliminates race conditions and non-deterministic timing behaviors, ensuring that distributed coordination is as predictable and stable as the cryptography that secures it. WNN paves the way for a truly ambient, self-orchestrating Bitcoin L2 that functions with machine-like precision.
+
+### V12 Reproducibility Package
+
+To guarantee verifiable execution, V12 introduces a comprehensive Reproducibility Package. This suite of canonical artifacts allows any engineer or automated system to rebuild the binary, run the protocol, and replay state transitions with bit-for-bit accuracy.
+
+*   **Frozen Genesis (`v12_frozen_genesis.json`):** Defines the immutable, deterministic starting state for the protocol, anchoring all subsequent epoch roots.
+*   **Build Hash (`v12_build_hash.txt`):** Cryptographically fingerprints the deterministic V12 build environment and compilation manifest.
+*   **Receipt Hash (`v12_receipt_hash.txt`):** Fingerprints the deterministic execution outputs and finalized epoch roots.
+*   **Re-Execution Path (`v12_reexecution_manifest.json`):** Provides step-by-step, deterministic replay instructions to re-execute the protocol from genesis through epoch 4.
+*   **Epoch State Roots:** The verified Merkle roots of the AILEE L2 state after each epoch of execution.
+*   **Verification Script (`verify_v12.sh`):** An automated utility to cryptographically validate the integrity of the reproducibility artifacts.
+
+### Canonical Artifacts & Epoch Roots
+
+*   **Build Hash:** `e9576ab0527e7e3fb27230936be817f3cf52fd73f4955a91eae5c282c04bd75a`
+*   **Receipt Hash:** `b02a21d807ce351b641bcacadc2f32243e0135996cd8fd34d96a9f71fe8dfdfd`
+*   **Re-Execution Hash:** `e62961a5ab1d18eabc01708703eb64b74d6ab0aff569cf7cbafab40e7655b8ca`
+
+**Epoch State Roots:**
+*   **Genesis (Epoch 0):** `425e70c240a19594bac19c354a12fa7edbe6e6c6d3c5790e32b5af52de6ff8ee`
+*   **Epoch 1:** `9de36bff8690db9a9eb10ee4e1c1277354123b5619f3c74ac6252d67e187011d`
+*   **Epoch 2:** `dafeb78382ef48f814a39ea91fad52232ffbfc1fa5976d64a9edafac0f970745`
+*   **Epoch 3:** `9e9696973d695c691a4a8c3355ee3246ee92938df6368076d4a6bc8cebc31f47`
+*   **Epoch 4:** `f4ffb4ab1eb4e31906c42f16367af8b10664f91876d1c932e1c44f96c0821c0f`
+
+### V12 Verification Script (`verify_v12.sh`)
+
+The `verify_v12.sh` verification script is an automated utility designed to validate the reproducibility package. It programmatically checks the integrity of the V12 build, receipt, and re-execution artifacts by calculating their SHA-256 hashes and comparing them against the canonical hashes listed above. By running this script, auditors and node operators can instantly verify that their local artifacts match the exact, unmodified deterministic state of the V12 release before running the execution replay.
+
+### Why This Matters
+
+V12 and WNN together forge an unbreakable chain of deterministic execution. In decentralized networks, non-determinism is the enemy of consensus. By stripping away reliance on local system clocks, non-deterministic scheduling, and floating-point ambiguity, V12 guarantees that the AILEE L2 operates identically across any hardware. Coupled with WNN's phase-coherent coordination, this ensures reproducible state transitions, eliminating state divergence and providing an incredibly stable, auditable infrastructure for Bitcoin L2 and the broader decentralized internet.
+
+---
+
 ## ✨ Key Features
 
 ### 🛡️ Reorg Detection
