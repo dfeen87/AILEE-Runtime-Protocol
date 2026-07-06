@@ -239,7 +239,7 @@ set(AILEE_HEADERS
     include/L1Reflection.h
     include/HeartbeatLog.h
     include/StateLog.h
-    include/mesh/MeshView.h
+    include/MeshCoherence.h
 )
 
 # Policy System Headers (new files)
@@ -306,6 +306,7 @@ set(WNN_SOURCES
 
 # AILEE CORE Integration Sources
 set(AILEE_CORE_SOURCES
+    src/MeshCoherence.cpp
     src/ailee_core/runtime/ailee_core_runtime.cpp
     src/ailee_core/identity/ailee_core_identity.cpp
     src/ailee_core/participation/ailee_core_participation.cpp
@@ -688,7 +689,7 @@ if(BUILD_TESTS)
     add_executable(ailee_tests 
         tests/AdapterRegistryTests.cpp
         tests/BitVMInterpreterTests.cpp
-        tests/MeshViewTests.cpp
+        tests/MeshCoherenceTests.cpp
         src/runtime/BitVMInterpreter.cpp
     )
     
