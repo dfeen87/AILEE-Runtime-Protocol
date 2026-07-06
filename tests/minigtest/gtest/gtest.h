@@ -144,6 +144,18 @@ inline void ExpectTrue(bool result,
     ::testing::detail::ExpectBinary((A) == (B), (A), (B), "==", #A, #B,        \
                                     __FILE__, __LINE__, false)
 
+#define EXPECT_NE(A, B)                                                       \
+    ::testing::detail::ExpectBinary((A) != (B), (A), (B), "!=", #A, #B,        \
+                                    __FILE__, __LINE__, false)
+
+#define EXPECT_LT(A, B)                                                       \
+    ::testing::detail::ExpectBinary((A) < (B), (A), (B), "<", #A, #B,          \
+                                    __FILE__, __LINE__, false)
+
+#define EXPECT_GT(A, B)                                                       \
+    ::testing::detail::ExpectBinary((A) > (B), (A), (B), ">", #A, #B,          \
+                                    __FILE__, __LINE__, false)
+
 #define ASSERT_EQ(A, B)                                                       \
     ::testing::detail::ExpectBinary((A) == (B), (A), (B), "==", #A, #B,        \
                                     __FILE__, __LINE__, true)
@@ -151,3 +163,34 @@ inline void ExpectTrue(bool result,
 #define ASSERT_NE(A, B)                                                       \
     ::testing::detail::ExpectBinary((A) != (B), (A), (B), "!=", #A, #B,        \
                                     __FILE__, __LINE__, true)
+
+namespace testing {
+class Test {
+public:
+    virtual ~Test() = default;
+    virtual void SetUp() {}
+    virtual void TearDown() {}
+};
+}
+
+#define TEST_F(TEST_FIXTURE, TEST_NAME)                                       \
+    class TEST_FIXTURE##_##TEST_NAME##_Test : public TEST_FIXTURE {           \
+    public:                                                                   \
+        void TestBody();                                                      \
+    };                                                                        \
+    static void TEST_FIXTURE##_##TEST_NAME##_Run() {                          \
+        TEST_FIXTURE##_##TEST_NAME##_Test test;                               \
+        test.SetUp();                                                         \
+        try {                                                                 \
+            test.TestBody();                                                  \
+        } catch(...) {}                                                       \
+        test.TearDown();                                                      \
+    }                                                                         \
+    namespace {                                                               \
+        const bool TEST_FIXTURE##_##TEST_NAME##_registered = []() {           \
+            ::testing::RegisterTest(#TEST_FIXTURE, #TEST_NAME,                \
+                                    &TEST_FIXTURE##_##TEST_NAME##_Run);       \
+            return true;                                                      \
+        }();                                                                  \
+    }                                                                         \
+    void TEST_FIXTURE##_##TEST_NAME##_Test::TestBody()

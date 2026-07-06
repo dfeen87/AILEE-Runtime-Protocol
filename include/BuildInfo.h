@@ -12,4 +12,10 @@ struct BuildHashInfo {
 };
 
 } // namespace build
+
+struct BuildInfo {
+    uint8_t build_hash[32];
+    uint32_t build_number;
+};
+
 } // namespace ailee
