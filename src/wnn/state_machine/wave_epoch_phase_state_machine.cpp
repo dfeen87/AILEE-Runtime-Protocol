@@ -56,3 +56,10 @@ void PllController::monitor_phase_error(double incoming_phase_error, double curr
 
 } // namespace wnn
 } // namespace ailee
+
+namespace ailee {
+namespace wnn {
+double PhaseStateMachine::get_phase_error() const { return error_; }
+bool PhaseStateMachine::is_locked() const { return locked_; }
+}
+}

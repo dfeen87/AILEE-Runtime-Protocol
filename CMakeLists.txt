@@ -287,6 +287,28 @@ set(AMBIENT_SOURCES
     src/AmbientAI.cpp
 )
 
+# WNN Sources (Wave Native Network V11)
+set(WNN_SOURCES
+    src/wnn/core/wave_native_network_core.cpp
+    src/wnn/propagation/wave_phase_propagation.cpp
+    src/wnn/resonance/wave_resonance_profiles.cpp
+    src/wnn/identity/wave_identity_phase_binding.cpp
+    src/wnn/state_machine/wave_epoch_phase_state_machine.cpp
+    src/wnn/routing/wave_native_routing_layer.cpp
+    src/wnn/mesh/wave_mesh_integration.cpp
+)
+
+# AILEE CORE Integration Sources
+set(AILEE_CORE_SOURCES
+    src/ailee_core/runtime/ailee_core_runtime.cpp
+    src/ailee_core/identity/ailee_core_identity.cpp
+    src/ailee_core/participation/ailee_core_participation.cpp
+    src/ailee_core/consensus/ailee_core_consensus.cpp
+    src/ailee_core/mesh/ailee_core_mesh.cpp
+    src/ailee_core/anchoring/ailee_core_anchoring.cpp
+)
+
+
 # New Infrastructure Sources
 set(INFRASTRUCTURE_SOURCES
     src/storage/PersistentStorage.cpp
@@ -342,6 +364,8 @@ set(CORE_SOURCES
     ${ANCHORING_SOURCES}
     ${IDENTITY_SOURCES}
     ${AMBIENT_SOURCES}
+    ${WNN_SOURCES}
+    ${AILEE_CORE_SOURCES}
     ${INFRASTRUCTURE_SOURCES}
     ${POLICY_SOURCES}
     ${AILEE_HEADERS}
@@ -393,7 +417,7 @@ add_custom_command(
             --out-json /dev/null
             --out-hpp ${CMAKE_BINARY_DIR}/build_metadata.hpp
             --rust-prover-lib ${CMAKE_BINARY_DIR}/libailee_rust_prover.a
-    DEPENDS cargo_build_rust_prover
+
 )
 
 add_custom_target(generate_metadata_hpp DEPENDS ${CMAKE_BINARY_DIR}/build_metadata.hpp)
@@ -406,7 +430,7 @@ add_custom_command(
             --node-bin ${CMAKE_BINARY_DIR}/ailee_node
             --service-bin ${CMAKE_BINARY_DIR}/ailee_service
             --rust-prover-lib ${CMAKE_BINARY_DIR}/libailee_rust_prover.a
-    DEPENDS ailee_node ailee_service cargo_build_rust_prover
+    DEPENDS ailee_node ailee_service
 )
 
 add_custom_target(generate_metadata ALL DEPENDS ${CMAKE_BINARY_DIR}/metadata.json)
@@ -417,7 +441,7 @@ add_custom_target(verify_build ALL
             --node ${CMAKE_BINARY_DIR}/ailee_node
             --service ${CMAKE_BINARY_DIR}/ailee_service
             --rust-prover ${CMAKE_BINARY_DIR}/libailee_rust_prover.a
-    DEPENDS generate_metadata ailee_node ailee_service cargo_build_rust_prover
+    DEPENDS generate_metadata ailee_node ailee_service
 )
 
 add_executable(ailee_node ${CORE_SOURCES})
@@ -551,6 +575,8 @@ add_library(ailee_adapters STATIC
     ${ANCHORING_SOURCES}
     ${IDENTITY_SOURCES}
     ${AMBIENT_SOURCES}
+    ${WNN_SOURCES}
+    ${AILEE_CORE_SOURCES}
     ${INFRASTRUCTURE_SOURCES}
     ${POLICY_SOURCES}
     src/security/zk_proofs.cpp

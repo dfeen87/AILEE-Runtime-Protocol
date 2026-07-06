@@ -1,6 +1,6 @@
 #pragma once
 
-#include "wave_identity_phase_binding.hpp"
+#include "../identity/wave_identity_phase_binding.hpp"
 #include <optional>
 #include <vector>
 

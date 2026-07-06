@@ -1,6 +1,6 @@
 #pragma once
 
-#include "wave_phase_propagation.hpp"
+#include "../propagation/wave_phase_propagation.hpp"
 #include <vector>
 #include <optional>
 #include <cstdint>

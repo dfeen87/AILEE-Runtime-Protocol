@@ -22,3 +22,16 @@ private:
 
 } // namespace wnn
 } // namespace ailee
+
+namespace ailee {
+namespace wnn {
+class PhaseStateMachine {
+public:
+    double get_phase_error() const;
+    bool is_locked() const;
+private:
+    bool locked_ = true;
+    double error_ = 0.0;
+};
+}
+}

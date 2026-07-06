@@ -1,5 +1,5 @@
 #include "wave_native_network_core.hpp"
-#include "wave_epoch_phase_state_machine.hpp"
+#include "../state_machine/wave_epoch_phase_state_machine.hpp"
 #include <cmath>
 
 namespace ailee {

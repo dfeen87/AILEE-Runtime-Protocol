@@ -1,6 +1,6 @@
 #pragma once
 
-#include "wave_native_network_core.hpp"
+#include "../core/wave_native_network_core.hpp"
 #include <vector>
 #include <cstdint>
 
