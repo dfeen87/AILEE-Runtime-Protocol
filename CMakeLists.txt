@@ -234,6 +234,12 @@ set(AILEE_HEADERS
     include/L2State.h
     include/BlockProducer.h
     include/AILEEWebServer.h
+    include/BuildInfo.h
+    include/ConfigInfo.h
+    include/L1Reflection.h
+    include/HeartbeatLog.h
+    include/StateLog.h
+    include/mesh/MeshView.h
 )
 
 # Policy System Headers (new files)
@@ -682,6 +688,7 @@ if(BUILD_TESTS)
     add_executable(ailee_tests 
         tests/AdapterRegistryTests.cpp
         tests/BitVMInterpreterTests.cpp
+        tests/MeshViewTests.cpp
         src/runtime/BitVMInterpreter.cpp
     )
     
