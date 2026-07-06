@@ -306,6 +306,7 @@ set(WNN_SOURCES
 
 # AILEE CORE Integration Sources
 set(AILEE_CORE_SOURCES
+    src/NodeIdentity.cpp
     src/MeshCoherence.cpp
     src/ailee_core/runtime/ailee_core_runtime.cpp
     src/ailee_core/identity/ailee_core_identity.cpp
@@ -687,6 +688,7 @@ if(BUILD_TESTS)
     enable_testing()
 
     add_executable(ailee_tests 
+        tests/NodeIdentityTests.cpp
         tests/AdapterRegistryTests.cpp
         tests/BitVMInterpreterTests.cpp
         tests/MeshCoherenceTests.cpp
