@@ -42,3 +42,51 @@ jobs:
       - name: Test
         run: |
           ctest --test-dir build --output-on-failure
+
+  heartbeat-ignite:
+    needs: build-and-test
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            cmake \
+            g++ \
+            pkg-config \
+            libssl-dev \
+            libcurl4-openssl-dev \
+            libzmq3-dev \
+            libjsoncpp-dev \
+            libyaml-cpp-dev \
+            librocksdb-dev \
+            zlib1g-dev \
+            libbz2-dev \
+            liblz4-dev \
+            libsnappy-dev \
+            libsecp256k1-dev
+
+      - name: Configure (Heartbeat Mode)
+        run: |
+          cmake -S . -B build -DENABLE_HEARTBEAT=ON
+
+      - name: Build (Heartbeat Mode)
+        run: |
+          cmake --build build --config Release --parallel
+
+      - name: Ignite Heartbeat
+        run: |
+          # Run the deterministic heartbeat-enabled runtime
+          # Use a deterministic WNN tick driver to force phase rollover
+          ./build/ailee_core --heartbeat --simulate-wnn --ticks 5000 \
+            | tee heartbeat_log.txt
+
+      - name: Upload Heartbeat Log
+        uses: actions/upload-artifact@v4
+        with:
+          name: heartbeat-log
+          path: heartbeat_log.txt
