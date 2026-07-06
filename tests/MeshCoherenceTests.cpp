@@ -21,6 +21,10 @@ public:
     void get_latest_confirmed_anchor(uint8_t out_hash[32]) const override {
         std::memcpy(out_hash, anchor_hash, 32);
     }
+    bool get_raw_value(const std::string& key, rocksdb::Slice& out_slice) const override { return false; }
+    bool get_raw_anchor_slice(rocksdb::Slice& out_slice) const override { return false; }
+    bool get_raw_reorg_slice(rocksdb::Slice& out_slice) const override { return false; }
+    bool get_raw_block_height_slice(rocksdb::Slice& out_slice) const override { return false; }
 };
 
 class MockHeartbeatLog : public HeartbeatLog {

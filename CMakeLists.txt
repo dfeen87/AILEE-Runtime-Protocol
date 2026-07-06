@@ -306,6 +306,7 @@ set(WNN_SOURCES
 
 # AILEE CORE Integration Sources
 set(AILEE_CORE_SOURCES
+    src/ReflectionLayer.cpp
     src/NodeIdentity.cpp
     src/MeshCoherence.cpp
     src/ailee_core/runtime/ailee_core_runtime.cpp
@@ -692,6 +693,7 @@ if(BUILD_TESTS)
         tests/AdapterRegistryTests.cpp
         tests/BitVMInterpreterTests.cpp
         tests/MeshCoherenceTests.cpp
+        tests/ReflectionLayerTests.cpp
         src/runtime/BitVMInterpreter.cpp
     )
     
