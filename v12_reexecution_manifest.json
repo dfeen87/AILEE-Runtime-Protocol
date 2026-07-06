@@ -1,0 +1,39 @@
+{
+  "version": "v12",
+  "build_hash": "e9576ab0527e7e3fb27230936be817f3cf52fd73f4955a91eae5c282c04bd75a",
+  "receipt_hash": "b02a21d807ce351b641bcacadc2f32243e0135996cd8fd34d96a9f71fe8dfdfd",
+  "genesis_state_root": "425e70c240a19594bac19c354a12fa7edbe6e6c6d3c5790e32b5af52de6ff8ee",
+
+  "required_files": {
+    "binary": "ailee_core_v12.bin",
+    "genesis": "v12_frozen_genesis.json",
+    "build_manifest": "v12_build_manifest.json",
+    "receipt_manifest": "v12_receipt_manifest.json"
+  },
+
+  "environment": {
+    "platform": "linux/amd64",
+    "base_image": "ubuntu:22.04",
+    "execution_command": "./ailee_core_v12.bin --run-epoch 0"
+  },
+
+  "expected_epoch_state_roots": {
+    "0": "425e70c240a19594bac19c354a12fa7edbe6e6c6d3c5790e32b5af52de6ff8ee",
+    "1": "9de36bff8690db9a9eb10ee4e1c1277354123b5619f3c74ac6252d67e187011d",
+    "2": "dafeb78382ef48f814a39ea91fad52232ffbfc1fa5976d64a9edafac0f970745",
+    "3": "9e9696973d695c691a4a8c3355ee3246ee92938df6368076d4a6bc8cebc31f47",
+    "4": "f4ffb4ab1eb4e31906c42f16367af8b10664f91876d1c932e1c44f96c0821c0f"
+  },
+
+  "reexecution_steps": [
+    "1. Verify that the build hash matches the contents of v12_build_manifest.json.",
+    "2. Verify that the receipt hash matches the contents of v12_receipt_manifest.json.",
+    "3. Load v12_frozen_genesis.json as the initial state.",
+    "4. Execute the binary using the deterministic command: ./ailee_core_v12.bin --run-epoch 0",
+    "5. Capture the state root for epoch 0 and verify it matches the expected value.",
+    "6. Continue execution through epochs 1–4, verifying each state root.",
+    "7. Confirm that all epoch_state_roots match the expected_epoch_state_roots table.",
+    "8. If all roots match, the reexecution is successful and deterministic."
+  ]
+}
+
