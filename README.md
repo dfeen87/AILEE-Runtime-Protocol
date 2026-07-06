@@ -30,39 +30,35 @@
 
 **AILEE-Core** is a Bitcoin Layer-2 orchestration and verification framework. It leverages ambient AI for intelligent task scheduling and a recovery-first design to extend Bitcoin's capabilities without modifying its consensus rules.
 
-> ⚠️ Protocol Status & Safety Notice
-AILEE Core has evolved into a deterministic, reproducible Bitcoin L2 protocol with verified execution paths, canonical state roots, and Wave Native Network integration.
+---
 
-Version 12 introduces: 
+## ⚠️ Protocol Status & Safety Notice
 
-deterministic execution
+AILEE Core has evolved into a **deterministic, reproducible Bitcoin L2 protocol** with verified execution paths, canonical state roots, and Wave Native Network integration.  
+Version 12 introduces:
 
-reproducible state transitions
+- deterministic execution  
+- reproducible state transitions  
+- frozen genesis  
+- canonical build + receipt hashes  
+- verified epoch roots (0–4)  
+- full re‑execution path  
+- automated verification script  
 
-frozen genesis
+This establishes AILEE Core as a **verifiable protocol**, not a prototype.
 
-canonical build + receipt hashes
+All core components in this repository are **real implementations** — no stubs, mocks, or placeholder cryptographic primitives are used. The deterministic runtime, reproducibility package, and Wave Native Network integration are fully functional.
 
-verified epoch roots (0–4)
+However, before mainnet fund custody, the following production‑grade hardening steps are still required:
 
-full re‑execution path
+- ZK proof system must be upgraded to audited circuits (Halo2, PLONK, Groth16)  
+- Signature verification must undergo formal review  
+- Networking layers must be security‑audited  
+- Third‑party audits are required for any production deployment  
 
-automated verification script
+AILEE Core V12 is a **protocol‑grade deterministic release**, but **not yet a mainnet‑ready financial system**.
 
-This establishes AILEE Core as a verifiable protocol, not a prototype.
-
-However, this software is still not intended for mainnet fund custody.
-While the deterministic runtime is complete, several components require production‑grade hardening before real‑asset deployment:
-
-ZK proof system must be upgraded from development stubs to real circuits (e.g., Halo2, PLONK, Groth16)
-
-Signature verification must be hardened and audited
-
-Networking layers must undergo security review
-
-Third‑party audits are required for any production use
-
-AILEE Core V12 is a protocol‑grade deterministic release, but not yet a mainnet‑ready financial system.
+> “AILEE-CORE is not a prototype anymore — but we’re not a custodial mainnet system.”
 
 ### Why AILEE?
 
