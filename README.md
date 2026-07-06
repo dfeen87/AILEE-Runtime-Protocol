@@ -30,9 +30,39 @@
 
 **AILEE-Core** is a Bitcoin Layer-2 orchestration and verification framework. It leverages ambient AI for intelligent task scheduling and a recovery-first design to extend Bitcoin's capabilities without modifying its consensus rules.
 
-> ⚠️ **Important**: This repository is a **research and pre-production framework** and is **NOT ready for mainnet deployment**. The codebase contains multiple components that are mocked or stubbed (ZK proofs, full ECDSA signature verification, federated networking). Do not use this software to manage real funds or production assets. Please review `AUDIT_REPORT.md` for a full list of known limitations. Third-party auditing and professional oversight are strictly required prior to any production use.
+> ⚠️ Protocol Status & Safety Notice
+AILEE Core has evolved into a deterministic, reproducible Bitcoin L2 protocol with verified execution paths, canonical state roots, and Wave Native Network integration.
 
-> **Note**: Certain cryptographic primitives (like ZK proofs) are currently implemented as mocks to facilitate development and testing. These must be replaced with real circuits (e.g., libsnark, Halo2) and thoroughly audited before any mainnet deployment.
+Version 12 introduces: 
+
+deterministic execution
+
+reproducible state transitions
+
+frozen genesis
+
+canonical build + receipt hashes
+
+verified epoch roots (0–4)
+
+full re‑execution path
+
+automated verification script
+
+This establishes AILEE Core as a verifiable protocol, not a prototype.
+
+However, this software is still not intended for mainnet fund custody.
+While the deterministic runtime is complete, several components require production‑grade hardening before real‑asset deployment:
+
+ZK proof system must be upgraded from development stubs to real circuits (e.g., Halo2, PLONK, Groth16)
+
+Signature verification must be hardened and audited
+
+Networking layers must undergo security review
+
+Third‑party audits are required for any production use
+
+AILEE Core V12 is a protocol‑grade deterministic release, but not yet a mainnet‑ready financial system.
 
 ### Why AILEE?
 
