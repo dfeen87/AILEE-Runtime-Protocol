@@ -1,0 +1,12 @@
+{
+  "version": "v12",
+  "binary_hash": "bdefa20d54510c6a8b8e56cd51f9dafc3f585df77be3ad6d4079412fc0d03937",
+  "container_hash": "26ebfb9e77295d97b641c9a61b3131bc56b5e92753d07c10d66d208b393b503c",
+  "genesis_state_root": "425e70c240a19594bac19c354a12fa7edbe6e6c6d3c5790e32b5af52de6ff8ee",
+  "environment": {
+    "platform": "linux/amd64",
+    "base_image": "ubuntu:22.04",
+    "execution_command": "./ailee_core_v12.bin --run-epoch 0"
+  }
+}
+
