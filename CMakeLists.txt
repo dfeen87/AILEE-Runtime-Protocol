@@ -306,6 +306,11 @@ set(AILEE_CORE_SOURCES
     src/ailee_core/consensus/ailee_core_consensus.cpp
     src/ailee_core/mesh/ailee_core_mesh.cpp
     src/ailee_core/anchoring/ailee_core_anchoring.cpp
+    src/heartbeat/WavePhaseController.cpp
+    src/heartbeat/EpochScheduler.cpp
+    src/heartbeat/DeterministicEpochExecutorWrapper.cpp
+    src/heartbeat/BitcoinAnchoringInterface.cpp
+    src/heartbeat/HeartbeatOrchestrator.cpp
 )
 
 

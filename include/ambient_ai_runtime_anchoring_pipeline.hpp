@@ -4,12 +4,14 @@
 #include <vector>
 #include <cstdint>
 
+#include "ambient_ai_node_identity.hpp"
+#include "ambient_ai_energy_model.hpp"
+#include "ambient_ai_event_commitment.hpp"
+#include "ambient_ai_l2_merkleization.hpp"
+
 namespace ailee {
 namespace protocol { struct AmbientAIAnchoringEpoch; }
 namespace anchoring { class TaprootAnchor; }
-namespace ambient { class AmbientEventAggregator; }
-namespace identity { struct ParticipationProof; }
-namespace energy { struct EnergyProfile; }
 }
 
 namespace ailee {
@@ -39,6 +41,14 @@ public:
         const protocol::AmbientAIAnchoringEpoch& epoch,
         anchoring::TaprootAnchor& anchor
     ) const;
+
+private:
+    std::vector<identity::ParticipationProof> collected_proofs_;
+    std::vector<energy::EnergyProfile> collected_profiles_;
+
+    consensus::Hash256 cached_participation_root_ = {0};
+    consensus::Hash256 cached_energy_root_ = {0};
+    consensus::Hash256 cached_event_root_ = {0};
 };
 
 } // namespace runtime

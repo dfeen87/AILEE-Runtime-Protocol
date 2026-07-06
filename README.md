@@ -323,3 +323,15 @@ This project was developed with a combination of original ideas, hands‑on codi
 ## 📄 License
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+
+---
+
+## AILEE Core Heartbeat System (Protocol Runtime)
+
+The AILEE Core Heartbeat System integrates the Wave Native Network (WNN) with the deterministic L2 execution engine. This forms a deterministic heartbeat loop that orchestrates state transitions without reliance on local wall-clock timers.
+
+The deterministic heartbeat loop operates as follows:
+- **Wave‑phase rollover → heartbeat:** The system listens for a mathematically deterministic wave‑phase boundary from the WNN. When crossed, it triggers a protocol heartbeat.
+- **Heartbeat → epoch execution:** The heartbeat triggers the epoch scheduler to deterministically advance the current epoch and schedule its execution.
+- **Epoch execution → new state root:** The deterministic runtime processes the epoch, computing a mathematically reproducible L2 state root.
+- **State root → Bitcoin anchoring:** The finalized state root is formatted as a verifiable anchor commitment, ready to be submitted to the Bitcoin L1.

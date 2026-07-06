@@ -4,6 +4,7 @@
 #include <memory>
 #include <cstdint>
 #include <vector>
+#include <string>
 
 // Forward declarations
 namespace ailee {
@@ -40,6 +41,10 @@ public:
 
 class AmbientRuntime {
 public:
+    struct EpochResult {
+        std::string state_root;
+    };
+
     explicit AmbientRuntime(const AmbientRuntimeConfig& config);
     ~AmbientRuntime();
 
@@ -48,6 +53,9 @@ public:
 
     // Steps the entire runtime deterministically based on L1 block heights and L2 ticks
     void step(uint64_t logicalTimestamp, uint64_t currentBitcoinHeight);
+
+    // Executes a full deterministic epoch using existing L2 Merkleizer and Anchoring Pipeline
+    EpochResult run_epoch(uint64_t epoch_index);
 
     // Graceful teardown
     void shutdown();
