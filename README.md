@@ -316,13 +316,7 @@ If you use or build upon this work in academic research, please cite:
 
 ## Acknowledgments
 
-This project was developed with a combination of original ideas, hands‑on coding, and support from advanced AI systems. I would like to acknowledge **Microsoft Copilot**, **Google Jules**, **Anthropic Claude**, and **OpenAI ChatGPT** for their meaningful assistance in refining concepts, improving clarity, and strengthening the overall quality of this work. Thank you to Yuji Hirose for the httplib.h MIT sourcecode. 
-
----
-
-## 📄 License
-
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+This project was developed with a combination of original ideas, hands‑on coding, and support from advanced AI systems. I would like to acknowledge **Microsoft Copilot** (Trustworthy Assistant, strengthened focus and motivation), **Google Jules** (Code Scaffolding and Code Synthesis Assistance), **Anthropic Claude** (Markdown File formatting assistance), and **OpenAI ChatGPT** (Input on the Original AILEE AI Design Framework) for their meaningful assistance in refining concepts, improving clarity, and strengthening the overall quality of this work. Thank you to Yuji Hirose for the httplib.h MIT sourcecode. 
 
 ---
 
@@ -335,3 +329,68 @@ The deterministic heartbeat loop operates as follows:
 - **Heartbeat → epoch execution:** The heartbeat triggers the epoch scheduler to deterministically advance the current epoch and schedule its execution.
 - **Epoch execution → new state root:** The deterministic runtime processes the epoch, computing a mathematically reproducible L2 state root.
 - **State root → Bitcoin anchoring:** The finalized state root is formatted as a verifiable anchor commitment, ready to be submitted to the Bitcoin L1.
+
+## Deterministic Guarantees Introduced in V13 (Heartbeat Release)
+
+### 1. Deterministic Wave‑Phase Boundaries (Eliminating Local Timing Drift)
+
+Traditional distributed systems rely on local machine clocks (std::chrono, OS timers, NTP), which drift, jitter, and create nondeterministic execution windows. This leads to inconsistent ordering, ambiguous event boundaries, replay instability, and timing‑driven state divergence.
+
+**V13 Heartbeat Shift:**  
+AILEE Core replaces internal wall‑clock timing with deterministic **WaveState phase‑coherence boundaries**, providing:
+
+- stable phase rollover triggers  
+- deterministic epoch boundaries  
+- reproducible timing transitions  
+- architecture‑independent execution triggers  
+
+Epochs advance **only** on wave‑phase rollover, ensuring stable, collision‑resistant coordination.  
+This is a protocol‑internal timing upgrade, not an internet‑wide change.
+
+---
+
+### 2. Canonical Deterministic Execution Replays
+
+Distributed systems often diverge due to floating‑point drift, scheduler nondeterminism, and inconsistent ordering. Even identical event sequences can yield different results.
+
+**V13 Heartbeat Shift:**  
+The Heartbeat loop enforces **bit‑for‑bit reproducible execution**:
+
+- deterministic wave‑phase trigger  
+- deterministic epoch scheduler  
+- deterministic `run_epoch()` execution  
+- canonical L2 merkleized state root  
+- deterministic Bitcoin‑ready anchor payload  
+
+This produces a **globally reproducible execution lineage**, independent of CPU architecture, OS scheduling, or hardware timing.
+
+---
+
+### 3. Bitcoin‑Anchored Recovery & Deterministic Rebuild Pathways
+
+Systems suffering hardware failure, regional outage, corruption, or catastrophic loss rarely achieve trust‑minimized recovery.
+
+**V13 Heartbeat Shift:**  
+Each heartbeat emits:
+
+- a canonical state root  
+- a deterministic anchor payload  
+- a verifiable OP_RETURN/Taproot‑ready commitment  
+
+This provides:
+
+- immutable recovery checkpoints  
+- trust‑minimized replay paths  
+- deterministic re‑execution from genesis  
+- automatic reorg detection  
+
+Nodes can rebuild state with **zero ambiguity** by verifying anchored roots and replaying epochs deterministically.  
+This is a protocol‑level guarantee built on Bitcoin’s immutability.
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+
+
