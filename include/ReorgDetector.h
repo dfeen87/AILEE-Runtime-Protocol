@@ -74,6 +74,9 @@ public:
                                   std::uint64_t confirmations,
                                   std::string* err = nullptr);
 
+    // Get the RocksDB instance to share with SettlementIngestionEngine
+    std::shared_ptr<rocksdb::DB> getDb() const { return db_; }
+
     // Handle a detected reorg - returns list of invalidated anchor hashes (persisted)
     std::vector<std::string> handleReorg(std::uint64_t reorgHeight);
 
@@ -122,7 +125,7 @@ private:
     std::string dbPath_;
     
     // RocksDB instance for persistent storage
-    std::unique_ptr<rocksdb::DB> db_;
+    std::shared_ptr<rocksdb::DB> db_;
     rocksdb::ColumnFamilyHandle* defaultCf_ = nullptr;
     rocksdb::ColumnFamilyHandle* reputationCf_ = nullptr;
     

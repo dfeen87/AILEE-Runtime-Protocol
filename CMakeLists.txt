@@ -353,6 +353,7 @@ set(CORE_SOURCES
     src/security/zk_proofs.cpp
     src/l1/AnchorCommitment.cpp
     src/l1/ReorgDetector.cpp
+    src/l1/SettlementIngestion.cpp
     src/l2/L2State.cpp
     src/l2/BlockProducer.cpp
     src/l2/Mempool.cpp
@@ -697,7 +698,9 @@ if(BUILD_TESTS)
     if(RocksDB_FOUND)
         add_executable(reorg_detector_tests 
             tests/ReorgDetectorTests.cpp
+            tests/SettlementIngestionTests.cpp
             src/l1/ReorgDetector.cpp
+            src/l1/SettlementIngestion.cpp
         )
         
         target_include_directories(reorg_detector_tests PRIVATE
