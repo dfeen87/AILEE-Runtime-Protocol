@@ -1,0 +1,10 @@
+{
+  "version": "v12",
+  "epoch_state_roots": {
+    "0": "425e70c240a19594bac19c354a12fa7edbe6e6c6d3c5790e32b5af52de6ff8ee",
+    "1": "9de36bff8690db9a9eb10ee4e1c1277354123b5619f3c74ac6252d67e187011d",
+    "2": "dafeb78382ef48f814a39ea91fad52232ffbfc1fa5976d64a9edafac0f970745",
+    "3": "9e9696973d695c691a4a8c3355ee3246ee92938df6368076d4a6bc8cebc31f47",
+    "4": "f4ffb4ab1eb4e31906c42f16367af8b10664f91876d1c932e1c44f96c0821c0f"
+  }
+}
