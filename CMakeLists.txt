@@ -636,6 +636,9 @@ add_library(ailee_adapters STATIC
     src/l4/DeterministicDashboard.cpp
     src/l4/ReplayBuffer.cpp
     src/l4/ReplayEngine.cpp
+    src/l4/FederationConfig.cpp
+    src/l4/ClusterFederationView.cpp
+    src/l4/MultiClusterSim.cpp
 )
 
 target_link_libraries(ailee_adapters
@@ -747,6 +750,7 @@ if(BUILD_TESTS)
         tests/l4/test_deterministic_telemetry.cpp
         tests/l4/test_deterministic_dashboard.cpp
         tests/l4/test_deterministic_replay.cpp
+        tests/l4/test_multi_cluster_sim.cpp
         src/runtime/BitVMInterpreter.cpp
     )
     

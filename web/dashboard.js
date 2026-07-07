@@ -14,9 +14,53 @@ fetch('dashboard.json')
   });
 
 function renderAllCharts(samples) {
+    if (window.federationMode) {
+        renderFederationView(samples);
+    }
     renderTickChart(samples);
     renderCoherenceChart(samples);
     renderStateRootChart(samples);
+}
+
+// Federation Mode Logic
+window.federationMode = false;
+const federationToggle = document.getElementById('federationToggle');
+
+federationToggle.addEventListener('click', () => {
+    window.federationMode = !window.federationMode;
+    if (window.federationMode) {
+        federationToggle.style.backgroundColor = '#e53e3e';
+        federationToggle.innerText = 'Federation Mode: ON';
+        document.getElementById('federationViewContainer').style.display = 'block';
+    } else {
+        federationToggle.style.backgroundColor = '#2b6cb0';
+        federationToggle.innerText = 'Federation Mode: OFF';
+        document.getElementById('federationViewContainer').style.display = 'none';
+    }
+
+    // Re-render based on current state
+    if (window.isReplayMode && replayData) {
+        renderReplayTick(replayData, parseInt(replaySlider.value, 10));
+    } else if (window.liveTelemetry) {
+        renderAllCharts(window.liveTelemetry);
+    }
+});
+
+function renderFederationView(samples) {
+    if (!samples || samples.length === 0) return;
+
+    // In a real implementation we would render data about multiple clusters and cross-cluster envelopes.
+    // For now we simulate federation metrics based on the current cluster data or actual federation structures.
+    const latest = samples[samples.length - 1];
+
+    const summaryHtml = `
+        <div class="deterministic-chart-data">
+            <div class="metric"><span class="metric-label">Avg Coherence</span><span class="metric-value">${latest.global_coherence_score.toFixed(1)}%</span></div>
+            <div class="metric"><span class="metric-label">In-Flight Envelopes</span><span class="metric-value">0</span></div>
+            <div class="metric"><span class="metric-label">Total Clusters</span><span class="metric-value">1 (Simulated)</span></div>
+        </div>
+    `;
+    document.getElementById('federationSummary').innerHTML = summaryHtml;
 }
 
 // Replay Mode Logic
