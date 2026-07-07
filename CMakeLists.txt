@@ -639,10 +639,18 @@ add_library(ailee_adapters STATIC
     src/l4/FederationConfig.cpp
     src/l4/ClusterFederationView.cpp
     src/l4/MultiClusterSim.cpp
+    src/l4/ReplayTick.cpp
 )
+
+add_library(ailee_l5_compression STATIC
+    src/l5/CompressionConfig.cpp
+    src/l5/DeterministicCompressor.cpp
+)
+target_include_directories(ailee_l5_compression PUBLIC include)
 
 target_link_libraries(ailee_adapters
     PRIVATE
+    ailee_l5_compression
     $<IF:$<BOOL:${AILEE_USE_RUST_PROVER}>,ailee_rust_prover,ailee_rust_ffi_fallback>
     OpenSSL::SSL
     OpenSSL::Crypto
@@ -751,6 +759,7 @@ if(BUILD_TESTS)
         tests/l4/test_deterministic_dashboard.cpp
         tests/l4/test_deterministic_replay.cpp
         tests/l4/test_multi_cluster_sim.cpp
+        tests/l5/test_deterministic_compression.cpp
         src/runtime/BitVMInterpreter.cpp
     )
     
