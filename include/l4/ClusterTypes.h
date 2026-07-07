@@ -5,6 +5,7 @@
 #include "l2/DeterministicEngine.h"
 #include "l3/GossipLayer.h"
 #include "l3/PeerSync.h"
+#include "l4/MeshAnchor.h"
 
 namespace ailee {
 namespace l4 {
@@ -24,11 +25,11 @@ static_assert(sizeof(ClusterNodeState) == 1088, "ClusterNodeState must be 1088 b
 
 struct alignas(64) ClusterView {
     std::vector<ClusterNodeState> nodes; // 24 bytes
+    std::vector<MeshPropagationEnvelope> mesh_envelopes; // 24 bytes
     uint64_t total_nodes;                // 8 bytes
     uint64_t total_steps;                // 8 bytes
-    // Total size: 24 + 8 + 8 = 40 bytes
-    // Next multiple of 64 is 64. Padding needed: 24 bytes
-    uint8_t padding[24];
+    // Total size: 24 + 24 + 8 + 8 = 64 bytes
+    // Already a multiple of 64. No padding needed!
 };
 static_assert(sizeof(ClusterView) == 64, "ClusterView must be 64 bytes");
 

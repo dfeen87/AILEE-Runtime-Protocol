@@ -1,5 +1,6 @@
 #include "l4/ClusterSim.h"
 #include "l4/RecoveryCoordinator.h"
+#include "l4/MeshAnchor.h"
 #include "l2/DeterministicEngine.h"
 #include "l3/GossipLayer.h"
 #include "l3/PeerSync.h"
@@ -19,7 +20,6 @@ ClusterView run_cluster_simulation(
     view.nodes = initial_nodes;
     view.total_nodes = initial_nodes.size();
     view.total_steps = 0;
-    std::memset(view.padding, 0, sizeof(view.padding));
 
     // We instantiate DeterministicEngines per node to hold their internal state
     std::vector<l2::DeterministicEngine> engines;
@@ -117,8 +117,19 @@ ClusterView run_cluster_simulation(
             node.last_gossip_summary = self_msg.summary;
         }
 
+        // 4. Mesh Anchoring (at the end of the step)
+        MeshEpoch epoch = build_mesh_epoch(view);
+        MeshAnchor anchor = build_mesh_anchor(epoch, view);
+
+        view.mesh_envelopes.clear(); // Ensure it only holds envelopes for current step, or we can append. The prompt asks to "optionally produce mesh-anchored output ... Optionally store these envelopes in a new field on ClusterView". Since there's one per node per step, appending makes sense if we want history, but usually view is the current state. The instructions say "For each node, build a MeshPropagationEnvelope ... Optionally store these envelopes in a new field on ClusterView: e.g., std::vector<MeshPropagationEnvelope> mesh_envelopes;". Let's clear and store the latest.
+        view.mesh_envelopes.reserve(view.nodes.size());
+        for (const auto& node : view.nodes) {
+            MeshPropagationEnvelope env = build_mesh_propagation_envelope(node.node_id_hash, anchor);
+            view.mesh_envelopes.push_back(env);
+        }
+
         view.total_steps++;
-    }
+        }
 
     return view;
 }
