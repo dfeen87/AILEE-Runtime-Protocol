@@ -500,6 +500,10 @@ if(nlohmann_json_FOUND)
     target_link_libraries(example_wallet_integration PRIVATE nlohmann_json::nlohmann_json)
 endif()
 
+add_executable(example_node_sidecar
+    examples/example_node_sidecar.cpp
+    ${AILEE_L2_SOURCES}
+)
 target_link_libraries(example_node_sidecar PRIVATE Threads::Threads OpenSSL::SSL OpenSSL::Crypto secp256k1)
 if(nlohmann_json_FOUND)
     target_link_libraries(example_node_sidecar PRIVATE nlohmann_json::nlohmann_json)
@@ -630,6 +634,8 @@ add_library(ailee_adapters STATIC
     src/l4/DeterministicTransport.cpp
     src/l4/DeterministicTelemetry.cpp
     src/l4/DeterministicDashboard.cpp
+    src/l4/ReplayBuffer.cpp
+    src/l4/ReplayEngine.cpp
 )
 
 target_link_libraries(ailee_adapters
@@ -740,6 +746,7 @@ if(BUILD_TESTS)
         tests/l4/test_deterministic_transport.cpp
         tests/l4/test_deterministic_telemetry.cpp
         tests/l4/test_deterministic_dashboard.cpp
+        tests/l4/test_deterministic_replay.cpp
         src/runtime/BitVMInterpreter.cpp
     )
     
