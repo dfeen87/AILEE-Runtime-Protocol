@@ -532,6 +532,14 @@ endif()
 # --- 2. L2 Verification Tool ---
 add_executable(ailee_l2_verify
     src/tools/ailee_l2_verify.cpp
+    src/l2/DeterministicEngine.cpp
+    src/l2/EpochScheduler.cpp
+    src/l2/ExecutionContext.cpp
+    src/l2/RecoveryPayload.cpp
+    src/l2/StateRootPipeline.cpp
+    src/ReflectionLayer.cpp
+    src/MeshCoherence.cpp
+    src/NodeIdentity.cpp
     src/security/zk_proofs.cpp
     src/l3/NetworkReflection.cpp
     src/l3/NetworkBinding.cpp
@@ -542,6 +550,8 @@ add_executable(ailee_l2_verify
 
 target_link_libraries(ailee_l2_verify
     PRIVATE
+    ${CURL_LIBRARIES}
+    jsoncpp_lib
     ${libsecp256k1_LIBRARIES}
     $<IF:$<BOOL:${AILEE_USE_RUST_PROVER}>,ailee_rust_prover,ailee_rust_ffi_fallback>
     OpenSSL::SSL
