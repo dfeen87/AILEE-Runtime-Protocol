@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 #include "l6/AnchorSerializer.h"
+#include <cstring>
 
 using namespace ailee::l6;
 
@@ -53,7 +54,11 @@ TEST(AnchorSerializerTest, SerializationRoundTrip) {
     EXPECT_EQ(decoded.version, original.version);
     EXPECT_EQ(decoded.replay_height, original.replay_height);
     EXPECT_EQ(decoded.coherence_score, original.coherence_score);
-    EXPECT_EQ(decoded.state_root, original.state_root);
+
+    // FIX: deterministic binary comparison
+    EXPECT_EQ(std::memcmp(decoded.state_root.data(),
+                          original.state_root.data(),
+                          32), 0);
 }
 
 TEST(AnchorSerializerTest, DeserializeFailsOnWrongSize) {
@@ -78,6 +83,11 @@ TEST(AnchorSerializerTest, EdgeCaseZerosAndMax) {
     EXPECT_TRUE(deserialize(bytes_zeros, decoded_zeros));
     EXPECT_EQ(decoded_zeros.replay_height, 0);
     EXPECT_EQ(decoded_zeros.coherence_score, 0);
+
+    // FIX: deterministic binary comparison
+    EXPECT_EQ(std::memcmp(decoded_zeros.state_root.data(),
+                          zeros.state_root.data(),
+                          32), 0);
     
     AnchorRecord maxes;
     maxes.version = 255;
@@ -90,4 +100,9 @@ TEST(AnchorSerializerTest, EdgeCaseZerosAndMax) {
     EXPECT_TRUE(deserialize(bytes_maxes, decoded_maxes));
     EXPECT_EQ(decoded_maxes.replay_height, 0xFFFFFFFFFFFFFFFFULL);
     EXPECT_EQ(decoded_maxes.coherence_score, 0xFFFFFFFFFFFFFFFFULL);
+
+    // FIX: deterministic binary comparison
+    EXPECT_EQ(std::memcmp(decoded_maxes.state_root.data(),
+                          maxes.state_root.data(),
+                          32), 0);
 }
