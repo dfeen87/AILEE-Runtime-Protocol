@@ -367,6 +367,8 @@ set(CORE_SOURCES
     src/security/zk_proofs.cpp
     src/l3/NetworkReflection.cpp
     src/l3/NetworkBinding.cpp
+    src/l3/GossipLayer.cpp
+    src/l3/PeerSync.cpp
     src/l3/NetworkDriver.cpp
     src/l1/AnchorCommitment.cpp
     src/l1/ReorgDetector.cpp
@@ -543,6 +545,8 @@ add_executable(ailee_l2_verify
     src/security/zk_proofs.cpp
     src/l3/NetworkReflection.cpp
     src/l3/NetworkBinding.cpp
+    src/l3/GossipLayer.cpp
+    src/l3/PeerSync.cpp
     src/l3/NetworkDriver.cpp
     src/l1/AnchorCommitment.cpp
     src/l2/L2State.cpp
@@ -618,6 +622,8 @@ add_library(ailee_adapters STATIC
     src/security/zk_proofs.cpp
     src/l3/NetworkReflection.cpp
     src/l3/NetworkBinding.cpp
+    src/l3/GossipLayer.cpp
+    src/l3/PeerSync.cpp
     src/l3/NetworkDriver.cpp
     src/l1/AnchorCommitment.cpp
 )
@@ -720,6 +726,8 @@ if(BUILD_TESTS)
         tests/ReflectionLayerTests.cpp
     tests/DeterministicEngineTests.cpp
         tests/NetworkIntegrationTests.cpp
+        tests/l3/GossipLayerTests.cpp
+        tests/l3/PeerSyncTests.cpp
         src/runtime/BitVMInterpreter.cpp
     )
     
