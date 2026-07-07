@@ -629,6 +629,7 @@ add_library(ailee_adapters STATIC
     src/l4/ClusterSim.cpp
     src/l4/RecoveryCoordinator.cpp
     src/l4/MeshAnchor.cpp
+    src/l4/StateRootPropagation.cpp
 )
 
 target_link_libraries(ailee_adapters
@@ -734,6 +735,7 @@ if(BUILD_TESTS)
         tests/l4/test_cluster_sim.cpp
         tests/l4/test_recovery_coordinator.cpp
         tests/l4/test_mesh_anchor.cpp
+        tests/l4/test_state_root_propagation.cpp
         src/runtime/BitVMInterpreter.cpp
     )
     
