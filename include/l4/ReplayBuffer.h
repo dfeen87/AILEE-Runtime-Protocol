@@ -3,6 +3,7 @@
 #include "l4/ClusterTypes.h"
 #include "l4/DeterministicScheduler.h"
 #include "l4/DeterministicTelemetry.h"
+#include "l5/DeterministicCompressor.h"
 #include <vector>
 
 namespace ailee {
@@ -26,6 +27,9 @@ struct ReplayBuffer {
     std::vector<ReplaySchedulerSnapshot> scheduler_snapshots;
     std::vector<ReplayClusterViewSnapshot> view_snapshots;
     std::vector<TelemetrySample> telemetry_snapshots;
+
+    std::vector<std::vector<uint8_t>> compressed_ticks;
+    l5::DeterministicCompressor compressor;
 
     void record_tick(
         const DeterministicSchedulerState& scheduler_state,

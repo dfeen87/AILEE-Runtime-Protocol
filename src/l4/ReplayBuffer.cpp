@@ -8,6 +8,10 @@ void ReplayBuffer::record_tick(
     const ClusterView& view,
     const TelemetrySample& telemetry_sample
 ) {
+    ReplayTick tick{scheduler_state, view, telemetry_sample};
+    auto compressed = compressor.compress_tick(view, tick);
+    compressed_ticks.push_back(std::move(compressed));
+
     scheduler_snapshots.push_back({ scheduler_state });
     
     ReplayClusterViewSnapshot snap;
