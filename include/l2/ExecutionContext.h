@@ -1,0 +1,37 @@
+#pragma once
+
+#include <cstdint>
+#include "NodeIdentity.h"
+#include "l2/EpochScheduler.h"
+#include "l2/StateRootPipeline.h"
+#include "MeshCoherence.h"
+
+namespace ailee {
+namespace l2 {
+
+struct alignas(64) ExecutionContext {
+    uint8_t context_hash[32];
+    uint8_t epoch_hash[32];
+    uint8_t state_root_hash[32];
+    uint8_t node_identity_hash[32];
+    uint64_t l1_height;
+    uint32_t mesh_coherence_score;
+    uint8_t padding[52]; // 32*4 + 8 + 4 + 52 = 192 bytes
+};
+static_assert(sizeof(ExecutionContext) == 192, "ExecutionContext must be 192 bytes");
+
+struct alignas(64) ExecutionEnvelope {
+    ExecutionContext context; // 192
+    uint8_t signature_or_commitment[64]; // 64
+};
+static_assert(sizeof(ExecutionEnvelope) == 256, "ExecutionEnvelope must be 256 bytes");
+
+ExecutionContext build_execution_context(
+    const identity::NodeId& node_identity,
+    const EpochState& epoch_state,
+    const StateRoot& state_root,
+    const mesh::MeshCoherenceResult& coherence
+);
+
+} // namespace l2
+} // namespace ailee

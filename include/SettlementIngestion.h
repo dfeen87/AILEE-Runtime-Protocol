@@ -77,6 +77,21 @@ struct alignas(64) CacheAlignedReorgEvent {
 static_assert(sizeof(CacheAlignedReorgEvent) == 128, "CacheAlignedReorgEvent must be exactly 128 bytes");
 static_assert(alignof(CacheAlignedReorgEvent) == 64, "CacheAlignedReorgEvent must be 64-byte aligned");
 
+/**
+ * @brief Deterministic, zero-allocation parsed settlement artifacts.
+ * This is meant to be passed into pure functions for state root pipelines.
+ */
+struct alignas(64) SettlementIngestion {
+    CacheAlignedAnchor latest_anchor; // 128 bytes
+    uint64_t total_anchors_processed; // 8 bytes
+    uint32_t latest_confirmations; // 4 bytes
+    uint32_t reorgs_detected; // 4 bytes
+    uint8_t _padding[48]; // 128 + 8 + 4 + 4 = 144 bytes, padding 48 makes it 192 bytes total
+};
+static_assert(sizeof(SettlementIngestion) == 192, "SettlementIngestion must be exactly 192 bytes");
+static_assert(alignof(SettlementIngestion) == 64, "SettlementIngestion must be 64-byte aligned");
+
+
 // ------------------------------------------------------------------
 // SETTLEMENT INGESTION ENGINE
 // ------------------------------------------------------------------
