@@ -4,6 +4,7 @@
 #include <string>
 #include <fstream>
 #include <sstream>
+#include <filesystem>
 
 using namespace ailee::l4;
 
@@ -72,7 +73,7 @@ TEST_F(DeterministicDashboardTest, IntegrationTest) {
 
     // Ensure web directory exists for tests, but we'll try reading what it actually wrote
     // The test environment might not have a web directory where it's being run.
-    system("mkdir -p web");
+    std::filesystem::create_directories("web");
 
     // Run N ticks
     run_cluster_simulation(initial_nodes, schedule, 2);
