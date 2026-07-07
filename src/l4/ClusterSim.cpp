@@ -1,6 +1,7 @@
 #include "l4/ClusterSim.h"
 #include "l4/RecoveryCoordinator.h"
 #include "l4/MeshAnchor.h"
+#include "l4/StateRootPropagation.h"
 #include "l2/DeterministicEngine.h"
 #include "l3/GossipLayer.h"
 #include "l3/PeerSync.h"
@@ -121,15 +122,34 @@ ClusterView run_cluster_simulation(
         MeshEpoch epoch = build_mesh_epoch(view);
         MeshAnchor anchor = build_mesh_anchor(epoch, view);
 
-        view.mesh_envelopes.clear(); // Ensure it only holds envelopes for current step, or we can append. The prompt asks to "optionally produce mesh-anchored output ... Optionally store these envelopes in a new field on ClusterView". Since there's one per node per step, appending makes sense if we want history, but usually view is the current state. The instructions say "For each node, build a MeshPropagationEnvelope ... Optionally store these envelopes in a new field on ClusterView: e.g., std::vector<MeshPropagationEnvelope> mesh_envelopes;". Let's clear and store the latest.
+        view.mesh_envelopes.clear();
         view.mesh_envelopes.reserve(view.nodes.size());
         for (const auto& node : view.nodes) {
             MeshPropagationEnvelope env = build_mesh_propagation_envelope(node.node_id_hash, anchor);
             view.mesh_envelopes.push_back(env);
         }
 
-        view.total_steps++;
+        // 5. State-Root Announcements and Validation
+        auto announcements = build_state_root_announcements(view);
+        auto validation_results = validate_state_roots(view, anchor, announcements);
+
+        for (auto& node : view.nodes) {
+            StateRootStatus new_status = StateRootStatus::UNKNOWN;
+            for (const auto& res : validation_results) {
+                if (res.node_id_hash == node.node_id_hash) {
+                    if (res.accepted) {
+                        new_status = StateRootStatus::CONSISTENT;
+                    } else if (res.rejected) {
+                        new_status = StateRootStatus::INCONSISTENT;
+                    }
+                    break;
+                }
+            }
+            node.state_root_status = new_status;
         }
+
+        view.total_steps++;
+    }
 
     return view;
 }
@@ -182,6 +202,12 @@ ClusterCoherenceSummary compute_cluster_coherence(const ClusterView& view) {
         } else {
             // Assume stale if no sync state
             summary.stale_count++;
+        }
+
+        if (node.state_root_status == StateRootStatus::CONSISTENT) {
+            summary.consistent_state_root_nodes++;
+        } else if (node.state_root_status == StateRootStatus::INCONSISTENT) {
+            summary.inconsistent_state_root_nodes++;
         }
     }
 
