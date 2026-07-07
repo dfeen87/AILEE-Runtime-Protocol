@@ -7,6 +7,7 @@
 #include "l4/ClusterSim.h"
 #include "l4/ClusterFederationView.h"
 #include "l4/ReplayBuffer.h"
+#include "l6/StateRootBuilder.h"
 
 namespace ailee {
 namespace l4 {
@@ -28,6 +29,7 @@ struct MultiClusterSim {
     std::vector<InFlightEnvelope> in_flight;
 
     ReplayBuffer federation_replay;
+    l6::AnchorState anchor_state;
 
     MultiClusterSim(const FederationConfig& cfg);
 

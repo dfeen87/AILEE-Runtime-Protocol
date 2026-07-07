@@ -39,6 +39,12 @@ void MultiClusterSim::run_federation_tick() {
         federation_replay.record_tick(dummy_state, view.cluster_views.front(), dummy_telemetry);
     }
 
+    // Call StateRootBuilder and populate anchor_state
+    l6::StateRootBuilder builder;
+    anchor_state.state_root = builder.build_state_root(federation_replay, view);
+    anchor_state.replay_height = federation_tick;
+    anchor_state.coherence_score = static_cast<uint64_t>(view.coherence_summary.average_coherence);
+
     federation_tick++;
 }
 

@@ -639,6 +639,7 @@ add_library(ailee_adapters STATIC
     src/l4/FederationConfig.cpp
     src/l4/ClusterFederationView.cpp
     src/l4/MultiClusterSim.cpp
+    src/l6/StateRootBuilder.cpp
     src/l4/ReplayTick.cpp
 )
 
