@@ -626,6 +626,7 @@ add_library(ailee_adapters STATIC
     src/l3/PeerSync.cpp
     src/l3/NetworkDriver.cpp
     src/l1/AnchorCommitment.cpp
+    src/l4/ClusterSim.cpp
 )
 
 target_link_libraries(ailee_adapters
@@ -724,10 +725,11 @@ if(BUILD_TESTS)
         tests/BitVMInterpreterTests.cpp
         tests/MeshCoherenceTests.cpp
         tests/ReflectionLayerTests.cpp
-    tests/DeterministicEngineTests.cpp
+        tests/DeterministicEngineTests.cpp
         tests/NetworkIntegrationTests.cpp
         tests/l3/GossipLayerTests.cpp
         tests/l3/PeerSyncTests.cpp
+        tests/l4/test_cluster_sim.cpp
         src/runtime/BitVMInterpreter.cpp
     )
     
