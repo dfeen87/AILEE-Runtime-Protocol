@@ -500,10 +500,6 @@ if(nlohmann_json_FOUND)
     target_link_libraries(example_wallet_integration PRIVATE nlohmann_json::nlohmann_json)
 endif()
 
-add_executable(example_node_sidecar
-    examples/example_node_sidecar.cpp
-    ${AILEE_L2_SOURCES}
-)
 target_link_libraries(example_node_sidecar PRIVATE Threads::Threads OpenSSL::SSL OpenSSL::Crypto secp256k1)
 if(nlohmann_json_FOUND)
     target_link_libraries(example_node_sidecar PRIVATE nlohmann_json::nlohmann_json)
