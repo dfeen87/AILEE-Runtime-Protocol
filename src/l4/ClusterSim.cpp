@@ -2,6 +2,7 @@
 #include "l4/RecoveryCoordinator.h"
 #include "l4/MeshAnchor.h"
 #include "l4/StateRootPropagation.h"
+#include "l4/DeterministicTransport.h"
 #include "l2/DeterministicEngine.h"
 #include "l3/GossipLayer.h"
 #include "l3/PeerSync.h"
@@ -146,6 +147,59 @@ ClusterView run_cluster_simulation(
                 }
             }
             node.state_root_status = new_status;
+        }
+
+        // 8. Deterministic Transport Layer (Message routing)
+        for (const auto& node : view.nodes) {
+            // Envelope TransportMessage
+            for (const auto& target : view.nodes) {
+                TransportMessage msg_env = {};
+                msg_env.source_node_id_hash = node.node_id_hash;
+                msg_env.dest_node_id_hash = target.node_id_hash;
+                msg_env.epoch_height = node.last_envelope.context.l1_height;
+                msg_env.message_type = 0; // ENVELOPE
+                pack_envelope_payload(msg_env.payload, node.last_envelope.context.l1_height, node.last_envelope.context.state_root_hash);
+                enqueue_transport_message(view.transport_queue, msg_env);
+            }
+
+            // State Root Announcement TransportMessage
+            for (const auto& ann : announcements) {
+                if (ann.source_node_id_hash == node.node_id_hash) {
+                    for (const auto& target : view.nodes) {
+                        TransportMessage msg_ann = {};
+                        msg_ann.source_node_id_hash = node.node_id_hash;
+                        msg_ann.dest_node_id_hash = target.node_id_hash;
+                        msg_ann.epoch_height = ann.epoch_height;
+                        msg_ann.message_type = 1; // STATE_ROOT_ANNOUNCEMENT
+                        pack_state_root_announcement_payload(msg_ann.payload, ann.epoch_height, ann.state_root);
+                        enqueue_transport_message(view.transport_queue, msg_ann);
+                    }
+                }
+            }
+
+            // Mesh Anchor TransportMessage
+            for (const auto& target : view.nodes) {
+                TransportMessage msg_anch = {};
+                msg_anch.source_node_id_hash = node.node_id_hash;
+                msg_anch.dest_node_id_hash = target.node_id_hash;
+                msg_anch.epoch_height = anchor.epoch.epoch_height;
+                msg_anch.message_type = 2; // MESH_ANCHOR
+                pack_mesh_anchor_payload(msg_anch.payload, anchor.epoch.epoch_height, anchor.epoch.mesh_state_root);
+                enqueue_transport_message(view.transport_queue, msg_anch);
+            }
+        }
+
+        // Each node drains and processes its transport messages
+        for (const auto& node : view.nodes) {
+            std::vector<TransportMessage> node_messages = drain_transport_messages_for_node(
+                view.transport_queue, node.node_id_hash);
+
+            // In a real execution, we would route payloads.
+            // For deterministic simulation, we only decode to verify integrity, then discard.
+            for (const auto& msg : node_messages) {
+                // (Verification logic is exercised in tests, we just simulate draining here)
+                (void)msg; // discard
+            }
         }
 
         view.total_steps++;

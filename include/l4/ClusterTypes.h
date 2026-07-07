@@ -6,6 +6,7 @@
 #include "l3/GossipLayer.h"
 #include "l3/PeerSync.h"
 #include "l4/MeshAnchor.h"
+#include "l4/DeterministicTransport.h"
 
 namespace ailee {
 namespace l4 {
@@ -35,10 +36,10 @@ struct alignas(64) ClusterView {
     std::vector<MeshPropagationEnvelope> mesh_envelopes; // 24 bytes
     uint64_t total_nodes;                // 8 bytes
     uint64_t total_steps;                // 8 bytes
-    // Total size: 24 + 24 + 8 + 8 = 64 bytes
-    // Already a multiple of 64. No padding needed!
+    TransportQueue transport_queue;      // 64 bytes
+    // Total size: 24 + 24 + 8 + 8 + 64 = 128 bytes
 };
-static_assert(sizeof(ClusterView) == 64, "ClusterView must be 64 bytes");
+static_assert(sizeof(ClusterView) == 128, "ClusterView must be 128 bytes");
 
 struct alignas(64) ClusterCoherenceSummary {
     uint64_t in_sync_count;                 // 8 bytes
