@@ -31,16 +31,6 @@ struct alignas(64) ClusterNodeState {
 };
 static_assert(sizeof(ClusterNodeState) == 1088, "ClusterNodeState must be 1088 bytes");
 
-struct alignas(64) ClusterView {
-    std::vector<ClusterNodeState> nodes; // 24 bytes
-    std::vector<MeshPropagationEnvelope> mesh_envelopes; // 24 bytes
-    uint64_t total_nodes;                // 8 bytes
-    uint64_t total_steps;                // 8 bytes
-    TransportQueue transport_queue;      // 64 bytes
-    // Total size: 24 + 24 + 8 + 8 + 64 = 128 bytes
-};
-static_assert(sizeof(ClusterView) == 128, "ClusterView must be 128 bytes");
-
 struct alignas(64) ClusterCoherenceSummary {
     uint64_t in_sync_count;                 // 8 bytes
     uint64_t ahead_count;                   // 8 bytes
@@ -57,6 +47,17 @@ struct alignas(64) ClusterCoherenceSummary {
     uint8_t padding[48];
 };
 static_assert(sizeof(ClusterCoherenceSummary) == 128, "ClusterCoherenceSummary must be 128 bytes");
+
+struct alignas(64) ClusterView {
+    std::vector<ClusterNodeState> nodes; // 24 bytes
+    std::vector<MeshPropagationEnvelope> mesh_envelopes; // 24 bytes
+    uint64_t total_nodes;                // 8 bytes
+    uint64_t total_steps;                // 8 bytes
+    TransportQueue transport_queue;      // 64 bytes
+    ClusterCoherenceSummary coherence_summary; // 128 bytes
+    // Total size: 24 + 24 + 8 + 8 + 64 + 128 = 256 bytes
+};
+static_assert(sizeof(ClusterView) == 256, "ClusterView must be 256 bytes");
 
 } // namespace l4
 } // namespace ailee

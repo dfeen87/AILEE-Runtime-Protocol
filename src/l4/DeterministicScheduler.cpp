@@ -203,9 +203,10 @@ void DeterministicScheduler::run_tick(
         }
 
         case SchedulerPhase::COHERENCE_UPDATE: {
-            coherence_summary = compute_cluster_coherence(view);
-            state.cluster_stable = (coherence_summary.global_coherence_score == 100);
+            view.coherence_summary = compute_cluster_coherence(view);
+            state.cluster_stable = (view.coherence_summary.global_coherence_score == 100);
             view.total_steps++;
+            record_telemetry_sample(view, state, telemetry);
             break;
         }
     }

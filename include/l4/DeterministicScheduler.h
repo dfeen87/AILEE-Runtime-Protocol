@@ -9,6 +9,7 @@
 #include "l4/StateRootPropagation.h"
 #include "l2/DeterministicEngine.h"
 #include "l4/ClusterSim.h"
+#include "l4/DeterministicTelemetry.h"
 
 namespace ailee {
 namespace l4 {
@@ -42,13 +43,13 @@ struct DeterministicScheduler {
     MeshEpoch current_epoch;
     MeshAnchor current_anchor;
     std::vector<StateRootAnnouncement> current_announcements;
-    ClusterCoherenceSummary coherence_summary;
+
+    TelemetryBuffer telemetry;
 
     DeterministicScheduler() {
         std::memset(&state, 0, sizeof(state));
         std::memset(&current_epoch, 0, sizeof(current_epoch));
         std::memset(&current_anchor, 0, sizeof(current_anchor));
-        std::memset(&coherence_summary, 0, sizeof(coherence_summary));
     }
 
     void run_tick(

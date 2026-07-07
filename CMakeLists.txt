@@ -632,6 +632,7 @@ add_library(ailee_adapters STATIC
     src/l4/MeshAnchor.cpp
     src/l4/StateRootPropagation.cpp
     src/l4/DeterministicTransport.cpp
+    src/l4/DeterministicTelemetry.cpp
 )
 
 target_link_libraries(ailee_adapters
@@ -740,6 +741,7 @@ if(BUILD_TESTS)
         tests/l4/test_mesh_anchor.cpp
         tests/l4/test_state_root_propagation.cpp
         tests/l4/test_deterministic_transport.cpp
+        tests/l4/test_deterministic_telemetry.cpp
         src/runtime/BitVMInterpreter.cpp
     )
     
