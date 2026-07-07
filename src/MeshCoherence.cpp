@@ -5,7 +5,7 @@
 #include "HeartbeatLog.h"
 #include "StateLog.h"
 
-#include <openssl/sha.h>
+#include <secp256k1.h>
 #include <cstring>
 
 namespace ailee {
@@ -13,7 +13,9 @@ namespace mesh {
 
 namespace {
 void compute_sha256(const uint8_t* data, size_t len, uint8_t out_hash[32]) {
-    SHA256(data, len, out_hash);
+    static secp256k1_context* ctx = secp256k1_context_create(SECP256K1_CONTEXT_NONE);
+    const unsigned char tag[] = "MeshCoherence";
+    (void)secp256k1_tagged_sha256(ctx, out_hash, tag, sizeof(tag) - 1, data, len);
 }
 } // namespace
 
