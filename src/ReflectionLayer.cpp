@@ -26,15 +26,16 @@ bool reflect_latest_anchor(
 ) {
     rocksdb::Slice slice;
     if (db.get_raw_anchor_slice(slice)) {
-        if (slice.size() == sizeof(CacheAlignedAnchor) || slice.size() == 32 + sizeof(uint64_t)) {
-            // Because struct may have padding due to alignas(64) applied to the hash array,
-            // we should be careful with memcpy. The memory layout for CacheAlignedAnchor:
-            // - anchor_hash: 32 bytes at offset 0
-            // - block_height: 8 bytes at offset 32 (padding? offset might be 32 if alignas(64) is just for the struct alignment)
-            // Wait, alignas(64) on uint8_t anchor_hash[32] forces it to be aligned to 64 bytes.
-            // But since it's the first member, it aligns the whole struct to 64 bytes.
-            // Assuming the slice contains exactly 40 bytes (32 for hash, 8 for height):
-            // We just memcpy into the fields.
+        if (slice.size() == sizeof(CacheAlignedAnchor)) {
+            // Memory layout of CacheAlignedAnchor is fixed (sizeof == 128)
+            // but the populated data fields are:
+            // 32 bytes anchor_hash (offset 0)
+            // 8 bytes block_height (offset 64 due to alignment padding or packed layout)
+            // To be perfectly safe against padding differences, we just copy the raw aligned struct bytes.
+            std::memcpy(&out_anchor, slice.data(), sizeof(CacheAlignedAnchor));
+            return true;
+        } else if (slice.size() == 40) {
+            // Explicitly support the compact 40 byte packed structure without alignas padding.
             const uint8_t* data = reinterpret_cast<const uint8_t*>(slice.data());
             std::memcpy(out_anchor.anchor_hash, data, 32);
             std::memcpy(&out_anchor.block_height, data + 32, sizeof(uint64_t));
@@ -50,8 +51,11 @@ bool reflect_reorg_event(
 ) {
     rocksdb::Slice slice;
     if (db.get_raw_reorg_slice(slice)) {
-        // Layout: old_height(8) + new_height(8) + old_anchor_hash(32) + new_anchor_hash(32) = 80 bytes
-        if (slice.size() == sizeof(uint64_t) * 2 + 32 * 2) {
+        if (slice.size() == sizeof(CacheAlignedReorgEvent)) {
+            std::memcpy(&out_reorg, slice.data(), sizeof(CacheAlignedReorgEvent));
+            return true;
+        } else if (slice.size() == 80) {
+            // Explicitly support compact 80 byte format: old_height(8) + new_height(8) + old_hash(32) + new_hash(32)
             const uint8_t* data = reinterpret_cast<const uint8_t*>(slice.data());
             std::memcpy(&out_reorg.old_height, data, sizeof(uint64_t));
             std::memcpy(&out_reorg.new_height, data + sizeof(uint64_t), sizeof(uint64_t));

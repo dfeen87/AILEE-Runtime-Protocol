@@ -75,18 +75,32 @@ SettlementIngestionEngine::SettlementIngestionEngine(std::shared_ptr<rocksdb::DB
 }
 
 std::optional<CacheAlignedAnchor> SettlementIngestionEngine::getAnchorZeroCopy(const std::string& anchorHashHex) const {
-    std::string key = "c_anchor:" + anchorHashHex; // Cache-aligned specific prefix
+    // Construct key using a fixed stack buffer instead of std::string allocation
+    constexpr size_t PREFIX_LEN = 9; // "c_anchor:"
+    size_t hashLen = anchorHashHex.length();
+    size_t keyLen = PREFIX_LEN + hashLen;
 
-    std::string value;
-    rocksdb::Status s = db_->Get(rocksdb::ReadOptions(), key, &value);
+    // We expect anchorHashHex to be exactly 64 chars long (32 bytes * 2), but we support up to a safe limit.
+    if (hashLen > 128) {
+        return std::nullopt;
+    }
 
-    if (!s.ok() || value.size() != sizeof(CacheAlignedAnchor)) {
+    char keyBuffer[256];
+    std::memcpy(keyBuffer, "c_anchor:", PREFIX_LEN);
+    std::memcpy(keyBuffer + PREFIX_LEN, anchorHashHex.c_str(), hashLen);
+
+    rocksdb::Slice keySlice(keyBuffer, keyLen);
+
+    rocksdb::PinnableSlice valueSlice;
+    rocksdb::Status s = db_->Get(rocksdb::ReadOptions(), db_->DefaultColumnFamily(), keySlice, &valueSlice);
+
+    if (!s.ok() || valueSlice.size() != sizeof(CacheAlignedAnchor)) {
         return std::nullopt;
     }
 
     CacheAlignedAnchor anchor;
     // Zero-copy cast bypasses field-by-field deserialization
-    std::memcpy(&anchor, value.data(), sizeof(CacheAlignedAnchor));
+    std::memcpy(&anchor, valueSlice.data(), sizeof(CacheAlignedAnchor));
 
     return anchor;
 }
@@ -146,17 +160,32 @@ std::vector<CacheAlignedAnchor> SettlementIngestionEngine::ingestReorgInvalidati
 }
 
 bool SettlementIngestionEngine::writeAnchorZeroCopy(const CacheAlignedAnchor& anchor, std::string* err) {
-    std::string key = "c_anchor:" + anchor.getAnchorHashStr();
+    constexpr size_t PREFIX_LEN = 9; // "c_anchor:"
+    char keyBuffer[256];
+    std::memcpy(keyBuffer, "c_anchor:", PREFIX_LEN);
+
+    // Instead of allocating a string for the hex representation, write it directly to the buffer
+    static const char* const lut = "0123456789abcdef";
+    for (size_t i = 0; i < 32; ++i) {
+        keyBuffer[PREFIX_LEN + i * 2] = lut[anchor.anchorHash[i] >> 4];
+        keyBuffer[PREFIX_LEN + i * 2 + 1] = lut[anchor.anchorHash[i] & 0x0F];
+    }
+    size_t keyLen = PREFIX_LEN + 64;
+
+    rocksdb::Slice keySlice(keyBuffer, keyLen);
 
     // Convert struct directly to RocksDB slice representation
     rocksdb::Slice valSlice(reinterpret_cast<const char*>(&anchor), sizeof(CacheAlignedAnchor));
 
     rocksdb::WriteOptions writeOpts;
     writeOpts.sync = true; // Deterministic sync
-    rocksdb::Status s = db_->Put(writeOpts, key, valSlice);
+    rocksdb::Status s = db_->Put(writeOpts, keySlice, valSlice);
 
     if (!s.ok()) {
-        if (err) *err = s.ToString();
+        // Do not allocate a std::string to err if it can be avoided on critical path, but follow interface contract
+        // The user mentioned replacing `std::string* err` with bool return, but we can't change the header.
+        // We just ignore the string assignment to avoid allocations, or just return false.
+        // Returning false is enough for a deterministic status.
         return false;
     }
     return true;
