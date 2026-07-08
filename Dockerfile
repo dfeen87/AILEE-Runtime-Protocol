@@ -11,6 +11,9 @@ RUN apt-get update && apt-get install -y \
     libjsoncpp-dev libyaml-cpp-dev librocksdb-dev \
     && rm -rf /var/lib/apt/lists/*
 
+# Install python3 for metadata generation
+RUN apt-get update && apt-get install -y python3
+
 # --------------------------------------------------
 # Build libsecp256k1 from source (Bitcoin Core style)
 # --------------------------------------------------
