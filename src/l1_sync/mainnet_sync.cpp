@@ -1,0 +1,146 @@
+#include "l1_sync/mainnet_sync.hpp"
+#include <algorithm>
+#include "l1_sync/reorg_detector.hpp"
+#include <cstring>
+#include <stdexcept>
+
+namespace ailee {
+namespace l1_sync {
+
+bool MempoolEntry::operator<(const MempoolEntry& other) const {
+    // Deterministic sort: txid -> fee -> size
+    int cmp = std::memcmp(txid.data(), other.txid.data(), txid.size());
+    if (cmp != 0) return cmp < 0;
+    if (fee != other.fee) return fee < other.fee;
+    return size < other.size;
+}
+
+MainnetSyncManager::MainnetSyncManager(size_t max_buffer_size)
+    : max_buffer_size(max_buffer_size)
+{
+    clock.height = 0;
+    clock.consensus_time = 0.0;
+    clock.interval_seconds = 600.0; // default 10 mins
+}
+
+SyncEventBatch MainnetSyncManager::ingest_headers(const HeaderBatch& headers) {
+    SyncEventBatch events;
+    for (const auto& header : headers) {
+        // Validation: Prevhash check for Reorg detection
+        if (!header_buffer.empty()) {
+            const auto& tip = header_buffer.back();
+            if (std::memcmp(tip.hash.data(), header.prev_hash.data(), 32) != 0 || header.height <= tip.height) {
+                // Reorg detected due to prevhash mismatch or rollback
+                SyncEvent event;
+                event.type = SyncEventType::ReorgDetected;
+                event.height = header.height;
+                event.block_hash = header.hash;
+                events.push_back(event);
+
+                // Use the ReorgDetector
+                std::vector<std::array<uint8_t, 32>> current_chain;
+                for (const auto& h : header_buffer) {
+                    current_chain.push_back(h.hash);
+                }
+                std::vector<std::array<uint8_t, 32>> new_chain;
+                new_chain.push_back(header.hash);
+
+                ReorgResolution resolution = ReorgDetector::detect_and_resolve(current_chain, new_chain);
+
+                if (resolution.reorg_occurred) {
+                    // Truncate buffer to branch point
+                    while (header_buffer.size() > resolution.rollback_height) {
+                        header_buffer.pop_back();
+                    }
+                } else {
+                    // Fallback to simple pop
+                    while (!header_buffer.empty() && (header_buffer.back().height >= header.height ||
+                           (header_buffer.size() > 0 && std::memcmp(header_buffer.back().hash.data(), header.prev_hash.data(), 32) != 0))) {
+                        header_buffer.pop_back();
+                    }
+                }
+            }
+        }
+
+        // Basic PoW Validation checks could go here (nonce, nBits, version)
+        if (header.version < 1) {
+            continue; // Skip obviously bad headers to maintain deterministic integrity
+        }
+
+        header_buffer.push_back(header);
+        if (header_buffer.size() > max_buffer_size) {
+            header_buffer.pop_front();
+        }
+
+        SyncEvent event;
+        event.type = SyncEventType::HeaderApplied;
+        event.height = header.height;
+        event.block_hash = header.hash;
+        events.push_back(event);
+    }
+
+    update_clock();
+    return events;
+}
+
+SyncEventBatch MainnetSyncManager::ingest_mempool_deltas(const MempoolDeltaBatch& deltas) {
+    SyncEventBatch events;
+    uint32_t adds = 0;
+    uint32_t removes = 0;
+
+    for (const auto& delta : deltas) {
+        if (delta.is_add) {
+            MempoolEntry entry;
+            entry.txid = delta.txid;
+            entry.fee = delta.fee;
+            entry.size = delta.size;
+            mempool.push_back(entry);
+            adds++;
+        } else {
+            auto it = std::remove_if(mempool.begin(), mempool.end(),
+                [&delta](const MempoolEntry& e) {
+                    return std::memcmp(e.txid.data(), delta.txid.data(), e.txid.size()) == 0;
+                });
+            if (it != mempool.end()) {
+                mempool.erase(it, mempool.end());
+                removes++;
+            }
+        }
+    }
+
+    if (adds > 0 || removes > 0) {
+        sort_mempool();
+        SyncEvent event;
+        event.type = SyncEventType::MempoolDeltaApplied;
+        event.mempool_additions = adds;
+        event.mempool_removals = removes;
+        events.push_back(event);
+    }
+
+    return events;
+}
+
+void MainnetSyncManager::update_clock() {
+    if (header_buffer.empty()) return;
+
+    clock.height = header_buffer.back().height;
+
+    // MTP - median time past over last 11 blocks
+    std::vector<uint32_t> times;
+    auto it = header_buffer.rbegin();
+    for (int i = 0; i < 11 && it != header_buffer.rend(); ++i, ++it) {
+        times.push_back(it->timestamp);
+    }
+
+    if (!times.empty()) {
+        std::sort(times.begin(), times.end());
+        clock.consensus_time = static_cast<double>(times[times.size() / 2]);
+    }
+}
+
+void MainnetSyncManager::sort_mempool() {
+    std::sort(mempool.begin(), mempool.end());
+}
+
+} // namespace l1_sync
+} // namespace ailee
