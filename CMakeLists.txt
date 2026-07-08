@@ -471,6 +471,7 @@ add_custom_target(verify_build ALL
 
 add_executable(ailee_node ${CORE_SOURCES})
 add_dependencies(ailee_node generate_metadata_hpp)
+target_link_libraries(ailee_node PRIVATE ailee_adapters ailee_l5_compression)
 
 # --- Layer-2 Service Executable ---
 add_executable(ailee_service
@@ -639,9 +640,11 @@ add_library(ailee_l5_compression STATIC
 )
 target_include_directories(ailee_l5_compression PUBLIC include)
 
+# ailee_adapters includes ReplayTick which is needed by compression
+target_link_libraries(ailee_l5_compression PRIVATE ailee_adapters)
+
 target_link_libraries(ailee_adapters
     PRIVATE
-    ailee_l5_compression
     $<IF:$<BOOL:${AILEE_USE_RUST_PROVER}>,ailee_rust_prover,ailee_rust_ffi_fallback>
     OpenSSL::SSL
     OpenSSL::Crypto
@@ -759,6 +762,7 @@ if(BUILD_TESTS)
     target_link_libraries(ailee_tests
         PRIVATE
         ailee_adapters
+        ailee_l5_compression
         GTest::gtest
         GTest::gtest_main
     )

@@ -73,6 +73,7 @@ public:
     void setSyncEventsCallback(std::function<std::string()> callback);
     void setSyncClockCallback(std::function<std::string()> callback);
     void setLatestReplayTickCallback(std::function<std::string()> callback);
+    void setMeshEnvelopesCallback(std::function<std::string()> callback);
 
 private:
     class Impl;

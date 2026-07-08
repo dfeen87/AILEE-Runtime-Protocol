@@ -106,13 +106,45 @@ ClusterView ClusterSim::build_view() const {
 SchedulerCallbacks ClusterSim::get_scheduler_callbacks() const {
     SchedulerCallbacks cb;
     if (scheduler) {
-        cb.sync_events = [this]() { return scheduler->get_sync_events_json(); };
-        cb.sync_clock  = [this]() { return scheduler->get_clock_json(); };
-        cb.replay_tick = [this]() { return scheduler->get_latest_replay_tick_json(); };
+        cb.sync_events      = [this]() { return scheduler->get_sync_events_json(); };
+        cb.sync_clock       = [this]() { return scheduler->get_clock_json(); };
+        cb.replay_tick      = [this]() { return scheduler->get_latest_replay_tick_json(); };
+        cb.federation_view  = [this]() {
+            // simple federation view: node ids + coherence
+            std::string json = "{";
+            json += "\"global_coherence_score\":" + std::to_string(view.coherence_summary.global_coherence_score) + ",";
+            json += "\"nodes\":[";
+            for (size_t i = 0; i < view.nodes.size(); ++i) {
+                const auto& n = view.nodes[i];
+                json += "{";
+                json += "\"node_id_hash\":" + std::to_string(n.node_id_hash) + ",";
+                json += "\"state_root_status\":" + std::to_string(static_cast<int>(n.state_root_status));
+                json += "}";
+                if (i + 1 < view.nodes.size()) json += ",";
+            }
+            json += "]";
+            json += "}";
+            return json;
+        };
+        cb.mesh_envelopes   = [this]() {
+            std::string json = "[";
+            for (size_t i = 0; i < view.mesh_envelopes.size(); ++i) {
+                const auto& env = view.mesh_envelopes[i];
+                json += "{";
+                json += "\"source_node_id_hash\":" + std::to_string(env.source_node_id_hash) + ",";
+                json += "\"epoch_height\":" + std::to_string(env.anchor.epoch.epoch_height);
+                json += "}";
+                if (i + 1 < view.mesh_envelopes.size()) json += ",";
+            }
+            json += "]";
+            return json;
+        };
     } else {
-        cb.sync_events = []() { return std::string("[]"); };
-        cb.sync_clock  = []() { return std::string("{}"); };
-        cb.replay_tick = []() { return std::string("{}"); };
+        cb.sync_events      = []() { return std::string("[]"); };
+        cb.sync_clock       = []() { return std::string("{}"); };
+        cb.replay_tick      = []() { return std::string("{}"); };
+        cb.federation_view  = []() { return std::string("{}"); };
+        cb.mesh_envelopes   = []() { return std::string("[]"); };
     }
     return cb;
 }
