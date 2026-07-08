@@ -6,11 +6,97 @@
 #include "NodeIdentity.h"
 #include "l4/ReplayEngine.h"
 #include "l4/ReplayTick.h"
+#include "util/Hex.h"
 #include <cstring>
 #include <iostream>
 
 namespace ailee {
 namespace l4 {
+
+std::string DeterministicScheduler::get_sync_events_json() const {
+    std::string json = "[";
+    for (size_t i = 0; i < last_sync_events.size(); ++i) {
+        const auto& ev = last_sync_events[i];
+        json += "{";
+        json += "\"block_hash\":\"" + util::to_hex(ev.block_hash) + "\",";
+        json += "\"height\":" + std::to_string(ev.height) + ",";
+        json += "\"reorg_target_height\":" + std::to_string(ev.reorg_target_height) + ",";
+        json += "\"txid\":\"" + util::to_hex(ev.txid) + "\",";
+        json += "\"type\":" + std::to_string(static_cast<uint8_t>(ev.type));
+        json += "}";
+        if (i < last_sync_events.size() - 1) {
+            json += ",";
+        }
+    }
+    json += "]";
+    return json;
+}
+
+std::string DeterministicScheduler::get_clock_json() const {
+    const auto& clock = mainnet_sync.get_clock();
+    std::string json = "{";
+    json += "\"block_interval_variance\":" + std::to_string(clock.interval_seconds) + ",";
+    json += "\"height\":" + std::to_string(clock.height) + ",";
+    json += "\"mtp\":" + std::to_string(clock.consensus_time) + ",";
+    json += "\"phase_alignment\":0,";
+    json += "\"timestamp\":" + std::to_string(clock.consensus_time);
+    json += "}";
+    return json;
+}
+
+std::string DeterministicScheduler::get_latest_replay_tick_json() const {
+    std::string json = "{";
+    
+    // clock object
+    json += "\"clock\":{";
+    json += "\"height\":" + std::to_string(latest_replay_tick.clock.height) + ",";
+    json += "\"timestamp\":" + std::to_string(latest_replay_tick.clock.consensus_time);
+    json += "},";
+
+    json += "\"height\":" + std::to_string(latest_replay_tick.height) + ",";
+    
+    // replay_events array
+    json += "\"replay_events\":[";
+    for (size_t i = 0; i < latest_replay_tick.replay_events.size(); ++i) {
+        const auto& ev = latest_replay_tick.replay_events[i];
+        json += "{";
+        json += "\"block_hash\":\"" + util::to_hex(ev.block_hash) + "\",";
+        json += "\"height\":" + std::to_string(ev.height) + ",";
+        json += "\"txid\":\"" + util::to_hex(ev.txid) + "\",";
+        json += "\"type\":" + std::to_string(static_cast<uint8_t>(ev.type));
+        json += "}";
+        if (i < latest_replay_tick.replay_events.size() - 1) {
+            json += ",";
+        }
+    }
+    json += "],";
+    
+    // view object
+    json += "\"view\":{";
+    json += "\"clock\":{";
+    json += "\"height\":" + std::to_string(latest_replay_tick.view.clock.height) + ",";
+    json += "\"timestamp\":" + std::to_string(latest_replay_tick.view.clock.consensus_time);
+    json += "},";
+    
+    json += "\"replay_events\":[";
+    for (size_t i = 0; i < latest_replay_tick.view.replay_events.size(); ++i) {
+        const auto& ev = latest_replay_tick.view.replay_events[i];
+        json += "{";
+        json += "\"block_hash\":\"" + util::to_hex(ev.block_hash) + "\",";
+        json += "\"height\":" + std::to_string(ev.height) + ",";
+        json += "\"txid\":\"" + util::to_hex(ev.txid) + "\",";
+        json += "\"type\":" + std::to_string(static_cast<uint8_t>(ev.type));
+        json += "}";
+        if (i < latest_replay_tick.view.replay_events.size() - 1) {
+            json += ",";
+        }
+    }
+    json += "]"; // end view.replay_events
+    json += "}"; // end view
+    
+    json += "}"; // end main object
+    return json;
+}
 
 DeterministicScheduler::DeterministicScheduler() {
     std::memset(&state, 0, sizeof(state));
@@ -26,10 +112,10 @@ void DeterministicScheduler::run_tick(
     const std::vector<std::pair<size_t, size_t>>& gossip_schedule,
     std::vector<l2::DeterministicEngine>& engines
 ) {
-    auto events = mainnet_sync.drain_sync_events();
+    last_sync_events = mainnet_sync.drain_sync_events();
     auto clock = mainnet_sync.get_clock();
 
-    l1_sync::ReplayInput input{events, clock};
+    l1_sync::ReplayInput input{last_sync_events, clock};
     ReplayTick tick = replay_engine.step(previous_replay_state, input);
 
     previous_replay_state.current_height = tick.height;
