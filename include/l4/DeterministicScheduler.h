@@ -50,9 +50,15 @@ struct DeterministicScheduler {
     ReplayEngine replay_engine;
     l1_sync::ReplayState previous_replay_state;
     ReplayTick latest_replay_tick;
+    l1_sync::SyncEventBatch last_sync_events;
 
     DeterministicScheduler();
     ~DeterministicScheduler();
+
+    // V17 JSON endpoints for telemetry
+    std::string get_sync_events_json() const;
+    std::string get_clock_json() const;
+    std::string get_latest_replay_tick_json() const;
 
     void run_tick(
         ClusterView& view,
