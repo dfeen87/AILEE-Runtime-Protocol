@@ -3,6 +3,7 @@
 #include <vector>
 #include <cstdint>
 #include <array>
+#include <cstddef>
 #include <deque>
 #include "l1_sync/sync_events.hpp"
 #include "l1_sync/bitcoin_clock.hpp"
