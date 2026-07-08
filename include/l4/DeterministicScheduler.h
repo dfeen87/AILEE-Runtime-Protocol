@@ -1,5 +1,7 @@
 #pragma once
 
+#include "l1_sync/mainnet_sync.hpp"
+
 #include <cstdint>
 #include <vector>
 #include <utility>
@@ -48,6 +50,7 @@ struct DeterministicScheduler {
     TelemetryBuffer telemetry;
     DashboardBuilder dashboard_builder;
     DashboardSnapshot last_snapshot;
+    l1_sync::MainnetSyncManager mainnet_sync;
 
     DeterministicScheduler() {
         std::memset(&state, 0, sizeof(state));

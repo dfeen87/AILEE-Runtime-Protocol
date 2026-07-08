@@ -584,6 +584,9 @@ endif()
 # --- 2. Adapter Library (Static) ---
 # Useful for testing adapters without running the full node
 add_library(ailee_adapters STATIC 
+    src/l1_sync/mainnet_sync.cpp
+    src/l1_sync/reorg_detector.cpp
+    src/l1_sync/bitcoin_clock.cpp
     ${ADAPTER_SOURCES}
     ${AMBIENT_NODE_SOURCES}
     ${AMBIENT_MESH_SOURCES}
