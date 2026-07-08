@@ -149,9 +149,32 @@ std::string JsonBindings::to_json(const ExternalEnvelope& env) {
     return out;
 }
 
-std::string JsonBindings::to_json(const ExternalClusterView& view) {
-    // Keys sorted: "coherence", "envelopes", "node_count"
+std::string JsonBindings::to_json(const ExternalBitcoinClockState& clock) {
+    // Keys sorted: "consensus_time", "height", "interval_seconds"
     std::string out = "{";
+    out += "\"consensus_time\":" + format_double_stable(clock.consensus_time) + ",";
+    out += "\"height\":" + std::to_string(clock.height) + ",";
+    out += "\"interval_seconds\":" + format_double_stable(clock.interval_seconds);
+    out += "}";
+    return out;
+}
+
+std::string JsonBindings::to_json(const ExternalReplayEvent& event) {
+    // Keys sorted: "block_hash", "height", "txid", "type"
+    std::string out = "{";
+    out += "\"block_hash\":\"" + escape_string(event.block_hash) + "\",";
+    out += "\"height\":" + std::to_string(event.height) + ",";
+    out += "\"txid\":\"" + escape_string(event.txid) + "\",";
+    out += "\"type\":" + std::to_string(event.type);
+    out += "}";
+    return out;
+}
+
+std::string JsonBindings::to_json(const ExternalClusterView& view) {
+    // Keys sorted: "clock", "coherence", "envelopes", "node_count", "replay_events"
+    std::string out = "{";
+
+    out += "\"clock\":" + to_json(view.clock) + ",";
     out += "\"coherence\":" + format_double_stable(view.coherence) + ",";
 
     out += "\"envelopes\":[";
@@ -163,7 +186,17 @@ std::string JsonBindings::to_json(const ExternalClusterView& view) {
     }
     out += "],";
 
-    out += "\"node_count\":" + std::to_string(view.node_count);
+    out += "\"node_count\":" + std::to_string(view.node_count) + ",";
+
+    out += "\"replay_events\":[";
+    for (size_t i = 0; i < view.replay_events.size(); ++i) {
+        out += to_json(view.replay_events[i]);
+        if (i < view.replay_events.size() - 1) {
+            out += ",";
+        }
+    }
+    out += "]";
+
     out += "}";
     return out;
 }
@@ -211,6 +244,70 @@ ExternalEnvelope JsonBindings::from_json_envelope(const std::string& json) {
     return env;
 }
 
+ExternalBitcoinClockState JsonBindings::from_json_clock(const std::string& json) {
+    ExternalBitcoinClockState clock;
+    size_t pos = 0;
+    expect_char(json, pos, '{');
+    while (pos < json.size()) {
+        skip_whitespace(json, pos);
+        if (json[pos] == '}') {
+            pos++;
+            break;
+        }
+        std::string key = parse_key(json, pos);
+        if (key == "consensus_time") {
+            clock.consensus_time = parse_double(json, pos);
+        } else if (key == "height") {
+            clock.height = parse_uint(json, pos);
+        } else if (key == "interval_seconds") {
+            clock.interval_seconds = parse_double(json, pos);
+        } else {
+            throw std::runtime_error("Unknown key in clock state: " + key);
+        }
+
+        skip_whitespace(json, pos);
+        if (json[pos] == ',') {
+            pos++;
+        } else if (json[pos] != '}') {
+            throw std::runtime_error("Expected ',' or '}'");
+        }
+    }
+    return clock;
+}
+
+ExternalReplayEvent JsonBindings::from_json_replay_event(const std::string& json) {
+    ExternalReplayEvent event;
+    size_t pos = 0;
+    expect_char(json, pos, '{');
+    while (pos < json.size()) {
+        skip_whitespace(json, pos);
+        if (json[pos] == '}') {
+            pos++;
+            break;
+        }
+        std::string key = parse_key(json, pos);
+        if (key == "block_hash") {
+            event.block_hash = parse_string(json, pos);
+        } else if (key == "height") {
+            event.height = parse_uint(json, pos);
+        } else if (key == "txid") {
+            event.txid = parse_string(json, pos);
+        } else if (key == "type") {
+            event.type = static_cast<uint8_t>(parse_uint(json, pos));
+        } else {
+            throw std::runtime_error("Unknown key in replay event: " + key);
+        }
+
+        skip_whitespace(json, pos);
+        if (json[pos] == ',') {
+            pos++;
+        } else if (json[pos] != '}') {
+            throw std::runtime_error("Expected ',' or '}'");
+        }
+    }
+    return event;
+}
+
 ExternalClusterView JsonBindings::from_json_view(const std::string& json) {
     ExternalClusterView view;
     size_t pos = 0;
@@ -226,6 +323,18 @@ ExternalClusterView JsonBindings::from_json_view(const std::string& json) {
             view.coherence = parse_double(json, pos);
         } else if (key == "node_count") {
             view.node_count = parse_uint(json, pos);
+        } else if (key == "clock") {
+            skip_whitespace(json, pos);
+            size_t start_obj = pos;
+            int depth = 0;
+            while (pos < json.size()) {
+                if (json[pos] == '{') depth++;
+                else if (json[pos] == '}') depth--;
+                pos++;
+                if (depth == 0) break;
+            }
+            std::string clock_json = json.substr(start_obj, pos - start_obj);
+            view.clock = from_json_clock(clock_json);
         } else if (key == "envelopes") {
             expect_char(json, pos, '[');
             while (pos < json.size()) {
@@ -251,6 +360,33 @@ ExternalClusterView JsonBindings::from_json_view(const std::string& json) {
                     pos++;
                 } else if (json[pos] != ']') {
                     throw std::runtime_error("Expected ',' or ']' in envelopes array");
+                }
+            }
+        } else if (key == "replay_events") {
+            expect_char(json, pos, '[');
+            while (pos < json.size()) {
+                skip_whitespace(json, pos);
+                if (json[pos] == ']') {
+                    pos++;
+                    break;
+                }
+
+                size_t start_obj = pos;
+                int depth = 0;
+                while (pos < json.size()) {
+                    if (json[pos] == '{') depth++;
+                    else if (json[pos] == '}') depth--;
+                    pos++;
+                    if (depth == 0) break;
+                }
+                std::string ev_json = json.substr(start_obj, pos - start_obj);
+                view.replay_events.push_back(from_json_replay_event(ev_json));
+
+                skip_whitespace(json, pos);
+                if (json[pos] == ',') {
+                    pos++;
+                } else if (json[pos] != ']') {
+                    throw std::runtime_error("Expected ',' or ']' in replay_events array");
                 }
             }
         } else {
