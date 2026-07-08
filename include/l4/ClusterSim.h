@@ -4,12 +4,20 @@
 #include <utility>
 #include <cstdint>
 #include <cstddef>
+#include <functional>
+#include <string>
 #include "l4/ClusterTypes.h"
 
 namespace ailee {
 namespace l4 {
 
 class DeterministicScheduler;
+
+struct SchedulerCallbacks {
+    std::function<std::string()> sync_events;
+    std::function<std::string()> sync_clock;
+    std::function<std::string()> replay_tick;
+};
 
 class ClusterSim {
 public:
@@ -35,6 +43,9 @@ public:
 
     // Accessor for building ClusterView
     ClusterView build_view() const;
+
+    // Callbacks for deterministic telemetry export
+    SchedulerCallbacks get_scheduler_callbacks() const;
 
 private:
     std::vector<l2::ExecutionEnvelope> inbox;
