@@ -120,9 +120,11 @@ TEST_F(DeterministicTransportTest, MultiNodeRouting) {
 }
 
 TEST_F(DeterministicTransportTest, PayloadIntegrity) {
-    uint8_t payload[128] = {0};
+    uint8_t payload[128];
+    std::memset(payload, 0, sizeof(payload));
     uint64_t epoch = 123456789;
     uint8_t state_root[32];
+    std::memset(state_root, 0, sizeof(state_root));
     for (int i = 0; i < 32; ++i) state_root[i] = static_cast<uint8_t>(i);
 
     pack_envelope_payload(payload, epoch, state_root);

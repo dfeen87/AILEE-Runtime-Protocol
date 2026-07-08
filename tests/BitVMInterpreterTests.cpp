@@ -1,6 +1,7 @@
 #include "runtime/BitVMInterpreter.h"
 #include <gtest/gtest.h>
 #include <openssl/sha.h>
+#include <cstring>
 
 using namespace ailee::runtime;
 
@@ -145,21 +146,27 @@ TEST(BitVMInterpreterTest, TestPushData124) {
     auto state1 = interpreter.execute(script1);
     EXPECT_TRUE(state1.execution_success);
     EXPECT_EQ(state1.stack.size(), 1);
-    EXPECT_EQ(state1.stack[0], (std::vector<uint8_t>{0xaa, 0xbb}));
+    std::vector<uint8_t> exp1 = {0xaa, 0xbb};
+    EXPECT_EQ(state1.stack[0].size(), exp1.size());
+    EXPECT_EQ(std::memcmp(state1.stack[0].data(), exp1.data(), exp1.size()), 0);
 
     // OP_PUSHDATA2 0x03 0x00 0xAA 0xBB 0xCC (push 3 bytes, little endian length)
     std::vector<uint8_t> script2 = {0x4d, 0x03, 0x00, 0xaa, 0xbb, 0xcc};
     auto state2 = interpreter.execute(script2);
     EXPECT_TRUE(state2.execution_success);
     EXPECT_EQ(state2.stack.size(), 1);
-    EXPECT_EQ(state2.stack[0], (std::vector<uint8_t>{0xaa, 0xbb, 0xcc}));
+    std::vector<uint8_t> exp2 = {0xaa, 0xbb, 0xcc};
+    EXPECT_EQ(state2.stack[0].size(), exp2.size());
+    EXPECT_EQ(std::memcmp(state2.stack[0].data(), exp2.data(), exp2.size()), 0);
 
     // OP_PUSHDATA4 0x04 0x00 0x00 0x00 0xAA 0xBB 0xCC 0xDD (push 4 bytes, little endian length)
     std::vector<uint8_t> script3 = {0x4e, 0x04, 0x00, 0x00, 0x00, 0xaa, 0xbb, 0xcc, 0xdd};
     auto state3 = interpreter.execute(script3);
     EXPECT_TRUE(state3.execution_success);
     EXPECT_EQ(state3.stack.size(), 1);
-    EXPECT_EQ(state3.stack[0], (std::vector<uint8_t>{0xaa, 0xbb, 0xcc, 0xdd}));
+    std::vector<uint8_t> exp3 = {0xaa, 0xbb, 0xcc, 0xdd};
+    EXPECT_EQ(state3.stack[0].size(), exp3.size());
+    EXPECT_EQ(std::memcmp(state3.stack[0].data(), exp3.data(), exp3.size()), 0);
 }
 
 TEST(BitVMInterpreterTest, TestControlFlowIfElse) {
@@ -178,7 +185,9 @@ TEST(BitVMInterpreterTest, TestControlFlowIfElse) {
     auto state = interpreter.execute(script);
     EXPECT_TRUE(state.execution_success);
     EXPECT_EQ(state.stack.size(), 1);
-    EXPECT_EQ(state.stack[0], (std::vector<uint8_t>{0x11}));
+    std::vector<uint8_t> exp = {0x11};
+    EXPECT_EQ(state.stack[0].size(), exp.size());
+    EXPECT_EQ(std::memcmp(state.stack[0].data(), exp.data(), exp.size()), 0);
 
     // [False] OP_IF [Push 0x11] OP_ELSE [Push 0x22] OP_ENDIF
     std::vector<uint8_t> script_false = {
@@ -193,7 +202,9 @@ TEST(BitVMInterpreterTest, TestControlFlowIfElse) {
     auto state_false = interpreter.execute(script_false);
     EXPECT_TRUE(state_false.execution_success);
     EXPECT_EQ(state_false.stack.size(), 1);
-    EXPECT_EQ(state_false.stack[0], (std::vector<uint8_t>{0x22}));
+    std::vector<uint8_t> exp_false = {0x22};
+    EXPECT_EQ(state_false.stack[0].size(), exp_false.size());
+    EXPECT_EQ(std::memcmp(state_false.stack[0].data(), exp_false.data(), exp_false.size()), 0);
 }
 
 TEST(BitVMInterpreterTest, TestStepByStepExecution) {

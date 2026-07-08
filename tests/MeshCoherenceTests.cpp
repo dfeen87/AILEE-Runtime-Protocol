@@ -15,7 +15,12 @@ namespace {
 class MockRocksDbHandle : public RocksDbHandle {
 public:
     uint64_t l1_height = 100;
-    uint8_t anchor_hash[32] = {0xAA};
+    uint8_t anchor_hash[32];
+
+    MockRocksDbHandle() {
+        std::memset(anchor_hash, 0, sizeof(anchor_hash));
+        anchor_hash[0] = 0xAA;
+    }
 
     uint64_t get_latest_l1_height() const override { return l1_height; }
 
@@ -49,7 +54,13 @@ public:
 
 class MockStateRootLog : public StateRootLog {
 public:
-    uint8_t state_root[32] = {0xBB};
+    uint8_t state_root[32];
+
+    MockStateRootLog() {
+        std::memset(state_root, 0, sizeof(state_root));
+        state_root[0] = 0xBB;
+    }
+
     void get_latest_state_root(uint8_t out_root[32]) const override {
         std::memcpy(out_root, state_root, 32);
     }
@@ -73,7 +84,7 @@ TEST(MeshCoherenceTests, ComputeNodeIdDeterminism) {
 
     MeshNodeId id3 = compute_node_id(build2, gen1, cfg1);
 
-    EXPECT_TRUE(std::memcmp(id1.id, id3.id, 32) != 0);
+    EXPECT_NE(std::memcmp(id1.id, id3.id, 32), 0);
 }
 
 TEST(MeshCoherenceTests, BuildLocalSnapshot) {
@@ -90,8 +101,14 @@ TEST(MeshCoherenceTests, BuildLocalSnapshot) {
     EXPECT_EQ(snapshot.latest_l1_height, 100);
     EXPECT_EQ(snapshot.latest_l2_epoch, 50);
 
-    uint8_t expected_anchor[32] = {0xAA};
-    uint8_t expected_root[32] = {0xBB};
+    uint8_t expected_anchor[32];
+    std::memset(expected_anchor, 0, sizeof(expected_anchor));
+    expected_anchor[0] = 0xAA;
+
+    uint8_t expected_root[32];
+    std::memset(expected_root, 0, sizeof(expected_root));
+    expected_root[0] = 0xBB;
+
     EXPECT_EQ(std::memcmp(snapshot.latest_anchor_hash, expected_anchor, 32), 0);
     EXPECT_EQ(std::memcmp(snapshot.latest_state_root, expected_root, 32), 0);
 }

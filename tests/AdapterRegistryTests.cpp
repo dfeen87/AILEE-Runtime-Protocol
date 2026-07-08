@@ -10,11 +10,11 @@ using namespace ailee::global_seven;
 // Dummy adapter for testing
 class DummyAdapter : public IChainAdapter {
 public:
-    bool init(const AdapterConfig&, ErrorCallback) override { return true; }
-    bool start(TxCallback, BlockCallback, EnergyCallback) override { return true; }
+    bool init(const AdapterConfig& /*cfg*/, ErrorCallback /*onError*/) override { return true; }
+    bool start(TxCallback /*onTx*/, BlockCallback /*onBlock*/, EnergyCallback /*onEnergy*/) override { return true; }
     void stop() override {}
-    bool broadcastTransaction(const std::vector<TxOut>&,
-                              const std::unordered_map<std::string, std::string>&,
+    bool broadcastTransaction(const std::vector<TxOut>& /*outputs*/,
+                              const std::unordered_map<std::string, std::string>& /*metadata*/,
                               std::string& outChainTxId) override {
         outChainTxId = "dummy_txid";
         return true;
