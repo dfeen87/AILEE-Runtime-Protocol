@@ -746,7 +746,7 @@ if(BUILD_TESTS)
     endif()
     enable_testing()
 
-    add_executable(ailee_tests 
+    add_executable(ailee_tests EXCLUDE_FROM_ALL
         tests/NodeIdentityTests.cpp
         tests/AdapterRegistryTests.cpp
         tests/BitVMInterpreterTests.cpp
@@ -770,7 +770,6 @@ if(BUILD_TESTS)
         tests/l6/test_external_bindings.cpp
         tests/l6/test_anchor_serializer.cpp
         tests/l6/test_anchor_verifier.cpp
-        src/runtime/BitVMInterpreter.cpp
     )
     
     target_link_libraries(ailee_tests
