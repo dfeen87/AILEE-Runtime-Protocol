@@ -13,9 +13,14 @@
 #include "l4/ClusterSim.h"
 #include "l4/DeterministicTelemetry.h"
 #include "l4/DeterministicDashboard.h"
+#include "l1_sync/replay_input.hpp"
+#include <memory>
 
 namespace ailee {
 namespace l4 {
+
+struct ReplayEngine;
+struct ReplayTick;
 
 enum class SchedulerPhase : uint8_t {
     ENGINE_STEP = 0,
@@ -52,11 +57,12 @@ struct DeterministicScheduler {
     DashboardSnapshot last_snapshot;
     l1_sync::MainnetSyncManager mainnet_sync;
 
-    DeterministicScheduler() {
-        std::memset(&state, 0, sizeof(state));
-        std::memset(&current_epoch, 0, sizeof(current_epoch));
-        std::memset(&current_anchor, 0, sizeof(current_anchor));
-    }
+    std::unique_ptr<ReplayEngine> replay_engine;
+    l1_sync::ReplayState previous_replay_state;
+    std::unique_ptr<ReplayTick> latest_replay_tick;
+
+    DeterministicScheduler();
+    ~DeterministicScheduler();
 
     void run_tick(
         ClusterView& view,

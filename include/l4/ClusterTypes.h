@@ -7,6 +7,8 @@
 #include "l3/PeerSync.h"
 #include "l4/MeshAnchor.h"
 #include "l4/DeterministicTransport.h"
+#include "l1_sync/bitcoin_clock.hpp"
+#include "l1_sync/replay_input.hpp"
 
 namespace ailee {
 namespace l4 {
@@ -55,9 +57,13 @@ struct alignas(64) ClusterView {
     uint64_t total_steps;                // 8 bytes
     TransportQueue transport_queue;      // 64 bytes
     ClusterCoherenceSummary coherence_summary; // 128 bytes
-    // Total size: 24 + 24 + 8 + 8 + 64 + 128 = 256 bytes
+    l1_sync::BitcoinClockState clock;    // 24 bytes
+    std::vector<l1_sync::ReplayEvent> replay_events; // 24 bytes
+    // Total size: 256 + 24 + 24 = 304 bytes
+    // Next multiple of 64 is 320. Padding needed: 16 bytes
+    uint8_t padding[16];
 };
-static_assert(sizeof(ClusterView) == 256, "ClusterView must be 256 bytes");
+static_assert(sizeof(ClusterView) == 320, "ClusterView must be 320 bytes");
 
 } // namespace l4
 } // namespace ailee

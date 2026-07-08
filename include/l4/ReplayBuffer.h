@@ -1,7 +1,6 @@
 #pragma once
 
 #include "l4/ClusterTypes.h"
-#include "l4/DeterministicScheduler.h"
 #include "l4/DeterministicTelemetry.h"
 #include "l5/DeterministicCompressor.h"
 #include "l6/ReplayExport.h"
@@ -10,6 +9,9 @@
 
 namespace ailee {
 namespace l4 {
+
+// Include full definition since we instantiate it inside ReplaySchedulerSnapshot
+#include "l4/DeterministicScheduler.h"
 
 struct alignas(64) ReplaySchedulerSnapshot {
     DeterministicSchedulerState state; // 64 bytes
@@ -23,6 +25,8 @@ struct ReplayClusterViewSnapshot {
     uint64_t total_nodes;
     uint64_t total_steps;
     ClusterCoherenceSummary coherence_summary;
+    l1_sync::BitcoinClockState clock;
+    std::vector<l1_sync::ReplayEvent> replay_events;
 };
 
 struct ReplayBuffer {

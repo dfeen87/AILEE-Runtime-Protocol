@@ -23,8 +23,7 @@ MainnetSyncManager::MainnetSyncManager(size_t max_buffer_size)
     clock.interval_seconds = 600.0; // default 10 mins
 }
 
-SyncEventBatch MainnetSyncManager::ingest_headers(const HeaderBatch& headers) {
-    SyncEventBatch events;
+void MainnetSyncManager::ingest_headers(const HeaderBatch& headers) {
     for (const auto& header : headers) {
         // Validation: Prevhash check for Reorg detection
         if (!header_buffer.empty()) {
@@ -35,7 +34,7 @@ SyncEventBatch MainnetSyncManager::ingest_headers(const HeaderBatch& headers) {
                 event.type = SyncEventType::ReorgDetected;
                 event.height = header.height;
                 event.block_hash = header.hash;
-                events.push_back(event);
+                pending_events.push_back(event);
 
                 // Use the ReorgDetector
                 std::vector<std::array<uint8_t, 32>> current_chain;
@@ -76,17 +75,14 @@ SyncEventBatch MainnetSyncManager::ingest_headers(const HeaderBatch& headers) {
         event.type = SyncEventType::HeaderApplied;
         event.height = header.height;
         event.block_hash = header.hash;
-        events.push_back(event);
+        pending_events.push_back(event);
     }
 
     update_clock();
-    return events;
 }
 
-SyncEventBatch MainnetSyncManager::ingest_mempool_deltas(const MempoolDeltaBatch& deltas) {
-    SyncEventBatch events;
-    uint32_t adds = 0;
-    uint32_t removes = 0;
+void MainnetSyncManager::ingest_mempool_deltas(const MempoolDeltaBatch& deltas) {
+    bool changed = false;
 
     for (const auto& delta : deltas) {
         if (delta.is_add) {
@@ -95,7 +91,13 @@ SyncEventBatch MainnetSyncManager::ingest_mempool_deltas(const MempoolDeltaBatch
             entry.fee = delta.fee;
             entry.size = delta.size;
             mempool.push_back(entry);
-            adds++;
+
+            SyncEvent event;
+            std::memset(&event, 0, sizeof(event));
+            event.type = SyncEventType::MempoolDeltaApplied;
+            event.txid = delta.txid;
+            pending_events.push_back(event);
+            changed = true;
         } else {
             auto it = std::remove_if(mempool.begin(), mempool.end(),
                 [&delta](const MempoolEntry& e) {
@@ -103,21 +105,26 @@ SyncEventBatch MainnetSyncManager::ingest_mempool_deltas(const MempoolDeltaBatch
                 });
             if (it != mempool.end()) {
                 mempool.erase(it, mempool.end());
-                removes++;
+
+                SyncEvent event;
+                std::memset(&event, 0, sizeof(event));
+                event.type = SyncEventType::MempoolDeltaApplied;
+                event.txid = delta.txid;
+                pending_events.push_back(event);
+                changed = true;
             }
         }
     }
 
-    if (adds > 0 || removes > 0) {
+    if (changed) {
         sort_mempool();
-        SyncEvent event;
-        event.type = SyncEventType::MempoolDeltaApplied;
-        event.mempool_additions = adds;
-        event.mempool_removals = removes;
-        events.push_back(event);
     }
+}
 
-    return events;
+SyncEventBatch MainnetSyncManager::drain_sync_events() {
+    SyncEventBatch batch = std::move(pending_events);
+    pending_events.clear();
+    return batch;
 }
 
 void MainnetSyncManager::update_clock() {

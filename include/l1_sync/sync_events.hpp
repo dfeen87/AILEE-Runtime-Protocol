@@ -17,8 +17,7 @@ struct SyncEvent {
     SyncEventType type;
     uint64_t height;
     std::array<uint8_t, 32> block_hash; // Relevant for HeaderApplied and ReorgDetected
-    uint32_t mempool_additions; // Relevant for MempoolDeltaApplied
-    uint32_t mempool_removals;  // Relevant for MempoolDeltaApplied
+    std::array<uint8_t, 32> txid;       // Relevant for MempoolDeltaApplied
 };
 
 using SyncEventBatch = std::vector<SyncEvent>;

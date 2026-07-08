@@ -50,8 +50,10 @@ public:
     MainnetSyncManager(size_t max_buffer_size = 144);
 
     // Ingest data and produce deterministic sync events
-    SyncEventBatch ingest_headers(const HeaderBatch& headers);
-    SyncEventBatch ingest_mempool_deltas(const MempoolDeltaBatch& deltas);
+    void ingest_headers(const HeaderBatch& headers);
+    void ingest_mempool_deltas(const MempoolDeltaBatch& deltas);
+
+    SyncEventBatch drain_sync_events();
 
     const BitcoinClockState& get_clock() const { return clock; }
     const MempoolSnapshot& get_mempool() const { return mempool; }
@@ -61,6 +63,7 @@ private:
     std::deque<BlockHeader> header_buffer;
     MempoolSnapshot mempool;
     BitcoinClockState clock;
+    std::vector<SyncEvent> pending_events;
 
     void update_clock();
     void sort_mempool();

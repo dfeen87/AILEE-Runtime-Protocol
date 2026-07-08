@@ -4,17 +4,40 @@
 #include "l3/GossipLayer.h"
 #include "l3/PeerSync.h"
 #include "NodeIdentity.h"
+#include "l4/ReplayEngine.h"
+#include "l4/ReplayTick.h"
 #include <cstring>
 #include <iostream>
 
 namespace ailee {
 namespace l4 {
 
+DeterministicScheduler::DeterministicScheduler() : replay_engine(std::make_unique<ReplayEngine>()) {
+    std::memset(&state, 0, sizeof(state));
+    std::memset(&current_epoch, 0, sizeof(current_epoch));
+    std::memset(&current_anchor, 0, sizeof(current_anchor));
+    std::memset(&previous_replay_state, 0, sizeof(previous_replay_state));
+}
+
+DeterministicScheduler::~DeterministicScheduler() = default;
+
 void DeterministicScheduler::run_tick(
     ClusterView& view,
     const std::vector<std::pair<size_t, size_t>>& gossip_schedule,
     std::vector<l2::DeterministicEngine>& engines
 ) {
+    auto events = mainnet_sync.drain_sync_events();
+    auto clock = mainnet_sync.get_clock();
+
+    l1_sync::ReplayInput input{events, clock};
+    ReplayTick tick = replay_engine->step(previous_replay_state, input);
+
+    previous_replay_state.current_height = tick.height;
+    latest_replay_tick = std::make_unique<ReplayTick>(tick);
+
+    view.clock = tick.clock;
+    view.replay_events = tick.replay_events;
+
     SchedulerPhase phase = static_cast<SchedulerPhase>(state.tick_count % 9);
 
     switch (phase) {

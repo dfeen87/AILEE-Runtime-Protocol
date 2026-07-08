@@ -9,7 +9,13 @@ void ReplayBuffer::record_tick(
     const ClusterView& view,
     const TelemetrySample& telemetry_sample
 ) {
-    ReplayTick tick{scheduler_state, view, telemetry_sample};
+    ReplayTick tick;
+    tick.scheduler_state = scheduler_state;
+    tick.view = view;
+    tick.telemetry = telemetry_sample;
+    tick.height = 0; // The real tick gets constructed properly later or these defaults apply for recording. Note: cluster view should probably have clock/replay_events if it's set correctly.
+    tick.clock = view.clock;
+    tick.replay_events = view.replay_events;
     auto compressed = compressor.compress_tick(view, tick);
     compressed_ticks.push_back(std::move(compressed));
 
@@ -32,6 +38,8 @@ void ReplayBuffer::record_tick(
     snap.total_nodes = view.total_nodes;
     snap.total_steps = view.total_steps;
     snap.coherence_summary = view.coherence_summary;
+    snap.clock = view.clock;
+    snap.replay_events = view.replay_events;
     
     view_snapshots.push_back(std::move(snap));
     

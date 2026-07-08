@@ -8,7 +8,42 @@ namespace ailee {
 namespace l4 {
 
 static const char REPLAY_MAGIC[10] = "AILEE-RPL";
-static const uint32_t REPLAY_VERSION = 1;
+static const uint32_t REPLAY_VERSION = 2;
+
+ReplayTick ReplayEngine::step(const l1_sync::ReplayState& previous, const l1_sync::ReplayInput& input) const {
+    ReplayTick tick;
+    tick.height = previous.current_height;
+    tick.clock = input.clock;
+
+    for (const auto& ev : input.events) {
+        l1_sync::ReplayEvent re;
+        std::memset(&re, 0, sizeof(re));
+
+        switch (ev.type) {
+            case l1_sync::SyncEventType::HeaderApplied:
+                re.type = l1_sync::ReplayEventType::HeaderApplied;
+                re.height = ev.height;
+                re.block_hash = ev.block_hash;
+                tick.height = ev.height;
+                break;
+            case l1_sync::SyncEventType::ReorgDetected:
+                re.type = l1_sync::ReplayEventType::ReorgRollback;
+                re.height = ev.height; // Using the provided height from SyncEvent as the rollback target
+                re.block_hash = ev.block_hash;
+                tick.height = ev.height;
+                break;
+            case l1_sync::SyncEventType::MempoolDeltaApplied:
+                re.type = l1_sync::ReplayEventType::MempoolUpdate;
+                re.height = tick.height;
+                re.txid = ev.txid;
+                break;
+        }
+
+        tick.replay_events.push_back(re);
+    }
+
+    return tick;
+}
 
 void ReplayEngine::write_replay_file(const std::string& path, const ReplayBuffer& replay_buffer) const {
     std::ofstream ofs(path, std::ios::binary);
@@ -65,6 +100,14 @@ void ReplayEngine::write_replay_file(const std::string& path, const ReplayBuffer
         ofs.write(reinterpret_cast<const char*>(&v_snap.total_steps), sizeof(v_snap.total_steps));
         ofs.write(reinterpret_cast<const char*>(&v_snap.coherence_summary), sizeof(ClusterCoherenceSummary));
 
+        ofs.write(reinterpret_cast<const char*>(&v_snap.clock), sizeof(l1_sync::BitcoinClockState));
+
+        uint64_t events_size = v_snap.replay_events.size();
+        ofs.write(reinterpret_cast<const char*>(&events_size), sizeof(events_size));
+        if (events_size > 0) {
+            ofs.write(reinterpret_cast<const char*>(v_snap.replay_events.data()), events_size * sizeof(l1_sync::ReplayEvent));
+        }
+
         ofs.write(reinterpret_cast<const char*>(&replay_buffer.telemetry_snapshots[i]), sizeof(TelemetrySample));
     }
 }
@@ -83,7 +126,7 @@ void ReplayEngine::load_replay_file(const std::string& path) {
 
     uint32_t version;
     ifs.read(reinterpret_cast<char*>(&version), sizeof(version));
-    if (version != REPLAY_VERSION) {
+    if (version > REPLAY_VERSION) {
         throw std::runtime_error("Unsupported replay version");
     }
 
@@ -144,6 +187,20 @@ void ReplayEngine::load_replay_file(const std::string& path) {
         ifs.read(reinterpret_cast<char*>(&v_snap.total_steps), sizeof(v_snap.total_steps));
         ifs.read(reinterpret_cast<char*>(&v_snap.coherence_summary), sizeof(ClusterCoherenceSummary));
 
+        if (version >= 2) {
+            ifs.read(reinterpret_cast<char*>(&v_snap.clock), sizeof(l1_sync::BitcoinClockState));
+
+            uint64_t events_size;
+            ifs.read(reinterpret_cast<char*>(&events_size), sizeof(events_size));
+            v_snap.replay_events.resize(events_size);
+            if (events_size > 0) {
+                ifs.read(reinterpret_cast<char*>(v_snap.replay_events.data()), events_size * sizeof(l1_sync::ReplayEvent));
+            }
+        } else {
+            std::memset(&v_snap.clock, 0, sizeof(v_snap.clock));
+            v_snap.replay_events.clear();
+        }
+
         ifs.read(reinterpret_cast<char*>(&buffer.telemetry_snapshots[i]), sizeof(TelemetrySample));
     }
 }
@@ -165,6 +222,8 @@ bool ReplayEngine::replay_tick(
     out_view.total_nodes = v_snap.total_nodes;
     out_view.total_steps = v_snap.total_steps;
     out_view.coherence_summary = v_snap.coherence_summary;
+    out_view.clock = v_snap.clock;
+    out_view.replay_events = v_snap.replay_events;
     
     out_telemetry = buffer.telemetry_snapshots[tick_index];
 
@@ -188,6 +247,12 @@ bool ReplayEngine::verify_tick(
     if (view.total_steps != v_snap.total_steps) return false;
     if (std::memcmp(&view.coherence_summary, &v_snap.coherence_summary, sizeof(ClusterCoherenceSummary)) != 0) return false;
     
+    if (std::memcmp(&view.clock, &v_snap.clock, sizeof(l1_sync::BitcoinClockState)) != 0) return false;
+    if (view.replay_events.size() != v_snap.replay_events.size()) return false;
+    if (view.replay_events.size() > 0) {
+        if (std::memcmp(view.replay_events.data(), v_snap.replay_events.data(), view.replay_events.size() * sizeof(l1_sync::ReplayEvent)) != 0) return false;
+    }
+
     if (view.nodes.size() != v_snap.nodes.size()) return false;
     for (size_t i = 0; i < view.nodes.size(); ++i) {
         ClusterNodeState node_pod = view.nodes[i];

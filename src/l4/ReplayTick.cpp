@@ -36,6 +36,9 @@ uint64_t read_u64(const std::vector<uint8_t>& in, size_t& offset) {
 std::vector<uint8_t> ReplayTick::serialize() const {
     std::vector<uint8_t> out;
 
+    uint32_t version = 2;
+    write_bytes(out, &version, sizeof(version));
+
     // Serialize Scheduler State
     write_bytes(out, &scheduler_state, sizeof(DeterministicSchedulerState));
 
@@ -76,12 +79,41 @@ std::vector<uint8_t> ReplayTick::serialize() const {
     // Serialize Telemetry Sample
     write_bytes(out, &telemetry, sizeof(TelemetrySample));
 
+    // Serialize Version 2 Fields
+    write_u64(out, height);
+    write_bytes(out, &clock, sizeof(l1_sync::BitcoinClockState));
+
+    write_u64(out, replay_events.size());
+    if (!replay_events.empty()) {
+        write_bytes(out, replay_events.data(), replay_events.size() * sizeof(l1_sync::ReplayEvent));
+    }
+
     return out;
 }
 
 ReplayTick ReplayTick::deserialize(const std::vector<uint8_t>& raw) {
     ReplayTick tick;
     size_t offset = 0;
+
+    uint32_t version = 1;
+    if (raw.size() >= sizeof(uint32_t)) {
+        // We peek to see if the first bytes look like a version.
+        // In previous implementation, the first field was `tick_count` of `DeterministicSchedulerState`.
+        // If this is a very old file, it might not have a version.
+        // We can safely assume version 2 if we explicitly wrote it, but for simplicity
+        // let's just always read it. If we need strict backwards compatibility with unversioned
+        // files we might need magic bytes. But since the prompt suggested `d.read(version)`,
+        // we'll implement it strictly.
+        // Actually, to handle old unversioned data safely without magic bytes is tricky.
+        // We will assume that all newly generated data starts with `version = 2`.
+        read_bytes(raw, offset, &version, sizeof(version));
+        if (version != 2 && version != 1) {
+            // Unlikely to be a valid version, probably old unversioned data
+            // We'll reset offset and assume version 1.
+            offset = 0;
+            version = 1;
+        }
+    }
 
     // Deserialize Scheduler State
     read_bytes(raw, offset, &tick.scheduler_state, sizeof(DeterministicSchedulerState));
@@ -129,6 +161,21 @@ ReplayTick ReplayTick::deserialize(const std::vector<uint8_t>& raw) {
 
     // Deserialize Telemetry Sample
     read_bytes(raw, offset, &tick.telemetry, sizeof(TelemetrySample));
+
+    if (version >= 2) {
+        tick.height = read_u64(raw, offset);
+        read_bytes(raw, offset, &tick.clock, sizeof(l1_sync::BitcoinClockState));
+
+        uint64_t events_size = read_u64(raw, offset);
+        tick.replay_events.resize(events_size);
+        if (events_size > 0) {
+            read_bytes(raw, offset, tick.replay_events.data(), events_size * sizeof(l1_sync::ReplayEvent));
+        }
+    } else {
+        tick.height = 0;
+        std::memset(&tick.clock, 0, sizeof(tick.clock));
+        tick.replay_events.clear();
+    }
 
     return tick;
 }
