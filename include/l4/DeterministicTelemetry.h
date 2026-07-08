@@ -3,11 +3,10 @@
 #include <cstdint>
 #include <vector>
 #include "l4/ClusterTypes.h"
+#include "l4/DeterministicSchedulerState.h"
 
 namespace ailee {
 namespace l4 {
-
-struct DeterministicSchedulerState; // Forward declaration
 
 struct alignas(64) TelemetrySample {
     uint64_t tick_count;

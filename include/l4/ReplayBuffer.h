@@ -11,7 +11,7 @@ namespace ailee {
 namespace l4 {
 
 // Include full definition since we instantiate it inside ReplaySchedulerSnapshot
-#include "l4/DeterministicScheduler.h"
+#include "l4/DeterministicSchedulerState.h"
 
 struct alignas(64) ReplaySchedulerSnapshot {
     DeterministicSchedulerState state; // 64 bytes
