@@ -8,7 +8,7 @@ namespace ailee {
 namespace l4 {
 
 static const char REPLAY_MAGIC[10] = "AILEE-RPL";
-static const uint32_t REPLAY_VERSION = 2;
+static constexpr uint32_t REPLAY_VERSION = 2;
 
 ReplayTick ReplayEngine::step(const l1_sync::ReplayState& previous, const l1_sync::ReplayInput& input) const {
     ReplayTick tick;
