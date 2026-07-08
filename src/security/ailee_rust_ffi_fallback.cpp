@@ -56,6 +56,24 @@ void free_halo2_proof_ffi(Halo2ProofOutput* proof_ptr) {
     }
 }
 
+int init_network_ffi() {
+    return -1;
+}
+
+int broadcast_message_ffi(const char* topic, const unsigned char* payload, size_t payload_len) {
+    if (!topic || !payload || payload_len == 0) {
+        return -1;
+    }
+    return -1;
+}
+
+int subscribe_topic_ffi(const char* topic) {
+    if (!topic) {
+        return -1;
+    }
+    return -1;
+}
+
 #endif // AILEE_USE_RUST_PROVER
 
 }

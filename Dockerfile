@@ -27,7 +27,7 @@ WORKDIR /build
 COPY . .
 
 # Build the C++ node
-RUN mkdir build && cd build && \
+RUN rm -rf build && mkdir build && cd build && \
     cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=OFF -DAILEE_USE_RUST_PROVER=OFF && \
     make -j2 ailee_node
 
