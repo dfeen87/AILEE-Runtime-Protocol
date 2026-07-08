@@ -35,6 +35,7 @@ ReplayTick ReplayEngine::step(const l1_sync::ReplayState& previous, const l1_syn
             case l1_sync::SyncEventType::MempoolDeltaApplied:
                 re.type = l1_sync::ReplayEventType::MempoolUpdate;
                 re.height = tick.height;
+                re.block_hash = ev.block_hash;
                 re.txid = ev.txid;
                 break;
         }
@@ -107,8 +108,12 @@ void ReplayEngine::write_replay_file(const std::string& path, const ReplayBuffer
 
         uint64_t events_size = v_snap.replay_events.size();
         ofs.write(reinterpret_cast<const char*>(&events_size), sizeof(events_size));
-        if (events_size > 0) {
-            ofs.write(reinterpret_cast<const char*>(v_snap.replay_events.data()), events_size * sizeof(l1_sync::ReplayEvent));
+        for (const auto& ev : v_snap.replay_events) {
+            uint8_t type_val = static_cast<uint8_t>(ev.type);
+            ofs.write(reinterpret_cast<const char*>(&type_val), sizeof(type_val));
+            ofs.write(reinterpret_cast<const char*>(&ev.height), sizeof(ev.height));
+            ofs.write(reinterpret_cast<const char*>(ev.block_hash.data()), ev.block_hash.size());
+            ofs.write(reinterpret_cast<const char*>(ev.txid.data()), ev.txid.size());
         }
 
         ofs.write(reinterpret_cast<const char*>(&replay_buffer.telemetry_snapshots[i]), sizeof(TelemetrySample));
@@ -196,8 +201,13 @@ void ReplayEngine::load_replay_file(const std::string& path) {
             uint64_t events_size;
             ifs.read(reinterpret_cast<char*>(&events_size), sizeof(events_size));
             v_snap.replay_events.resize(events_size);
-            if (events_size > 0) {
-                ifs.read(reinterpret_cast<char*>(v_snap.replay_events.data()), events_size * sizeof(l1_sync::ReplayEvent));
+            for (uint64_t e = 0; e < events_size; ++e) {
+                uint8_t type_val;
+                ifs.read(reinterpret_cast<char*>(&type_val), sizeof(type_val));
+                v_snap.replay_events[e].type = static_cast<l1_sync::ReplayEventType>(type_val);
+                ifs.read(reinterpret_cast<char*>(&v_snap.replay_events[e].height), sizeof(v_snap.replay_events[e].height));
+                ifs.read(reinterpret_cast<char*>(v_snap.replay_events[e].block_hash.data()), v_snap.replay_events[e].block_hash.size());
+                ifs.read(reinterpret_cast<char*>(v_snap.replay_events[e].txid.data()), v_snap.replay_events[e].txid.size());
             }
         } else {
             std::memset(&v_snap.clock, 0, sizeof(v_snap.clock));
@@ -252,8 +262,11 @@ bool ReplayEngine::verify_tick(
     
     if (std::memcmp(&view.clock, &v_snap.clock, sizeof(l1_sync::BitcoinClockState)) != 0) return false;
     if (view.replay_events.size() != v_snap.replay_events.size()) return false;
-    if (view.replay_events.size() > 0) {
-        if (std::memcmp(view.replay_events.data(), v_snap.replay_events.data(), view.replay_events.size() * sizeof(l1_sync::ReplayEvent)) != 0) return false;
+    for (size_t i = 0; i < view.replay_events.size(); ++i) {
+        if (view.replay_events[i].type != v_snap.replay_events[i].type) return false;
+        if (view.replay_events[i].height != v_snap.replay_events[i].height) return false;
+        if (std::memcmp(view.replay_events[i].block_hash.data(), v_snap.replay_events[i].block_hash.data(), 32) != 0) return false;
+        if (std::memcmp(view.replay_events[i].txid.data(), v_snap.replay_events[i].txid.data(), 32) != 0) return false;
     }
 
     if (view.nodes.size() != v_snap.nodes.size()) return false;

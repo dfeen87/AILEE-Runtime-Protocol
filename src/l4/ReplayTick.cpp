@@ -84,8 +84,12 @@ std::vector<uint8_t> ReplayTick::serialize() const {
     write_bytes(out, &clock, sizeof(l1_sync::BitcoinClockState));
 
     write_u64(out, replay_events.size());
-    if (!replay_events.empty()) {
-        write_bytes(out, replay_events.data(), replay_events.size() * sizeof(l1_sync::ReplayEvent));
+    for (const auto& ev : replay_events) {
+        uint8_t type_val = static_cast<uint8_t>(ev.type);
+        write_bytes(out, &type_val, sizeof(type_val));
+        write_u64(out, ev.height);
+        write_bytes(out, ev.block_hash.data(), ev.block_hash.size());
+        write_bytes(out, ev.txid.data(), ev.txid.size());
     }
 
     return out;
@@ -151,8 +155,13 @@ ReplayTick ReplayTick::deserialize(const std::vector<uint8_t>& raw) {
 
         uint64_t events_size = read_u64(raw, offset);
         tick.replay_events.resize(events_size);
-        if (events_size > 0) {
-            read_bytes(raw, offset, tick.replay_events.data(), events_size * sizeof(l1_sync::ReplayEvent));
+        for (uint64_t i = 0; i < events_size; ++i) {
+            uint8_t type_val;
+            read_bytes(raw, offset, &type_val, sizeof(type_val));
+            tick.replay_events[i].type = static_cast<l1_sync::ReplayEventType>(type_val);
+            tick.replay_events[i].height = read_u64(raw, offset);
+            read_bytes(raw, offset, tick.replay_events[i].block_hash.data(), tick.replay_events[i].block_hash.size());
+            read_bytes(raw, offset, tick.replay_events[i].txid.data(), tick.replay_events[i].txid.size());
         }
     } else {
         tick.height = 0;

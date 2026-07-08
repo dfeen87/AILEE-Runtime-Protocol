@@ -86,6 +86,12 @@ void MainnetSyncManager::ingest_headers(const HeaderBatch& headers) {
 void MainnetSyncManager::ingest_mempool_deltas(const MempoolDeltaBatch& deltas) {
     bool changed = false;
 
+    uint64_t current_height = clock.height;
+    std::array<uint8_t, 32> current_hash = {0};
+    if (!header_buffer.empty()) {
+        current_hash = header_buffer.back().hash;
+    }
+
     for (const auto& delta : deltas) {
         if (delta.is_add) {
             MempoolEntry entry;
@@ -97,6 +103,8 @@ void MainnetSyncManager::ingest_mempool_deltas(const MempoolDeltaBatch& deltas) 
             SyncEvent event;
             std::memset(&event, 0, sizeof(event));
             event.type = SyncEventType::MempoolDeltaApplied;
+            event.height = current_height;
+            event.block_hash = current_hash;
             event.txid = delta.txid;
             pending_events.push_back(event);
             changed = true;
@@ -111,6 +119,8 @@ void MainnetSyncManager::ingest_mempool_deltas(const MempoolDeltaBatch& deltas) 
                 SyncEvent event;
                 std::memset(&event, 0, sizeof(event));
                 event.type = SyncEventType::MempoolDeltaApplied;
+                event.height = current_height;
+                event.block_hash = current_hash;
                 event.txid = delta.txid;
                 pending_events.push_back(event);
                 changed = true;
