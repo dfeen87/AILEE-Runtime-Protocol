@@ -15,12 +15,12 @@
 #include "l4/DeterministicDashboard.h"
 #include "l1_sync/replay_input.hpp"
 #include <memory>
+#include "l4/DeterministicSchedulerState.h"
+#include "l4/ReplayEngine.h"
+#include "l4/ReplayTick.h"
 
 namespace ailee {
 namespace l4 {
-
-struct ReplayEngine;
-struct ReplayTick;
 
 enum class SchedulerPhase : uint8_t {
     ENGINE_STEP = 0,
@@ -33,16 +33,6 @@ enum class SchedulerPhase : uint8_t {
     TRANSPORT_DELIVERY = 7,
     COHERENCE_UPDATE = 8
 };
-
-struct alignas(64) DeterministicSchedulerState {
-    uint64_t tick_count;
-    uint64_t epoch_height;
-    uint64_t last_anchor_id;
-    uint64_t last_mesh_state_root_hash;
-    bool cluster_stable;
-    uint8_t padding[31];
-};
-static_assert(sizeof(DeterministicSchedulerState) == 64, "DeterministicSchedulerState must be 64 bytes");
 
 struct DeterministicScheduler {
     DeterministicSchedulerState state;
@@ -57,9 +47,9 @@ struct DeterministicScheduler {
     DashboardSnapshot last_snapshot;
     l1_sync::MainnetSyncManager mainnet_sync;
 
-    std::unique_ptr<ReplayEngine> replay_engine;
+    ReplayEngine replay_engine;
     l1_sync::ReplayState previous_replay_state;
-    std::unique_ptr<ReplayTick> latest_replay_tick;
+    ReplayTick latest_replay_tick;
 
     DeterministicScheduler();
     ~DeterministicScheduler();

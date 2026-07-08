@@ -12,7 +12,7 @@
 namespace ailee {
 namespace l4 {
 
-DeterministicScheduler::DeterministicScheduler() : replay_engine(std::make_unique<ReplayEngine>()) {
+DeterministicScheduler::DeterministicScheduler() {
     std::memset(&state, 0, sizeof(state));
     std::memset(&current_epoch, 0, sizeof(current_epoch));
     std::memset(&current_anchor, 0, sizeof(current_anchor));
@@ -30,7 +30,7 @@ void DeterministicScheduler::run_tick(
     auto clock = mainnet_sync.get_clock();
 
     l1_sync::ReplayInput input{events, clock};
-    ReplayTick tick = replay_engine->step(previous_replay_state, input);
+    ReplayTick tick = replay_engine.step(previous_replay_state, input);
 
     previous_replay_state.current_height = tick.height;
     previous_replay_state.applied_event_count += tick.replay_events.size();
@@ -40,7 +40,7 @@ void DeterministicScheduler::run_tick(
         }
     }
 
-    latest_replay_tick = std::make_unique<ReplayTick>(tick);
+    latest_replay_tick = tick;
 
     view.clock = tick.clock;
     view.replay_events = tick.replay_events;

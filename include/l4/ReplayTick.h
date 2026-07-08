@@ -2,7 +2,7 @@
 
 #include <vector>
 #include <cstdint>
-#include "l4/DeterministicScheduler.h"
+#include "l4/DeterministicSchedulerState.h"
 #include "l4/ClusterTypes.h"
 #include "l4/DeterministicTelemetry.h"
 
