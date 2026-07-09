@@ -5,6 +5,7 @@
 #include <vector>
 
 namespace ailee {
+namespace anchor {
 
 struct AnchorRecord {
     uint64_t epoch_id;
@@ -17,4 +18,5 @@ struct AnchorRecord {
     std::array<uint8_t, 32> anchor_root() const;
 };
 
+} // namespace anchor
 } // namespace ailee
