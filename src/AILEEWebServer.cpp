@@ -117,6 +117,14 @@ public:
         mesh_envelopes_callback_ = callback;
     }
 
+    bool isReplayModeEnabled() const {
+        return replay_mode_.load();
+    }
+
+    bool isFederationModeEnabled() const {
+        return federation_mode_.load();
+    }
+
 private:
     void setupRoutes() {
         // Combined pre-routing handler: CORS headers first, then API key auth.
@@ -410,6 +418,16 @@ private:
                 return;
             }
 
+            if (!federation_mode_.load()) {
+                res.status = 200;
+                json response = {
+                    {"status", "disabled"},
+                    {"message", "Federation mode is OFF"}
+                };
+                res.set_content(response.dump(), "application/json");
+                return;
+            }
+
             std::string view_json = federation_view_callback_();
             res.set_content(view_json, "application/json");
         });
@@ -530,6 +548,17 @@ private:
                 res.set_content(error.dump(), "application/json");
                 return;
             }
+
+            if (!federation_mode_.load()) {
+                res.status = 200;
+                json response = {
+                    {"status", "disabled"},
+                    {"message", "Federation mode is OFF"}
+                };
+                res.set_content(response.dump(), "application/json");
+                return;
+            }
+
             res.set_content(mesh_envelopes_callback_(), "application/json");
         });
 
@@ -672,6 +701,14 @@ void AILEEWebServer::stop() {
 
 bool AILEEWebServer::isRunning() const {
     return pImpl->isRunning();
+}
+
+bool AILEEWebServer::isReplayModeEnabled() const {
+    return pImpl->isReplayModeEnabled();
+}
+
+bool AILEEWebServer::isFederationModeEnabled() const {
+    return pImpl->isFederationModeEnabled();
 }
 
 void AILEEWebServer::setNodeStatusCallback(std::function<NodeStatus()> callback) {
