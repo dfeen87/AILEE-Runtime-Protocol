@@ -373,8 +373,11 @@ public:
         tick_running_.store(true);
         tick_thread_ = std::thread([this]() {
             while (tick_running_.load()) {
-                // Run one deterministic 9-phase cycle
-                sim_.run_cluster_cycle();
+                // Only advance the deterministic scheduler when replay mode is ON
+                if (webServer_ && webServer_->isReplayModeEnabled()) {
+                    // Run one deterministic 9-phase cycle
+                    sim_.run_cluster_cycle();
+                }
 
                 // Deterministic heartbeat interval
                 std::this_thread::sleep_for(std::chrono::milliseconds(100));

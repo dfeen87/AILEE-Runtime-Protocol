@@ -58,6 +58,10 @@ public:
     // Check if server is running
     bool isRunning() const;
 
+    // Check modes
+    bool isReplayModeEnabled() const;
+    bool isFederationModeEnabled() const;
+
     // Set callbacks to get live data from the node
     void setNodeStatusCallback(std::function<NodeStatus()> callback);
     void setOrchestratorRef(Orchestrator* orch);
