@@ -369,6 +369,18 @@ public:
             log(LogLevel::INFO, "Block producer started successfully");
         }
         
+        log(LogLevel::INFO, "Starting deterministic tick loop...");
+        tick_running_.store(true);
+        tick_thread_ = std::thread([this]() {
+            while (tick_running_.load()) {
+                // Run one deterministic 9-phase cycle
+                sim_.run_cluster_cycle();
+
+                // Deterministic heartbeat interval
+                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            }
+        });
+
         log(LogLevel::INFO, "AILEE Engine started successfully");
     }
     
@@ -378,6 +390,12 @@ public:
         }
         log(LogLevel::INFO, "AILEE Engine shutting down");
         
+        log(LogLevel::INFO, "Stopping deterministic tick loop...");
+        tick_running_.store(false);
+        if (tick_thread_.joinable()) {
+            tick_thread_.join();
+        }
+
         // Stop block producer first
         if (blockProducer_) {
             log(LogLevel::INFO, "Stopping block producer...");
@@ -714,6 +732,8 @@ public:
 private:
     Config cfg_;
     ailee::l4::ClusterSim sim_;
+    std::thread tick_thread_;
+    std::atomic<bool> tick_running_{false};
     ailee_netflow::HybridNetFlow netFlow_;
     std::unique_ptr<ailee::sched::Engine> orchestrationEngine_;
     std::unique_ptr<ailee::AILEEWebServer> webServer_;
