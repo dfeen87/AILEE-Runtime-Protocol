@@ -37,5 +37,19 @@ std::string to_bech32m(const std::string& hrp, const std::vector<uint8_t>& witne
 TaprootOutput build_taproot_for_anchor(const std::array<uint8_t, 32>& anchor_root,
                                        const std::array<uint8_t, 32>& internal_key);
 
+struct AnchorCommitTapLeaf {
+    std::vector<uint8_t> script;              // Raw TapLeaf script bytes
+    std::array<uint8_t, 32> leaf_hash;        // BIP342 TapLeaf hash
+};
+
+class TaprootScript {
+public:
+    // Build anchor-commit TapLeaf from AnchorRoot + metadata_hash
+    static AnchorCommitTapLeaf build_anchor_commit_tapleaf(
+        const std::array<uint8_t, 32>& anchor_root,
+        const std::array<uint8_t, 32>& metadata_hash
+    );
+};
+
 } // namespace taproot
 } // namespace ailee

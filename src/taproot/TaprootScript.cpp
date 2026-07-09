@@ -1,4 +1,5 @@
 #include "TaprootScript.h"
+#include "taproot/TaprootUtils.h"
 #include <openssl/sha.h>
 #include <secp256k1.h>
 #include <secp256k1_extrakeys.h>
@@ -201,6 +202,51 @@ TaprootOutput build_taproot_for_anchor(const std::array<uint8_t, 32>& anchor_roo
     output.bech32m_address = to_bech32m("bc", wp);
 
     return output;
+}
+
+AnchorCommitTapLeaf TaprootScript::build_anchor_commit_tapleaf(
+    const std::array<uint8_t, 32>& anchor_root,
+    const std::array<uint8_t, 32>& metadata_hash
+) {
+    AnchorCommitTapLeaf result;
+
+    const uint8_t OP_PUSH32 = 0x20;
+    const uint8_t OP_DROP = 0x75;
+    const uint8_t OP_TRUE = 0x51;
+
+    // script length: 1 + 32 + 1 + 1 + 32 + 1 + 1 = 69 bytes
+    result.script.reserve(69);
+
+    result.script.push_back(OP_PUSH32);
+    result.script.insert(result.script.end(), anchor_root.begin(), anchor_root.end());
+    result.script.push_back(OP_DROP);
+    result.script.push_back(OP_PUSH32);
+    result.script.insert(result.script.end(), metadata_hash.begin(), metadata_hash.end());
+    result.script.push_back(OP_DROP);
+    result.script.push_back(OP_TRUE);
+
+    // BIP342 TapLeaf hash
+    const char* tag = "TapLeaf";
+    std::array<uint8_t, 32> tag_hash;
+    SHA256(reinterpret_cast<const unsigned char*>(tag), std::strlen(tag), tag_hash.data());
+
+    std::vector<uint8_t> buffer;
+    // reserve: 32 (tag) + 32 (tag) + 1 (version 0xC0) + varint (up to 9 bytes) + 69 (script)
+    buffer.reserve(32 + 32 + 1 + 9 + 69);
+    buffer.insert(buffer.end(), tag_hash.begin(), tag_hash.end());
+    buffer.insert(buffer.end(), tag_hash.begin(), tag_hash.end());
+
+    // TapLeaf version 0xC0
+    buffer.push_back(0xC0);
+
+    // CompactSize script length
+    write_compact_size(buffer, result.script.size());
+
+    buffer.insert(buffer.end(), result.script.begin(), result.script.end());
+
+    SHA256(buffer.data(), buffer.size(), result.leaf_hash.data());
+
+    return result;
 }
 
 } // namespace taproot

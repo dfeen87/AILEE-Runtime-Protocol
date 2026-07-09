@@ -318,6 +318,7 @@ set(AILEE_CORE_SOURCES
     src/taproot/TaprootScript.cpp
     src/taproot/TaprootTxBuilder.cpp
     src/taproot/TaprootSigner.cpp
+    src/taproot/TaprootUtils.cpp
     src/anchor/AnchorRecord.cpp
     src/anchor/AnchorMetadata.cpp
     src/anchor/AnchorMetadataEncoder.cpp
@@ -741,6 +742,15 @@ if(BUILD_TESTS)
         add_library(GTest::gtest_main ALIAS minigtest_main)
     endif()
     enable_testing()
+
+    add_executable(anchor_commit_tapleaf_tests EXCLUDE_FROM_ALL
+        tests/test_anchor_commit_tapleaf.cpp
+    )
+    target_link_libraries(anchor_commit_tapleaf_tests
+        ailee_adapters
+        minigtest_main
+        ${LIBS}
+    )
 
     add_executable(ailee_tests EXCLUDE_FROM_ALL
         tests/NodeIdentityTests.cpp
