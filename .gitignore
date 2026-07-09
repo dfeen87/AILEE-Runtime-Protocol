@@ -111,3 +111,24 @@ docker-compose.override.yml
 logs/
 *.log
 src/rust_prover/target/
+
+# AILEE CORE — Deterministic Simulation Output
+web/*.json
+web/*.bin
+web/replay.bin
+web/dashboard.json
+
+# ClusterSim telemetry dumps
+mesh/
+sync/
+cluster/
+telemetry/
+
+# Replay engine dumps
+*.bin
+*.dat
+
+# JSON snapshots generated during simulation
+*.snapshot.json
+*.tick.json
+
