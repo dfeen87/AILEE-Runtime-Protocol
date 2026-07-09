@@ -316,6 +316,7 @@ set(AILEE_CORE_SOURCES
     src/ailee_core/mesh/ailee_core_mesh.cpp
     src/ailee_core/anchoring/ailee_core_anchoring.cpp
     src/taproot/TaprootScript.cpp
+    src/taproot/TaprootTxBuilder.cpp
     src/anchor/AnchorRecord.cpp
     src/clock/ConsensusClock.cpp
     src/zk/ZKReplayCircuit.cpp
