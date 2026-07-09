@@ -317,6 +317,8 @@ set(AILEE_CORE_SOURCES
     src/ailee_core/anchoring/ailee_core_anchoring.cpp
     src/anchor/AnchorRecord.cpp
     src/clock/ConsensusClock.cpp
+    src/zk/ZKReplayCircuit.cpp
+    src/zk/ZKWiring.cpp
     src/l2/DeterministicEngine.cpp
     src/l2/EpochScheduler.cpp
     src/l2/StateRootPipeline.cpp
