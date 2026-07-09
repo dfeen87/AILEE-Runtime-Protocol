@@ -317,6 +317,7 @@ set(AILEE_CORE_SOURCES
     src/ailee_core/anchoring/ailee_core_anchoring.cpp
     src/taproot/TaprootScript.cpp
     src/taproot/TaprootTxBuilder.cpp
+    src/taproot/TaprootSigner.cpp
     src/anchor/AnchorRecord.cpp
     src/clock/ConsensusClock.cpp
     src/zk/ZKReplayCircuit.cpp
@@ -764,6 +765,7 @@ if(BUILD_TESTS)
         tests/l6/test_anchor_serializer.cpp
         tests/l6/test_anchor_verifier.cpp
         tests/taproot/TaprootScriptTests.cpp
+        tests/taproot/TaprootSignerTests.cpp
     )
     
     target_link_libraries(ailee_tests

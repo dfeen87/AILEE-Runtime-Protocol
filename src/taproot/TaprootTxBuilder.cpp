@@ -64,6 +64,20 @@ std::vector<uint8_t> Tx::to_bytes() const {
     std::vector<uint8_t> out;
     write_uint32_le(out, version);
 
+    // Segwit marker and flag
+    bool is_segwit = false;
+    for (const auto& in : vin) {
+        if (!in.witness.empty()) {
+            is_segwit = true;
+            break;
+        }
+    }
+
+    if (is_segwit) {
+        out.push_back(0x00); // marker
+        out.push_back(0x01); // flag
+    }
+
     write_compact_size(out, vin.size());
     for (const auto& in : vin) {
         std::vector<uint8_t> in_bytes = in.to_bytes();
@@ -74,6 +88,16 @@ std::vector<uint8_t> Tx::to_bytes() const {
     for (const auto& o : vout) {
         std::vector<uint8_t> o_bytes = o.to_bytes();
         out.insert(out.end(), o_bytes.begin(), o_bytes.end());
+    }
+
+    if (is_segwit) {
+        for (const auto& in : vin) {
+            write_compact_size(out, in.witness.size());
+            for (const auto& w : in.witness) {
+                write_compact_size(out, w.size());
+                out.insert(out.end(), w.begin(), w.end());
+            }
+        }
     }
 
     write_uint32_le(out, locktime);

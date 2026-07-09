@@ -22,6 +22,7 @@ struct TxIn {
     uint32_t prev_vout;
     std::vector<uint8_t> script_sig;     // empty for unsigned
     uint32_t sequence;
+    std::vector<std::vector<uint8_t>> witness;
 
     std::vector<uint8_t> to_bytes() const;
 };
