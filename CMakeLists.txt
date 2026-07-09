@@ -315,6 +315,7 @@ set(AILEE_CORE_SOURCES
     src/ailee_core/consensus/ailee_core_consensus.cpp
     src/ailee_core/mesh/ailee_core_mesh.cpp
     src/ailee_core/anchoring/ailee_core_anchoring.cpp
+    src/anchor/AnchorRecord.cpp
     src/l2/DeterministicEngine.cpp
     src/l2/EpochScheduler.cpp
     src/l2/StateRootPipeline.cpp
