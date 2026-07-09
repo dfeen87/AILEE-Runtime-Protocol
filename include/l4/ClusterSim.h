@@ -17,6 +17,8 @@ struct SchedulerCallbacks {
     std::function<std::string()> sync_events;
     std::function<std::string()> sync_clock;
     std::function<std::string()> replay_tick;
+    std::function<std::string()> federation_view;
+    std::function<std::string()> mesh_envelopes;
 };
 
 class ClusterSim {
