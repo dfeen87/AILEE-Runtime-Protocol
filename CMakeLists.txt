@@ -322,6 +322,7 @@ set(AILEE_CORE_SOURCES
     src/anchor/AnchorRecord.cpp
     src/anchor/AnchorMetadata.cpp
     src/anchor/AnchorMetadataEncoder.cpp
+    src/anchor/AnchorCommitTxBuilder.cpp
     src/clock/ConsensusClock.cpp
     src/zk/ZKReplayCircuit.cpp
     src/zk/ZKWiring.cpp
@@ -778,6 +779,7 @@ if(BUILD_TESTS)
         tests/l6/test_anchor_verifier.cpp
         tests/taproot/TaprootScriptTests.cpp
         tests/taproot/TaprootSignerTests.cpp
+        tests/test_anchor_commit_txbuilder.cpp
     )
     
     add_executable(anchor_metadata_tests
