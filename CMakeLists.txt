@@ -319,6 +319,8 @@ set(AILEE_CORE_SOURCES
     src/taproot/TaprootTxBuilder.cpp
     src/taproot/TaprootSigner.cpp
     src/anchor/AnchorRecord.cpp
+    src/anchor/AnchorMetadata.cpp
+    src/anchor/AnchorMetadataEncoder.cpp
     src/clock/ConsensusClock.cpp
     src/zk/ZKReplayCircuit.cpp
     src/zk/ZKWiring.cpp
@@ -768,6 +770,18 @@ if(BUILD_TESTS)
         tests/taproot/TaprootSignerTests.cpp
     )
     
+    add_executable(anchor_metadata_tests
+        tests/test_anchor_metadata.cpp
+    )
+    target_link_libraries(anchor_metadata_tests
+        PRIVATE
+        ailee_adapters
+        ailee_l5_compression
+        GTest::gtest
+        GTest::gtest_main
+    )
+    add_test(NAME AnchorMetadataTests COMMAND anchor_metadata_tests)
+
     target_link_libraries(ailee_tests
         PRIVATE
         ailee_adapters
