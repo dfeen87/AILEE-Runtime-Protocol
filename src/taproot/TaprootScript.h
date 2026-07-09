@@ -31,7 +31,7 @@ struct TaprootOutput {
 std::array<uint8_t, 32> compute_tapleaf_hash(const TapLeaf& leaf);
 
 // Returns a Bech32m address (placeholder for Phase 1)
-std::string to_bech32m(const std::array<uint8_t, 32>& taproot_output_key);
+std::string to_bech32m(const std::string& hrp, const std::vector<uint8_t>& witness_program);
 
 // High-level integration helper for constructing a Taproot output from an anchor root
 TaprootOutput build_taproot_for_anchor(const std::array<uint8_t, 32>& anchor_root,

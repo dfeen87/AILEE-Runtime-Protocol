@@ -1,9 +1,107 @@
 #include "TaprootScript.h"
 #include <openssl/sha.h>
+#include <secp256k1.h>
+#include <secp256k1_extrakeys.h>
 #include <cstring>
+#include <vector>
 
 namespace ailee {
 namespace taproot {
+
+namespace {
+
+bool tweak_taproot_output_key(const std::array<uint8_t, 32>& internal_key,
+                              const std::array<uint8_t, 32>& tapleaf_hash,
+                              std::array<uint8_t, 32>& out_taproot_output_key) {
+    secp256k1_context* ctx = secp256k1_context_create(SECP256K1_CONTEXT_NONE);
+    if (!ctx) return false;
+
+    secp256k1_xonly_pubkey pubkey;
+    if (secp256k1_xonly_pubkey_parse(ctx, &pubkey, internal_key.data()) != 1) {
+        secp256k1_context_destroy(ctx);
+        return false;
+    }
+
+    // BIP341 TapTweak: tweak = tagged_hash("TapTweak", P || merkle_root)
+    // merkle_root in this case is the tapleaf_hash.
+    unsigned char tag_hash[SHA256_DIGEST_LENGTH];
+    SHA256(reinterpret_cast<const unsigned char*>("TapTweak"), 8, tag_hash);
+
+    std::vector<uint8_t> preimage;
+    preimage.reserve(SHA256_DIGEST_LENGTH + SHA256_DIGEST_LENGTH + 32 + 32);
+    preimage.insert(preimage.end(), tag_hash, tag_hash + SHA256_DIGEST_LENGTH);
+    preimage.insert(preimage.end(), tag_hash, tag_hash + SHA256_DIGEST_LENGTH);
+    preimage.insert(preimage.end(), internal_key.begin(), internal_key.end());
+    preimage.insert(preimage.end(), tapleaf_hash.begin(), tapleaf_hash.end());
+
+    unsigned char tweak[SHA256_DIGEST_LENGTH];
+    SHA256(preimage.data(), preimage.size(), tweak);
+
+    secp256k1_pubkey output_pubkey;
+    if (secp256k1_xonly_pubkey_tweak_add(ctx, &output_pubkey, &pubkey, tweak) != 1) {
+        secp256k1_context_destroy(ctx);
+        return false;
+    }
+
+    secp256k1_xonly_pubkey out_xonly;
+    if (secp256k1_xonly_pubkey_from_pubkey(ctx, &out_xonly, nullptr, &output_pubkey) != 1) {
+        secp256k1_context_destroy(ctx);
+        return false;
+    }
+
+    secp256k1_xonly_pubkey_serialize(ctx, out_taproot_output_key.data(), &out_xonly);
+
+    secp256k1_context_destroy(ctx);
+    return true;
+}
+
+namespace {
+
+uint32_t polymod_step(uint32_t pre) {
+    uint8_t b = pre >> 25;
+    return ((pre & 0x1ffffff) << 5) ^
+           (-((b >> 0) & 1) & 0x3b6a57b2UL) ^
+           (-((b >> 1) & 1) & 0x26508e6dUL) ^
+           (-((b >> 2) & 1) & 0x1ea119faUL) ^
+           (-((b >> 3) & 1) & 0x3d4233ddUL) ^
+           (-((b >> 4) & 1) & 0x2a1462b3UL);
+}
+
+std::vector<uint8_t> expand_hrp(const std::string& hrp) {
+    std::vector<uint8_t> ret;
+    ret.reserve(hrp.size() * 2 + 1);
+    for (char c : hrp) {
+        ret.push_back(c >> 5);
+    }
+    ret.push_back(0);
+    for (char c : hrp) {
+        ret.push_back(c & 31);
+    }
+    return ret;
+}
+
+std::vector<uint8_t> convert_bits(const std::vector<uint8_t>& in, int frombits, int tobits, bool pad) {
+    int acc = 0;
+    int bits = 0;
+    std::vector<uint8_t> ret;
+    int maxv = (1 << tobits) - 1;
+    for (uint8_t value : in) {
+        acc = (acc << frombits) | value;
+        bits += frombits;
+        while (bits >= tobits) {
+            bits -= tobits;
+            ret.push_back((acc >> bits) & maxv);
+        }
+    }
+    if (pad && bits > 0) {
+        ret.push_back((acc << (tobits - bits)) & maxv);
+    }
+    return ret;
+}
+
+} // namespace
+
+} // namespace
 
 void TapLeaf::build_script() {
     // Bitcoin Script opcodes
@@ -42,15 +140,48 @@ std::array<uint8_t, 32> compute_tapleaf_hash(const TapLeaf& leaf) {
     return hash_out;
 }
 
-void TaprootOutput::compute_output_key(const std::array<uint8_t, 32>& /*tapleaf_hash*/) {
-    // TODO(V19.P2): Replace with real secp256k1_xonly_pubkey_tweak_add
-    // For Phase 1, we use a placeholder tweak where the output key is just the internal key
-    taproot_output_key = internal_key;
+void TaprootOutput::compute_output_key(const std::array<uint8_t, 32>& tapleaf_hash) {
+    if (!tweak_taproot_output_key(internal_key, tapleaf_hash, taproot_output_key)) {
+        // Tweak failed, zero out the output key to indicate failure state (no exceptions)
+        std::fill(taproot_output_key.begin(), taproot_output_key.end(), 0);
+    }
 }
 
-std::string to_bech32m(const std::array<uint8_t, 32>& /*taproot_output_key*/) {
-    // TODO(V19.P2): Implement full Bech32m encoder
-    return "taproot-address-not-implemented";
+std::string to_bech32m(const std::string& hrp, const std::vector<uint8_t>& witness_program) {
+    const char* CHARSET = "qpzry9x8gf2tvdw0s3jn54khce6mua7l";
+    uint32_t BECH32M_CONST = 0x2bc830a3;
+
+    std::vector<uint8_t> data;
+    data.push_back(1); // witness version 1
+    std::vector<uint8_t> conv = convert_bits(witness_program, 8, 5, true);
+    data.insert(data.end(), conv.begin(), conv.end());
+
+    std::vector<uint8_t> values = expand_hrp(hrp);
+    values.insert(values.end(), data.begin(), data.end());
+
+    // polymod checksum
+    uint32_t chk = 1;
+    for (uint8_t v : values) {
+        chk = polymod_step(chk) ^ v;
+    }
+    for (int i = 0; i < 6; ++i) {
+        chk = polymod_step(chk) ^ 0;
+    }
+    chk ^= BECH32M_CONST;
+
+    std::vector<uint8_t> checksum;
+    for (int i = 0; i < 6; ++i) {
+        checksum.push_back((chk >> (5 * (5 - i))) & 31);
+    }
+
+    std::string ret = hrp + "1";
+    for (uint8_t v : data) {
+        ret += CHARSET[v];
+    }
+    for (uint8_t v : checksum) {
+        ret += CHARSET[v];
+    }
+    return ret;
 }
 
 TaprootOutput build_taproot_for_anchor(const std::array<uint8_t, 32>& anchor_root,
@@ -65,7 +196,9 @@ TaprootOutput build_taproot_for_anchor(const std::array<uint8_t, 32>& anchor_roo
     std::array<uint8_t, 32> tapleaf_hash = compute_tapleaf_hash(leaf);
 
     output.compute_output_key(tapleaf_hash);
-    output.bech32m_address = to_bech32m(output.taproot_output_key);
+
+    std::vector<uint8_t> wp(output.taproot_output_key.begin(), output.taproot_output_key.end());
+    output.bech32m_address = to_bech32m("bc", wp);
 
     return output;
 }
