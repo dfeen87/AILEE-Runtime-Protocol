@@ -113,6 +113,10 @@ public:
         latest_replay_tick_callback_ = callback;
     }
 
+    void setMeshEnvelopesCallback(std::function<std::string()> callback) {
+        mesh_envelopes_callback_ = callback;
+    }
+
 private:
     void setupRoutes() {
         // Combined pre-routing handler: CORS headers first, then API key auth.
@@ -451,6 +455,92 @@ private:
             res.set_content(latest_replay_tick_callback_(), "application/json");
         });
 
+        // Heartbeat (simple liveness flag)
+        server_->Get("/api/heartbeat", [this](const httplib::Request&, httplib::Response& res) {
+            json response = {
+                {"status", heartbeat_ok_ ? "ok" : "degraded"}
+            };
+            res.set_content(response.dump(), "application/json");
+        });
+
+        // Eject (no-op placeholder)
+        server_->Post("/api/eject", [this](const httplib::Request&, httplib::Response& res) {
+            json response = {
+                {"status", "accepted"},
+                {"message", "Eject requested (no-op in testnet)"}
+            };
+            res.status = 202;
+            res.set_content(response.dump(), "application/json");
+        });
+
+        // Reject (no-op placeholder)
+        server_->Post("/api/reject", [this](const httplib::Request&, httplib::Response& res) {
+            json response = {
+                {"status", "accepted"},
+                {"message", "Reject requested (no-op in testnet)"}
+            };
+            res.status = 202;
+            res.set_content(response.dump(), "application/json");
+        });
+
+        // Federation mode toggle
+        server_->Post("/api/federation/mode", [this](const httplib::Request& req, httplib::Response& res) {
+            try {
+                json body = json::parse(req.body);
+                bool enable = body.value("enable", false);
+                federation_mode_.store(enable);
+                json response = {
+                    {"status", "ok"},
+                    {"federation_mode", enable ? "ON" : "OFF"}
+                };
+                res.set_content(response.dump(), "application/json");
+            } catch (...) {
+                res.status = 400;
+                json error = {{"error", "Invalid request"}};
+                res.set_content(error.dump(), "application/json");
+            }
+        });
+
+        // Replay mode toggle
+        server_->Post("/api/replay/mode", [this](const httplib::Request& req, httplib::Response& res) {
+            try {
+                json body = json::parse(req.body);
+                bool enable = body.value("enable", false);
+                replay_mode_.store(enable);
+                json response = {
+                    {"status", "ok"},
+                    {"replay_mode", enable ? "ON" : "OFF"}
+                };
+                res.set_content(response.dump(), "application/json");
+            } catch (...) {
+                res.status = 400;
+                json error = {{"error", "Invalid request"}};
+                res.set_content(error.dump(), "application/json");
+            }
+        });
+
+        // Mesh envelopes for Deterministic Mesh panel
+        server_->Get("/api/mesh/envelopes", [this](const httplib::Request&, httplib::Response& res) {
+            if (!mesh_envelopes_callback_) {
+                res.status = 501;
+                json error = {
+                    {"error", "Not Implemented"},
+                    {"message", "Mesh envelopes callback not configured"}
+                };
+                res.set_content(error.dump(), "application/json");
+                return;
+            }
+            res.set_content(mesh_envelopes_callback_(), "application/json");
+        });
+
+        // Refresh All (just a convenience ping)
+        server_->Post("/api/refresh/all", [this](const httplib::Request&, httplib::Response& res) {
+            json response = {
+                {"status", "ok"},
+                {"message", "Refresh requested"}
+            };
+            res.set_content(response.dump(), "application/json");
+        });
 
         // Transaction submission endpoint (POST)
         server_->Post("/api/transactions/submit", [this](const httplib::Request& req, httplib::Response& res) {
@@ -559,6 +649,10 @@ private:
     std::function<std::string()> sync_events_callback_;
     std::function<std::string()> sync_clock_callback_;
     std::function<std::string()> latest_replay_tick_callback_;
+    std::function<std::string()> mesh_envelopes_callback_;
+    std::atomic<bool> heartbeat_ok_{true};
+    std::atomic<bool> federation_mode_{false};
+    std::atomic<bool> replay_mode_{false};
 };
 
 // Public API implementation
@@ -618,6 +712,10 @@ void AILEEWebServer::setSyncClockCallback(std::function<std::string()> callback)
 
 void AILEEWebServer::setLatestReplayTickCallback(std::function<std::string()> callback) {
     pImpl->setLatestReplayTickCallback(callback);
+}
+
+void AILEEWebServer::setMeshEnvelopesCallback(std::function<std::string()> callback) {
+    pImpl->setMeshEnvelopesCallback(callback);
 }
 
 } // namespace ailee
