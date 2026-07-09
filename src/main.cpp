@@ -55,6 +55,7 @@
 
 // Web Server for HTTP API
 #include "AILEEWebServer.h"
+#include "l4/ClusterSim.h"
 
 // ---------------------------------------------------------
 // Enhanced Structured Logging with Levels and File Output
@@ -712,6 +713,7 @@ public:
 
 private:
     Config cfg_;
+    ailee::l4::ClusterSim sim_;
     ailee_netflow::HybridNetFlow netFlow_;
     std::unique_ptr<ailee::sched::Engine> orchestrationEngine_;
     std::unique_ptr<ailee::AILEEWebServer> webServer_;
@@ -809,6 +811,13 @@ private:
             
             webServer_ = std::make_unique<ailee::AILEEWebServer>(wsConfig);
             
+            auto cb = sim_.get_scheduler_callbacks();
+            webServer_->setSyncEventsCallback(cb.sync_events);
+            webServer_->setSyncClockCallback(cb.sync_clock);
+            webServer_->setLatestReplayTickCallback(cb.replay_tick);
+            webServer_->setFederationViewCallback(cb.federation_view);
+            webServer_->setMeshEnvelopesCallback(cb.mesh_envelopes);
+
             // Set up status callback to provide node information
             startTime_ = std::chrono::steady_clock::now();
             webServer_->setNodeStatusCallback([this]() -> ailee::NodeStatus {
