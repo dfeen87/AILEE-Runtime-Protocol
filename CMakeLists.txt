@@ -650,6 +650,7 @@ add_library(ailee_adapters STATIC
     src/l6/ParameterGovernor.cpp
     src/l6/ProofScheduling.cpp
     src/l6/AnchorZKMetadata.cpp
+    src/l6/ZKOrchestrationManager.cpp
 )
 
 add_library(ailee_l5_compression STATIC
@@ -790,6 +791,7 @@ if(BUILD_TESTS)
         tests/l6/test_zk_stub_interface.cpp
         tests/l6/test_proof_scheduling.cpp
         tests/l6/test_anchor_zk_metadata.cpp
+        tests/l6/test_zk_orchestration_manager.cpp
         tests/taproot/TaprootScriptTests.cpp
         tests/taproot/TaprootSignerTests.cpp
         tests/test_anchor_commit_txbuilder.cpp
