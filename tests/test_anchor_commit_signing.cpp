@@ -40,7 +40,8 @@ TEST(AnchorCommitSigningTests, SignAnchorCommitTx) {
     std::fill(privkey.begin(), privkey.end(), 0x01); // Simple priv key for testing secp256k1 validation
     
     // Generate internal key from privkey
-    secp256k1_context* ctx = secp256k1_context_create(SECP256K1_CONTEXT_NONE);
+    secp256k1_context* ctx =
+    secp256k1_context_create(SECP256K1_CONTEXT_SIGN | SECP256K1_CONTEXT_VERIFY);
     secp256k1_keypair keypair;
     ASSERT_EQ(secp256k1_keypair_create(ctx, &keypair, privkey.data()), 1);
     
