@@ -31,15 +31,6 @@ void tagged_hash(const char* tag, const std::vector<uint8_t>& msg, std::array<ui
 }
 
 // Build P2TR scriptPubKey from x-only output key
-std::vector<uint8_t> build_p2tr_script_pubkey(const std::array<uint8_t, 32>& output_key) {
-    std::vector<uint8_t> spk;
-    spk.reserve(1 + 1 + 32);
-    spk.push_back(0x51);      // OP_1 (segwit v1)
-    spk.push_back(0x20);      // push 32 bytes
-    spk.insert(spk.end(), output_key.begin(), output_key.end());
-    return spk;
-}
-
 } // anonymous namespace
 
 TaprootSignatureResult sign_taproot_input(

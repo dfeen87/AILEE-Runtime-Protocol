@@ -38,6 +38,10 @@ jobs:
       - name: Build
         run: |
           cmake --build build --config Release --parallel
+      - name: Test
+        run: |
+          cmake --build build --target ailee_tests
+          ./build/ailee_tests
 
   heartbeat-ignite:
     needs: build-and-test
@@ -73,12 +77,16 @@ jobs:
       - name: Build (Heartbeat Mode)
         run: |
           cmake --build build --config Release --parallel
+      - name: Test
+        run: |
+          cmake --build build --target ailee_tests
+          ./build/ailee_tests
 
       - name: Ignite Heartbeat
         run: |
           # Run the deterministic heartbeat-enabled runtime
           # Use a deterministic WNN tick driver to force phase rollover
-          ./build/ailee_core --heartbeat --simulate-wnn --ticks 5000 \
+          ./build/ailee_node --heartbeat --simulate-wnn --ticks 5000 \
             | tee heartbeat_log.txt
 
       - name: Upload Heartbeat Log
