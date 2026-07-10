@@ -38,33 +38,54 @@ OrchestrationResult orchestrate_epoch(
     ZKAnchorMetadata zk_metadata;
     std::string proof_commitment_hash = "";
 
-    if (scheduling_says_attach && backend != nullptr) {
-        if (constraints != nullptr && transcript != nullptr) {
-            auto artifact = backend->generate_proof(backend_config, *constraints, *transcript);
-            auto check = validate_zk_metadata(artifact.metadata, *constraints, *transcript);
-            if (check.status == DeterministicZKStatus::OK && backend->verify_proof(backend_config, artifact, *constraints, *transcript)) {
-                zk_metadata.constraint_set_id = artifact.metadata.constraint_set_id;
-                zk_metadata.transcript_id = artifact.metadata.transcript_id;
-                zk_metadata.proof_id = artifact.metadata.proof_id;
-                zk_metadata.validation_status = DeterministicZKStatus::OK;
-                proof_commitment_hash = compute_hash_hex(artifact.proof_bytes);
-            } else {
-                zk_metadata.constraint_set_id = "";
-                zk_metadata.transcript_id = "";
-                zk_metadata.proof_id = "";
-                zk_metadata.validation_status = (check.status == DeterministicZKStatus::OK) ? DeterministicZKStatus::CONSTRAINT_MISMATCH : check.status; // Using existing error enum if verification fails to maintain backwards compatibility
-            }
-        } else {
-            zk_metadata.constraint_set_id = "";
-            zk_metadata.transcript_id = "";
-            zk_metadata.proof_id = "";
-            zk_metadata.validation_status = (constraints == nullptr) ? DeterministicZKStatus::EMPTY_CONSTRAINTS : DeterministicZKStatus::EMPTY_TRANSCRIPT;
-        }
-    } else {
+    if (backend == nullptr) {
         zk_metadata.constraint_set_id = "";
         zk_metadata.transcript_id = "";
         zk_metadata.proof_id = "";
         zk_metadata.validation_status = DeterministicZKStatus::OK;
+        proof_commitment_hash = "";
+    } else if (scheduling_says_attach) {
+        if (constraints != nullptr && transcript != nullptr) {
+            auto artifact = backend->generate_proof(backend_config, *constraints, *transcript);
+
+            // 3. & 4. Deterministic Verification and Metadata Validation
+            auto check = validate_zk_metadata(artifact.metadata, *constraints, *transcript);
+            bool verified = backend->verify_proof(backend_config, artifact, *constraints, *transcript);
+
+            if (check.status == DeterministicZKStatus::OK && verified) {
+                // 5. & 6. Valid proof handling
+                zk_metadata.proof_id = artifact.metadata.proof_id;
+                zk_metadata.constraint_set_id = artifact.metadata.constraint_set_id;
+                zk_metadata.transcript_id = artifact.metadata.transcript_id;
+                zk_metadata.validation_status = DeterministicZKStatus::OK;
+                proof_commitment_hash = compute_hash_hex(artifact.proof_bytes);
+            } else {
+                // Verification or validation failed
+                zk_metadata.proof_id = "";
+                zk_metadata.constraint_set_id = "";
+                zk_metadata.transcript_id = "";
+
+                if (check.status != DeterministicZKStatus::OK) {
+                    zk_metadata.validation_status = check.status;
+                } else {
+                    // Verification failed but validation succeeded, mapping to CONSTRAINT_MISMATCH to match existing error handling
+                    zk_metadata.validation_status = DeterministicZKStatus::CONSTRAINT_MISMATCH;
+                }
+                proof_commitment_hash = "";
+            }
+        } else {
+            zk_metadata.proof_id = "";
+            zk_metadata.constraint_set_id = "";
+            zk_metadata.transcript_id = "";
+            zk_metadata.validation_status = (constraints == nullptr) ? DeterministicZKStatus::EMPTY_CONSTRAINTS : DeterministicZKStatus::EMPTY_TRANSCRIPT;
+            proof_commitment_hash = "";
+        }
+    } else {
+        zk_metadata.proof_id = "";
+        zk_metadata.constraint_set_id = "";
+        zk_metadata.transcript_id = "";
+        zk_metadata.validation_status = DeterministicZKStatus::OK;
+        proof_commitment_hash = "";
     }
 
     // 4. Construct anchor payload
