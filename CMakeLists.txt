@@ -795,6 +795,8 @@ if(BUILD_TESTS)
         tests/l6/test_proof_scheduling.cpp
         tests/l6/test_zk_metadata.cpp
         tests/l6/test_zk_validation.cpp
+        tests/l6/test_zk_backend_abstraction.cpp
+        tests/l6/test_full_v23_pipeline.cpp
         tests/l6/test_zk_mock_backend.cpp
         tests/l6/test_zk_proving_integration.cpp
         tests/l6/test_zk_orchestration_integration.cpp

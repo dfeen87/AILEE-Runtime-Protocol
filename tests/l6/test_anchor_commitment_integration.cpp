@@ -182,3 +182,31 @@ TEST(AnchorCommitmentIntegrationTest, AnchorPayloadToBytesIncludesCommitmentDete
     EXPECT_TRUE(b1_str.find("abc123def456") != std::string::npos);
     EXPECT_TRUE(b2_str.find("987xyz654uvw") != std::string::npos);
 }
+
+TEST(AnchorCommitmentIntegrationTest, AnchorPayloadReplayConsistencyAndMismatchDetection) {
+    AnchorPayload original_payload;
+    original_payload.epoch_id = 42;
+    original_payload.state_root_hash = "deadbeef";
+    original_payload.zk_metadata.proof_id = "proof_1";
+    original_payload.zk_metadata.constraint_set_id = "constraint_1";
+    original_payload.zk_metadata.transcript_id = "transcript_1";
+    original_payload.zk_metadata.validation_status = DeterministicZKStatus::OK;
+    original_payload.proof_commitment_hash = "abc123def456";
+
+    std::vector<uint8_t> original_bytes = original_payload.to_bytes();
+
+    AnchorPayload replayed_payload = original_payload;
+    std::vector<uint8_t> replayed_bytes = replayed_payload.to_bytes();
+
+    EXPECT_EQ(original_bytes, replayed_bytes);
+
+    // Mismatch detection
+    AnchorPayload modified_payload = original_payload;
+    modified_payload.state_root_hash = "badf00d";
+    std::vector<uint8_t> modified_bytes = modified_payload.to_bytes();
+    EXPECT_NE(original_bytes, modified_bytes);
+
+    AnchorPayload modified_metadata = original_payload;
+    modified_metadata.zk_metadata.validation_status = DeterministicZKStatus::CONSTRAINT_MISMATCH;
+    EXPECT_NE(original_bytes, modified_metadata.to_bytes());
+}

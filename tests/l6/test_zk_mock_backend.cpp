@@ -161,3 +161,48 @@ TEST(ZKMockBackendTest, EmptyInputsHashProperly) {
 
     EXPECT_TRUE(backend.verify_proof(config, artifact, empty_constraints, empty_transcript));
 }
+
+// Negative and edge case tests
+TEST(ZKMockBackendTest, ZeroLengthProofBytesFailsVerification) {
+    ZKMockBackend backend;
+
+    ZKBackendConfig config{ZKBackendType::HALO2, "mock_circuit_v23"};
+    ZKConstraintSet constraints{"constraint_1", 100};
+    ZKTranscript transcript{"transcript_1", 10};
+
+    auto artifact = backend.generate_proof(config, constraints, transcript);
+    artifact.proof_bytes.clear(); // zero-length proof bytes
+
+    EXPECT_FALSE(backend.verify_proof(config, artifact, constraints, transcript));
+}
+
+TEST(ZKMockBackendTest, MalformedMetadataFailsVerification) {
+    ZKMockBackend backend;
+
+    ZKBackendConfig config{ZKBackendType::HALO2, "mock_circuit_v23"};
+    ZKConstraintSet constraints{"constraint_1", 100};
+    ZKTranscript transcript{"transcript_1", 10};
+
+    auto artifact = backend.generate_proof(config, constraints, transcript);
+    artifact.metadata.proof_id = "malformed_id";
+
+    EXPECT_FALSE(backend.verify_proof(config, artifact, constraints, transcript));
+}
+
+TEST(ZKMockBackendTest, InvalidConstraintTranscriptBytesAreTreatedDifferently) {
+    ZKMockBackend backend;
+
+    ZKBackendConfig config{ZKBackendType::HALO2, "mock_circuit_v23"};
+
+    // Different byte sizes/contents but same ID for testing inputs
+    ZKConstraintSet constraints1{"constraint_1", 100};
+    ZKConstraintSet constraints2{"constraint_1", 200}; // Same ID, different payload conceptually if size matter
+    // ZKConstraintSet in V23 mock doesn't store actual bytes yet, size is its "bytes"
+
+    // As constraints2 size is different, proof should be different
+    auto artifact1 = backend.generate_proof(config, constraints1, ZKTranscript{"transcript_1", 10});
+    auto artifact2 = backend.generate_proof(config, constraints2, ZKTranscript{"transcript_1", 10});
+
+    EXPECT_NE(artifact1.proof_bytes, artifact2.proof_bytes);
+    EXPECT_NE(artifact1.metadata.proof_id, artifact2.metadata.proof_id);
+}

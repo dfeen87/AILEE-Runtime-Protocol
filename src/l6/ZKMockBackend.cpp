@@ -63,7 +63,7 @@ bool ZKMockBackend::verify_proof(
     const ZKTranscript& transcript
 ) {
     std::vector<uint8_t> expected_bytes = compute_mock_proof_bytes(config.circuit_id, constraints, transcript);
-    return expected_bytes == artifact.proof_bytes;
+    return expected_bytes == artifact.proof_bytes && artifact.metadata.proof_id == hex_encode(artifact.proof_bytes);
 }
 
 } // namespace ailee::l6
