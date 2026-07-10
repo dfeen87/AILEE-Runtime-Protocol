@@ -1,12 +1,14 @@
 #include <gtest/gtest.h>
 #include "l6/ZKOrchestrationManager.h"
 #include "l6/ZKMockBackend.h"
+#include "l6/RuntimeEnvironment.h"
+#include "l6/ZKBackendFactory.h"
+#include "l6/Exceptions.h"
 
 using namespace ailee::l6;
 
 TEST(ZKProvingIntegrationTest, OrchestrationAttachesValidProof) {
-    ZKMockBackend backend;
-    ZKBackendConfig config{ZKBackendType::MOCK, "test_circuit"};
+    ZKBackendConfig config{ZKBackendType::MOCK, "test_circuit", "", "", ""};
     ZKConstraintSet constraints{"constraint_1", 100};
     ZKTranscript transcript{"transcript_1", 10};
 
@@ -17,7 +19,15 @@ TEST(ZKProvingIntegrationTest, OrchestrationAttachesValidProof) {
 
     std::string state_root_hash = "deadbeef";
 
-    auto result = orchestrate_epoch(ctx, &backend, config, &constraints, &transcript, state_root_hash);
+    RuntimeEnvironment env;
+    env.is_ci = true;
+    config.type = select_backend_type(env, config);
+    if (env.is_ci && config.type != ZKBackendType::MOCK) {
+        throw DeterministicBackendException("Non-deterministic backend not allowed in CI");
+    }
+    auto active_backend = make_backend(config);
+
+    auto result = orchestrate_epoch(ctx, active_backend.get(), config, &constraints, &transcript, state_root_hash);
 
     EXPECT_TRUE(result.should_anchor);
     EXPECT_TRUE(result.should_attach_proof);
@@ -34,8 +44,7 @@ TEST(ZKProvingIntegrationTest, OrchestrationAttachesValidProof) {
 }
 
 TEST(ZKProvingIntegrationTest, OrchestrationLeavesEmptyWhenSkipped) {
-    ZKMockBackend backend;
-    ZKBackendConfig config{ZKBackendType::MOCK, "test_circuit"};
+    ZKBackendConfig config{ZKBackendType::MOCK, "test_circuit", "", "", ""};
     ZKConstraintSet constraints{"constraint_1", 100};
     ZKTranscript transcript{"transcript_1", 10};
 
@@ -46,7 +55,15 @@ TEST(ZKProvingIntegrationTest, OrchestrationLeavesEmptyWhenSkipped) {
 
     std::string state_root_hash = "deadbeef";
 
-    auto result = orchestrate_epoch(ctx, &backend, config, &constraints, &transcript, state_root_hash);
+    RuntimeEnvironment env;
+    env.is_ci = true;
+    config.type = select_backend_type(env, config);
+    if (env.is_ci && config.type != ZKBackendType::MOCK) {
+        throw DeterministicBackendException("Non-deterministic backend not allowed in CI");
+    }
+    auto active_backend = make_backend(config);
+
+    auto result = orchestrate_epoch(ctx, active_backend.get(), config, &constraints, &transcript, state_root_hash);
 
     EXPECT_TRUE(result.should_anchor);
     EXPECT_FALSE(result.should_attach_proof);
