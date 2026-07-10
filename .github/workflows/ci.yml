@@ -72,7 +72,7 @@ jobs:
 
       - name: Configure (Heartbeat Mode)
         run: |
-          cmake -S . -B build -DENABLE_HEARTBEAT=ON
+          cmake -S . -B build -DENABLE_HEARTBEAT=ON -DBUILD_TESTS=ON
 
       - name: Build (Heartbeat Mode)
         run: |
