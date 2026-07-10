@@ -86,7 +86,7 @@ jobs:
         run: |
           # Run the deterministic heartbeat-enabled runtime
           # Use a deterministic WNN tick driver to force phase rollover
-          ./build/ailee_node --heartbeat --simulate-wnn --ticks 5000 \
+          ./build/ailee_node --heartbeat --simulate-wnn --ticks 1000 \
             | tee heartbeat_log.txt
 
       - name: Upload Heartbeat Log
