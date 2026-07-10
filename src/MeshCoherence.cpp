@@ -12,13 +12,25 @@ namespace ailee {
 namespace mesh {
 
 namespace {
+
+// -----------------------------------------------------------------------------
+// Deterministic tagged SHA256 using secp256k1_tagged_sha256
+// NOTE: This MUST use SIGN | VERIFY context, because tagged_sha256 requires
+//       the generator context to be built. Using CONTEXT_NONE causes CI aborts.
+// -----------------------------------------------------------------------------
 void compute_sha256(const uint8_t* data, size_t len, uint8_t out_hash[32]) {
-    static secp256k1_context* ctx = secp256k1_context_create(SECP256K1_CONTEXT_NONE);
+    static secp256k1_context* ctx =
+        secp256k1_context_create(SECP256K1_CONTEXT_SIGN | SECP256K1_CONTEXT_VERIFY);
+
     const unsigned char tag[] = "MeshCoherence";
     (void)secp256k1_tagged_sha256(ctx, out_hash, tag, sizeof(tag) - 1, data, len);
 }
+
 } // namespace
 
+// -----------------------------------------------------------------------------
+// Deterministic MeshNodeId computation
+// -----------------------------------------------------------------------------
 MeshNodeId compute_node_id(
     const build::BuildHashInfo& build,
     const GenesisInfo& genesis,
@@ -27,8 +39,9 @@ MeshNodeId compute_node_id(
     MeshNodeId node_id;
     std::memset(&node_id, 0, sizeof(node_id));
 
-    // Serialize deterministic fields into a fixed-width buffer
-    // build_hash (32) || protocol_version_hash (32) || genesis_anchor_root (32) || config_hash (32)
+    // Serialize deterministic fields into a fixed-width buffer:
+    // build_hash (32) || protocol_version_hash (32) ||
+    // genesis_anchor_root (32) || config_hash (32)
     constexpr size_t buffer_size = 32 + 32 + 32 + 32;
     uint8_t buffer[buffer_size];
     size_t offset = 0;
@@ -50,6 +63,9 @@ MeshNodeId compute_node_id(
     return node_id;
 }
 
+// -----------------------------------------------------------------------------
+// Build deterministic snapshot from logs
+// -----------------------------------------------------------------------------
 MeshNodeSnapshot build_local_snapshot(
     const MeshNodeId& self_id,
     const RocksDbHandle& rocksdb,
@@ -69,6 +85,9 @@ MeshNodeSnapshot build_local_snapshot(
     return snapshot;
 }
 
+// -----------------------------------------------------------------------------
+// Deterministic coherence scoring
+// -----------------------------------------------------------------------------
 MeshCoherenceResult compute_mesh_coherence(
     const MeshNodeSnapshot& self,
     const MeshNodeSnapshot& other
@@ -102,6 +121,9 @@ MeshCoherenceResult compute_mesh_coherence(
     return result;
 }
 
+// -----------------------------------------------------------------------------
+// Mesh-wide coherence summary
+// -----------------------------------------------------------------------------
 MeshCoherenceSummary summarize_mesh_coherence(
     const MeshNodeSnapshot& self,
     const MeshNodeSnapshot* others,
