@@ -9,12 +9,22 @@
 namespace ailee {
 namespace identity {
 
+// -----------------------------------------------------------------------------
+// Deterministic tagged SHA256 using secp256k1_tagged_sha256
+// NOTE: This MUST use SIGN | VERIFY context, because tagged_sha256 requires
+//       the generator context to be built. Using CONTEXT_NONE causes CI aborts.
+// -----------------------------------------------------------------------------
 static void compute_sha256(const uint8_t* data, size_t len, uint8_t out_hash[32]) {
-    static secp256k1_context* ctx = secp256k1_context_create(SECP256K1_CONTEXT_NONE);
+    static secp256k1_context* ctx =
+        secp256k1_context_create(SECP256K1_CONTEXT_SIGN | SECP256K1_CONTEXT_VERIFY);
+
     const unsigned char tag[] = "NodeId";
     (void)secp256k1_tagged_sha256(ctx, out_hash, tag, sizeof(tag) - 1, data, len);
 }
 
+// -----------------------------------------------------------------------------
+// Deterministic NodeID computation
+// -----------------------------------------------------------------------------
 NodeId compute_node_id(
     const BuildInfo& build,
     const GenesisInfo& genesis,
@@ -36,7 +46,6 @@ NodeId compute_node_id(
     offset += 32;
 
     // build.build_number (uint32_t, little-endian)
-    // Ensure little-endian serialization
     buffer[offset++] = static_cast<uint8_t>(build.build_number & 0xFF);
     buffer[offset++] = static_cast<uint8_t>((build.build_number >> 8) & 0xFF);
     buffer[offset++] = static_cast<uint8_t>((build.build_number >> 16) & 0xFF);
@@ -61,6 +70,9 @@ NodeId compute_node_id(
     return result;
 }
 
+// -----------------------------------------------------------------------------
+// Equality + Lexicographical comparison
+// -----------------------------------------------------------------------------
 bool node_id_equal(const NodeId& a, const NodeId& b) {
     return std::memcmp(a.id, b.id, 32) == 0;
 }
@@ -69,6 +81,9 @@ int node_id_compare_lex(const NodeId& a, const NodeId& b) {
     return std::memcmp(a.id, b.id, 32);
 }
 
+// -----------------------------------------------------------------------------
+// Mesh wrapper (semantic alias)
+// -----------------------------------------------------------------------------
 NodeId compute_node_id_for_mesh(
     const BuildInfo& build,
     const GenesisInfo& genesis,
