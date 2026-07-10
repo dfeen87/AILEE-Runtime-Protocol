@@ -652,6 +652,8 @@ add_library(ailee_adapters STATIC
     src/l6/ZKOrchestrationManager.cpp
     src/l6/ZKMetadata.cpp
     src/l6/ZKDeterministicValidator.cpp
+    src/l6/ZKProvingBackend.cpp
+    src/l6/ZKMockBackend.cpp
 )
 
 add_library(ailee_l5_compression STATIC
@@ -790,10 +792,10 @@ if(BUILD_TESTS)
         tests/l6/test_deterministic_epoch_anchoring.cpp
         tests/l6/test_parameter_governor.cpp
         tests/l6/test_proof_scheduling.cpp
-        tests/l6/test_anchor_zk_metadata.cpp
-        tests/l6/test_zk_orchestration_manager.cpp
         tests/l6/test_zk_metadata.cpp
         tests/l6/test_zk_validation.cpp
+        tests/l6/test_zk_mock_backend.cpp
+        tests/l6/test_zk_proving_integration.cpp
         tests/taproot/TaprootScriptTests.cpp
         tests/taproot/TaprootSignerTests.cpp
         tests/test_anchor_commit_txbuilder.cpp
