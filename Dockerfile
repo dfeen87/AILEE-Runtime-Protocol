@@ -83,7 +83,7 @@ RUN chmod +x ./ailee_node
 
 
 # ============================
-# Start Script (Heredoc Safe)
+# Start Script (Render-Compatible)
 # ============================
 RUN cat << 'EOF' > /app/start.sh
 #!/bin/bash
@@ -97,9 +97,10 @@ free -m
 df -h
 echo "--------------------------"
 
-export AILEE_WEB_SERVER_PORT=8181
+# Render requires listening on $PORT
+export AILEE_WEB_SERVER_PORT=${PORT}
 echo "Starting C++ node on :${AILEE_WEB_SERVER_PORT}..."
-./ailee_node > /app/logs/cpp-node.log 2>&1 &
+./ailee_node --web --heartbeat > /app/logs/cpp-node.log 2>&1 &
 CPP_PID=$!
 sleep 3
 
@@ -110,7 +111,8 @@ else
     echo "C++ node started on :${AILEE_WEB_SERVER_PORT}"
 fi
 
-API_PORT=${PORT:-8080}
+# Python API also listens on $PORT
+API_PORT=${PORT}
 echo "Starting Python API on :${API_PORT}..."
 export AILEE_PORT=${API_PORT}
 export AILEE_NODE_URL="http://localhost:${AILEE_WEB_SERVER_PORT}"
