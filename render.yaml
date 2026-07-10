@@ -4,8 +4,6 @@ services:
     env: docker
     plan: starter
     envVars:
-      - key: PORT
-        value: "8080"
       - key: AILEE_MODE
         value: "production"
       - key: AILEE_LOG_LEVEL
