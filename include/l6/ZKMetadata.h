@@ -20,32 +20,13 @@ struct ZKTranscript {
     std::vector<uint8_t> to_bytes() const;
 };
 
-struct ZKProofStub {
-    std::string proof_id;        // deterministic identifier for the proof
-    std::string constraint_set_id;
-    std::string transcript_id;
-    uint64_t size_bytes;         // logical size of the proof
+struct ZKProofMetadata {
+    std::string proof_id;            // deterministic identifier
+    std::string constraint_set_id;   // must match constraint set
+    std::string transcript_id;       // must match transcript
+    uint64_t logical_size_bytes;     // deterministic logical size
 
     std::vector<uint8_t> to_bytes() const;
 };
-
-enum class ZKVerifyStatus {
-    OK,
-    INVALID,
-    UNSUPPORTED
-};
-
-struct ZKVerifyResult {
-    ZKVerifyStatus status;
-    std::string proof_id;
-    std::string constraint_set_id;
-    std::string transcript_id;
-};
-
-ZKVerifyResult verify_proof_stub(
-    const ZKProofStub& proof,
-    const ZKConstraintSet& constraints,
-    const ZKTranscript& transcript
-);
 
 } // namespace ailee::l6

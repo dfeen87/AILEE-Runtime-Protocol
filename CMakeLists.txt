@@ -327,7 +327,6 @@ set(AILEE_CORE_SOURCES
     src/clock/ConsensusClock.cpp
     src/zk/ZKReplayCircuit.cpp
     src/zk/ZKWiring.cpp
-    src/l6/ZKStubInterface.cpp
     src/l2/DeterministicEngine.cpp
     src/l2/EpochScheduler.cpp
     src/l2/StateRootPipeline.cpp
@@ -651,6 +650,8 @@ add_library(ailee_adapters STATIC
     src/l6/ProofScheduling.cpp
     src/l6/AnchorZKMetadata.cpp
     src/l6/ZKOrchestrationManager.cpp
+    src/l6/ZKMetadata.cpp
+    src/l6/ZKDeterministicValidator.cpp
 )
 
 add_library(ailee_l5_compression STATIC
@@ -788,10 +789,11 @@ if(BUILD_TESTS)
         tests/l6/test_on_chain_replay_verifier.cpp
         tests/l6/test_deterministic_epoch_anchoring.cpp
         tests/l6/test_parameter_governor.cpp
-        tests/l6/test_zk_stub_interface.cpp
         tests/l6/test_proof_scheduling.cpp
         tests/l6/test_anchor_zk_metadata.cpp
         tests/l6/test_zk_orchestration_manager.cpp
+        tests/l6/test_zk_metadata.cpp
+        tests/l6/test_zk_validation.cpp
         tests/taproot/TaprootScriptTests.cpp
         tests/taproot/TaprootSignerTests.cpp
         tests/test_anchor_commit_txbuilder.cpp

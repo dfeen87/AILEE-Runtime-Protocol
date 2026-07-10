@@ -1,4 +1,4 @@
-#include "l6/ZKStubInterface.h"
+#include "l6/ZKMetadata.h"
 
 namespace ailee::l6 {
 
@@ -30,41 +30,12 @@ std::vector<uint8_t> ZKTranscript::to_bytes() const {
     return result;
 }
 
-std::vector<uint8_t> ZKProofStub::to_bytes() const {
+std::vector<uint8_t> ZKProofMetadata::to_bytes() const {
     std::vector<uint8_t> result;
     write_string(result, proof_id);
     write_string(result, constraint_set_id);
     write_string(result, transcript_id);
-    write_uint64_le(result, size_bytes);
-    return result;
-}
-
-ZKVerifyResult verify_proof_stub(
-    const ZKProofStub& proof,
-    const ZKConstraintSet& constraints,
-    const ZKTranscript& transcript
-) {
-    ZKVerifyResult result;
-    result.proof_id = proof.proof_id;
-    result.constraint_set_id = proof.constraint_set_id;
-    result.transcript_id = proof.transcript_id;
-
-    if (proof.constraint_set_id != constraints.id) {
-        result.status = ZKVerifyStatus::INVALID;
-        return result;
-    }
-
-    if (proof.transcript_id != transcript.id) {
-        result.status = ZKVerifyStatus::INVALID;
-        return result;
-    }
-
-    if (constraints.num_constraints == 0) {
-        result.status = ZKVerifyStatus::UNSUPPORTED;
-        return result;
-    }
-
-    result.status = ZKVerifyStatus::OK;
+    write_uint64_le(result, logical_size_bytes);
     return result;
 }
 
