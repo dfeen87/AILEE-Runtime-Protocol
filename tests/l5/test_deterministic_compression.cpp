@@ -4,14 +4,14 @@
 using namespace ailee::l4;
 
 TEST(DeterministicCompressionTest, ReplayTickSerializationRoundTrip) {
-    ReplayTick original;
-    std::memset(&original, 0, sizeof(original));
+    ReplayTick original = {};
+
     original.scheduler_state.tick_count = 42;
     original.view.total_nodes = 3;
     original.view.total_steps = 100;
 
-    ClusterNodeState node;
-    std::memset(&node, 0, sizeof(node));
+    ClusterNodeState node = {};
+
     new (&node.peer_sync_states) std::vector<ailee::l3::PeerSyncState>();
 
     node.step_counter = 10;
