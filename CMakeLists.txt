@@ -798,6 +798,7 @@ if(BUILD_TESTS)
         tests/l6/test_zk_mock_backend.cpp
         tests/l6/test_zk_proving_integration.cpp
         tests/l6/test_zk_orchestration_integration.cpp
+        tests/l6/test_anchor_commitment_integration.cpp
         tests/taproot/TaprootScriptTests.cpp
         tests/taproot/TaprootSignerTests.cpp
         tests/test_anchor_commit_txbuilder.cpp
