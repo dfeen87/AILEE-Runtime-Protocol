@@ -21,7 +21,7 @@ namespace {
 TEST(ZKMockBackendTest, DeterministicProofGenerationForIdenticalInputs) {
     ZKMockBackend backend;
 
-    ZKBackendConfig config{ZKBackendType::HALO2, "mock_circuit_v23"};
+    ZKBackendConfig config{ZKBackendType::MOCK, "mock_circuit_v23"};
     ZKConstraintSet constraints{"constraint_1", 100};
     ZKTranscript transcript{"transcript_1", 10};
 
@@ -35,7 +35,7 @@ TEST(ZKMockBackendTest, DeterministicProofGenerationForIdenticalInputs) {
 TEST(ZKMockBackendTest, DifferentConstraintsProduceDifferentProofBytes) {
     ZKMockBackend backend;
 
-    ZKBackendConfig config{ZKBackendType::HALO2, "mock_circuit_v23"};
+    ZKBackendConfig config{ZKBackendType::MOCK, "mock_circuit_v23"};
 
     ZKConstraintSet constraints1{"constraint_1", 100};
     ZKTranscript transcript{"transcript_1", 10};
@@ -51,7 +51,7 @@ TEST(ZKMockBackendTest, DifferentConstraintsProduceDifferentProofBytes) {
 TEST(ZKMockBackendTest, DifferentTranscriptProduceDifferentProofBytes) {
     ZKMockBackend backend;
 
-    ZKBackendConfig config{ZKBackendType::HALO2, "mock_circuit_v23"};
+    ZKBackendConfig config{ZKBackendType::MOCK, "mock_circuit_v23"};
 
     ZKConstraintSet constraints{"constraint_1", 100};
     ZKTranscript transcript1{"transcript_1", 10};
@@ -70,10 +70,10 @@ TEST(ZKMockBackendTest, DifferentCircuitIdProduceDifferentProofBytes) {
     ZKConstraintSet constraints{"constraint_1", 100};
     ZKTranscript transcript{"transcript_1", 10};
 
-    ZKBackendConfig config1{ZKBackendType::HALO2, "mock_circuit_v23"};
+    ZKBackendConfig config1{ZKBackendType::MOCK, "mock_circuit_v23"};
     auto artifact1 = backend.generate_proof(config1, constraints, transcript);
 
-    ZKBackendConfig config2{ZKBackendType::HALO2, "different_circuit_v23"};
+    ZKBackendConfig config2{ZKBackendType::MOCK, "different_circuit_v23"};
     auto artifact2 = backend.generate_proof(config2, constraints, transcript);
 
     EXPECT_NE(artifact1.proof_bytes, artifact2.proof_bytes);
@@ -83,7 +83,7 @@ TEST(ZKMockBackendTest, DifferentCircuitIdProduceDifferentProofBytes) {
 TEST(ZKMockBackendTest, VerifyProofReturnsTrueForMatchingInputs) {
     ZKMockBackend backend;
 
-    ZKBackendConfig config{ZKBackendType::HALO2, "mock_circuit_v23"};
+    ZKBackendConfig config{ZKBackendType::MOCK, "mock_circuit_v23"};
     ZKConstraintSet constraints{"constraint_1", 100};
     ZKTranscript transcript{"transcript_1", 10};
 
@@ -95,7 +95,7 @@ TEST(ZKMockBackendTest, VerifyProofReturnsTrueForMatchingInputs) {
 TEST(ZKMockBackendTest, VerifyProofReturnsFalseForMismatchedInputs) {
     ZKMockBackend backend;
 
-    ZKBackendConfig config{ZKBackendType::HALO2, "mock_circuit_v23"};
+    ZKBackendConfig config{ZKBackendType::MOCK, "mock_circuit_v23"};
     ZKConstraintSet constraints{"constraint_1", 100};
     ZKTranscript transcript{"transcript_1", 10};
 
@@ -107,7 +107,7 @@ TEST(ZKMockBackendTest, VerifyProofReturnsFalseForMismatchedInputs) {
     ZKTranscript mismatched_transcript{"transcript_2", 10};
     EXPECT_FALSE(backend.verify_proof(config, artifact, constraints, mismatched_transcript));
 
-    ZKBackendConfig mismatched_config{ZKBackendType::HALO2, "wrong_circuit"};
+    ZKBackendConfig mismatched_config{ZKBackendType::MOCK, "wrong_circuit"};
     EXPECT_FALSE(backend.verify_proof(mismatched_config, artifact, constraints, transcript));
 
     ZKProofArtifact mismatched_artifact = artifact;
@@ -120,7 +120,7 @@ TEST(ZKMockBackendTest, VerifyProofReturnsFalseForMismatchedInputs) {
 TEST(ZKMockBackendTest, MetadataFieldsMatchExpectedValues) {
     ZKMockBackend backend;
 
-    ZKBackendConfig config{ZKBackendType::HALO2, "mock_circuit_v23"};
+    ZKBackendConfig config{ZKBackendType::MOCK, "mock_circuit_v23"};
     ZKConstraintSet constraints{"constraint_1", 100};
     ZKTranscript transcript{"transcript_1", 10};
 
@@ -135,7 +135,7 @@ TEST(ZKMockBackendTest, MetadataFieldsMatchExpectedValues) {
 TEST(ZKMockBackendTest, ProofIdMatchesHexEncodedDigest) {
     ZKMockBackend backend;
 
-    ZKBackendConfig config{ZKBackendType::HALO2, "mock_circuit_v23"};
+    ZKBackendConfig config{ZKBackendType::MOCK, "mock_circuit_v23"};
     ZKConstraintSet constraints{"constraint_1", 100};
     ZKTranscript transcript{"transcript_1", 10};
 
@@ -149,7 +149,7 @@ TEST(ZKMockBackendTest, ProofIdMatchesHexEncodedDigest) {
 TEST(ZKMockBackendTest, EmptyInputsHashProperly) {
     ZKMockBackend backend;
 
-    ZKBackendConfig config{ZKBackendType::HALO2, "mock_circuit_v23"};
+    ZKBackendConfig config{ZKBackendType::MOCK, "mock_circuit_v23"};
     ZKConstraintSet empty_constraints{"", 0};
     ZKTranscript empty_transcript{"", 0};
 
@@ -166,7 +166,7 @@ TEST(ZKMockBackendTest, EmptyInputsHashProperly) {
 TEST(ZKMockBackendTest, ZeroLengthProofBytesFailsVerification) {
     ZKMockBackend backend;
 
-    ZKBackendConfig config{ZKBackendType::HALO2, "mock_circuit_v23"};
+    ZKBackendConfig config{ZKBackendType::MOCK, "mock_circuit_v23"};
     ZKConstraintSet constraints{"constraint_1", 100};
     ZKTranscript transcript{"transcript_1", 10};
 
@@ -179,7 +179,7 @@ TEST(ZKMockBackendTest, ZeroLengthProofBytesFailsVerification) {
 TEST(ZKMockBackendTest, MalformedMetadataFailsVerification) {
     ZKMockBackend backend;
 
-    ZKBackendConfig config{ZKBackendType::HALO2, "mock_circuit_v23"};
+    ZKBackendConfig config{ZKBackendType::MOCK, "mock_circuit_v23"};
     ZKConstraintSet constraints{"constraint_1", 100};
     ZKTranscript transcript{"transcript_1", 10};
 
@@ -192,7 +192,7 @@ TEST(ZKMockBackendTest, MalformedMetadataFailsVerification) {
 TEST(ZKMockBackendTest, InvalidConstraintTranscriptBytesAreTreatedDifferently) {
     ZKMockBackend backend;
 
-    ZKBackendConfig config{ZKBackendType::HALO2, "mock_circuit_v23"};
+    ZKBackendConfig config{ZKBackendType::MOCK, "mock_circuit_v23"};
 
     // Different byte sizes/contents but same ID for testing inputs
     ZKConstraintSet constraints1{"constraint_1", 100};

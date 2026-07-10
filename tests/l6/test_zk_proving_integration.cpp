@@ -6,7 +6,7 @@ using namespace ailee::l6;
 
 TEST(ZKProvingIntegrationTest, OrchestrationAttachesValidProof) {
     ZKMockBackend backend;
-    ZKBackendConfig config{ZKBackendType::HALO2, "test_circuit"};
+    ZKBackendConfig config{ZKBackendType::MOCK, "test_circuit"};
     ZKConstraintSet constraints{"constraint_1", 100};
     ZKTranscript transcript{"transcript_1", 10};
 
@@ -35,7 +35,7 @@ TEST(ZKProvingIntegrationTest, OrchestrationAttachesValidProof) {
 
 TEST(ZKProvingIntegrationTest, OrchestrationLeavesEmptyWhenSkipped) {
     ZKMockBackend backend;
-    ZKBackendConfig config{ZKBackendType::HALO2, "test_circuit"};
+    ZKBackendConfig config{ZKBackendType::MOCK, "test_circuit"};
     ZKConstraintSet constraints{"constraint_1", 100};
     ZKTranscript transcript{"transcript_1", 10};
 

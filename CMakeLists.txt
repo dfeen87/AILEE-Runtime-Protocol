@@ -307,6 +307,9 @@ set(WNN_SOURCES
 # AILEE CORE Integration Sources
 set(AILEE_CORE_SOURCES
     src/l6/ZKMockBackend.cpp
+    src/l6/Halo2Backend.cpp
+    src/l6/PlonkBackend.cpp
+    src/l6/ZKBackendFactory.cpp
     src/ReflectionLayer.cpp
     src/NodeIdentity.cpp
     src/MeshCoherence.cpp
@@ -655,6 +658,9 @@ add_library(ailee_adapters STATIC
     src/l6/ZKDeterministicValidator.cpp
     src/l6/ZKProvingBackend.cpp
     src/l6/ZKMockBackend.cpp
+    src/l6/Halo2Backend.cpp
+    src/l6/PlonkBackend.cpp
+    src/l6/ZKBackendFactory.cpp
 )
 
 add_library(ailee_l5_compression STATIC
@@ -796,6 +802,7 @@ if(BUILD_TESTS)
         tests/l6/test_zk_metadata.cpp
         tests/l6/test_zk_validation.cpp
         tests/l6/test_zk_backend_abstraction.cpp
+        tests/l6/test_zk_backend_activation.cpp
         tests/l6/test_full_v23_pipeline.cpp
         tests/l6/test_zk_mock_backend.cpp
         tests/l6/test_zk_proving_integration.cpp

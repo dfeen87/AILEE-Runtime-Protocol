@@ -9,7 +9,7 @@ using namespace ailee::l6;
 class FullV23PipelineTest : public ::testing::Test {
 protected:
     ZKMockBackend backend;
-    ZKBackendConfig config{ZKBackendType::HALO2, "mock_circuit_v23"};
+    ZKBackendConfig config{ZKBackendType::MOCK, "mock_circuit_v23"};
     ZKConstraintSet constraints{"constraints_v23_test", 100};
     ZKTranscript transcript{"transcript_v23_test", 10};
     std::string state_root_hash = "deadbeef";

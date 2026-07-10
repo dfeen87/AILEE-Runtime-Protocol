@@ -8,13 +8,17 @@
 namespace ailee::l6 {
 
 enum class ZKBackendType {
-    HALO2,
-    PLONK
+    MOCK,          // existing deterministic backend
+    HALO2_NATIVE,  // stub Halo2 backend
+    PLONK_NATIVE   // stub Plonk backend
 };
 
 struct ZKBackendConfig {
     ZKBackendType type;
     std::string circuit_id; // deterministic circuit identifier
+    std::string circuit_path;          // path to circuit artifact (stub for now)
+    std::string proving_key_path;      // path to proving key (stub for now)
+    std::string verification_key_path; // path to verification key (stub for now)
 };
 
 struct ZKProofArtifact {
