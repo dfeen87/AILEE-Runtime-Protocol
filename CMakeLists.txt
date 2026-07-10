@@ -645,6 +645,7 @@ add_library(ailee_adapters STATIC
     src/l6/AnchorSerializer.cpp
     src/l6/AnchorVerifier.cpp
     src/l6/OnChainReplayVerifier.cpp
+    src/l6/DeterministicEpochAnchoring.cpp
 )
 
 add_library(ailee_l5_compression STATIC
@@ -780,6 +781,7 @@ if(BUILD_TESTS)
         tests/l6/test_anchor_serializer.cpp
         tests/l6/test_anchor_verifier.cpp
         tests/l6/test_on_chain_replay_verifier.cpp
+        tests/l6/test_deterministic_epoch_anchoring.cpp
         tests/taproot/TaprootScriptTests.cpp
         tests/taproot/TaprootSignerTests.cpp
         tests/test_anchor_commit_txbuilder.cpp
