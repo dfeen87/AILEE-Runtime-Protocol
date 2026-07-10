@@ -1,25 +1,19 @@
 #include "l6/ZKMockBackend.h"
 #include <openssl/sha.h>
-#include <sstream>
-#include <iomanip>
 
 namespace ailee::l6 {
 
 namespace {
 
 std::string hex_encode(const std::vector<uint8_t>& data) {
-    std::stringstream ss;
-    ss << std::hex << std::setfill('0');
-    for (uint8_t byte : data) {
-        ss << std::setw(2) << static_cast<int>(byte);
+    std::string hex_chars = "0123456789abcdef";
+    std::string hex;
+    hex.reserve(data.size() * 2);
+    for (uint8_t b : data) {
+        hex.push_back(hex_chars[b >> 4]);
+        hex.push_back(hex_chars[b & 0x0F]);
     }
-    return ss.str();
-}
-
-std::vector<uint8_t> sha256(const std::vector<uint8_t>& data) {
-    std::vector<uint8_t> hash(SHA256_DIGEST_LENGTH);
-    SHA256(data.data(), data.size(), hash.data());
-    return hash;
+    return hex;
 }
 
 std::vector<uint8_t> compute_mock_proof_bytes(
@@ -27,17 +21,20 @@ std::vector<uint8_t> compute_mock_proof_bytes(
     const ZKConstraintSet& constraints,
     const ZKTranscript& transcript
 ) {
-    std::vector<uint8_t> data;
+    std::vector<uint8_t> input_bytes;
 
     auto constraints_bytes = constraints.to_bytes();
-    data.insert(data.end(), constraints_bytes.begin(), constraints_bytes.end());
+    input_bytes.insert(input_bytes.end(), constraints_bytes.begin(), constraints_bytes.end());
 
     auto transcript_bytes = transcript.to_bytes();
-    data.insert(data.end(), transcript_bytes.begin(), transcript_bytes.end());
+    input_bytes.insert(input_bytes.end(), transcript_bytes.begin(), transcript_bytes.end());
 
-    data.insert(data.end(), circuit_id.begin(), circuit_id.end());
+    input_bytes.insert(input_bytes.end(), circuit_id.begin(), circuit_id.end());
 
-    return sha256(data);
+    uint8_t digest[32];
+    SHA256(input_bytes.data(), input_bytes.size(), digest);
+
+    return std::vector<uint8_t>(digest, digest + 32);
 }
 
 } // namespace
@@ -66,17 +63,7 @@ bool ZKMockBackend::verify_proof(
     const ZKTranscript& transcript
 ) {
     std::vector<uint8_t> expected_bytes = compute_mock_proof_bytes(config.circuit_id, constraints, transcript);
-
-    if (artifact.proof_bytes != expected_bytes) {
-        return false;
-    }
-
-    if (artifact.metadata.constraint_set_id != constraints.id ||
-        artifact.metadata.transcript_id != transcript.id) {
-        return false;
-    }
-
-    return true;
+    return expected_bytes == artifact.proof_bytes;
 }
 
 } // namespace ailee::l6

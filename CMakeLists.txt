@@ -306,6 +306,7 @@ set(WNN_SOURCES
 
 # AILEE CORE Integration Sources
 set(AILEE_CORE_SOURCES
+    src/l6/ZKMockBackend.cpp
     src/ReflectionLayer.cpp
     src/NodeIdentity.cpp
     src/MeshCoherence.cpp
