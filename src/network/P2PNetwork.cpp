@@ -162,7 +162,7 @@ public:
         return std::vector<PeerInfo>(); // Placeholder; fetch from FFI in complete implementation
     }
 
-    bool subscribe(const std::string& topic, MessageHandler handler) override {
+    bool subscribe([[maybe_unused]] const std::string& topic, [[maybe_unused]] MessageHandler handler) override {
         std::lock_guard<std::mutex> lock(mutex);
         if (!running) return false;
 
@@ -173,12 +173,12 @@ public:
         return true;
     }
     
-    bool unsubscribe(const std::string& topic) override {
+    bool unsubscribe([[maybe_unused]] const std::string& topic) override {
         std::lock_guard<std::mutex> lock(mutex);
         return false; // Not implemented in current FFI
     }
     
-    bool publish(const std::string& topic, const std::vector<uint8_t>& payload) override {
+    bool publish(const std::string& topic, [[maybe_unused]] const std::vector<uint8_t>& payload) override {
         std::lock_guard<std::mutex> lock(mutex);
         if (!running) return false;
 
@@ -187,9 +187,9 @@ public:
     }
 
     std::optional<std::vector<uint8_t>> sendToPeer(
-        const std::string& peerId,
-        const std::string& protocol,
-        const std::vector<uint8_t>& payload) override {
+        [[maybe_unused]] const std::string& peerId,
+        [[maybe_unused]] const std::string& protocol,
+        [[maybe_unused]] const std::vector<uint8_t>& payload) override {
         
         std::lock_guard<std::mutex> lock(mutex);
         if (!running) return std::nullopt;
@@ -197,14 +197,14 @@ public:
         return std::nullopt;
     }
     
-    bool connectToPeer(const std::string& multiaddr) override {
+    bool connectToPeer([[maybe_unused]] const std::string& multiaddr) override {
         std::lock_guard<std::mutex> lock(mutex);
         if (!running) return false;
 
         return false; // Not implemented in current FFI
     }
     
-    bool disconnectPeer(const std::string& peerId) override {
+    bool disconnectPeer([[maybe_unused]] const std::string& peerId) override {
         std::lock_guard<std::mutex> lock(mutex);
         return false; // Not implemented in current FFI
     }
@@ -332,8 +332,8 @@ bool P2PNetwork::publish(const std::string& topic, const std::vector<uint8_t>& p
 }
 
 std::optional<std::vector<uint8_t>> P2PNetwork::sendToPeer(
-    const std::string& peerId,
-    const std::string& protocol,
+    [[maybe_unused]] const std::string& peerId,
+    [[maybe_unused]] const std::string& protocol,
     const std::vector<uint8_t>& payload) {
     
     auto result = transport_->sendToPeer(peerId, protocol, payload);

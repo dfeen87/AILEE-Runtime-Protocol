@@ -9,7 +9,7 @@ bool ReplaySemantics::validate_replay_chain(const l6::IReplayBuffer& buffer, uin
     if (history.empty()) return true;
 
     // We only need block_per_epoch parameter for epoch validation, we assume 1000 here as default semantics for replay check.
-    uint32_t blocks_per_epoch = 1000;
+    [[maybe_unused]] uint32_t blocks_per_epoch = 1000;
 
     for (size_t i = 0; i < history.size(); ++i) {
         if (i > 0) {

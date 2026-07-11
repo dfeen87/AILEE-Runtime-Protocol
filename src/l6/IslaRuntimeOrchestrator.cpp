@@ -13,7 +13,7 @@
 namespace ailee::l6 {
 
 IslaRuntimeOrchestrator::IslaRuntimeOrchestrator(const RuntimeEnvironment& env)
-    : env_(env), active_config_({ZKBackendType::MOCK, ""}) {}
+    : env_(env), active_config_({ZKBackendType::MOCK, "", "", "", ""}) {}
 
 void IslaRuntimeOrchestrator::attach_backend(const ZKBackendConfig& config) {
     if (!semantics::BackendActivationSemantics::is_backend_allowed(env_.get_environment_type(), config.type)) {

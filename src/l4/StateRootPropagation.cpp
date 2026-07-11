@@ -99,7 +99,7 @@ std::vector<StateRootValidationResult> validate_state_roots(
             }
         } else {
             // Find if there's any announcement at all with unknown source
-            bool has_unknown = false;
+            [[maybe_unused]] bool has_unknown = false;
             for (const auto& ann : announcements) {
                 bool found = false;
                 for (const auto& vnode : view.nodes) {

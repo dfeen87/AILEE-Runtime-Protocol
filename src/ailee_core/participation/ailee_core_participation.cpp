@@ -5,7 +5,7 @@ namespace core {
 namespace participation {
 
 ailee::identity::ParticipationProof WnnParticipationIntegration::derive_proof_from_cluster(
-    const ailee::wnn::CoherenceCluster& cluster,
+    [[maybe_unused]] const ailee::wnn::CoherenceCluster& cluster,
     const ailee::identity::IdentityPayload& boundPayload,
     const std::vector<uint8_t>& nodeSignature
 ) const {
