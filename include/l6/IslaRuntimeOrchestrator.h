@@ -18,7 +18,14 @@
 #include "anchor/AnchorCommitTxBuilder.h"
 #include "anchor/AnchorCommitValidator.h"
 #include "anchor/AnchorMetadataEncoder.h"
+#include "l6/MeshCoherenceEngine.h"
 
+
+namespace ailee::l6 {
+
+class MeshCoherenceEngine;
+}
+#include "policy/PolicyEngine.h"
 namespace ailee::l6 {
 
 struct ClockSnapshot {
@@ -30,20 +37,6 @@ class IClock {
 public:
     virtual ~IClock() = default;
     virtual ClockSnapshot get_snapshot() const = 0;
-};
-
-struct SchedulerDecision {
-    AnchorDecision anchor_decision;
-    ProofDecision proof_decision;
-    // can be extended with metadata for epoch boundary
-};
-
-// Based on prompt "std::unique_ptr<EpochScheduler> scheduler_;" we should define an interface
-// or class EpochScheduler since one doesn't exist yet as a class.
-class EpochScheduler {
-public:
-    virtual ~EpochScheduler() = default;
-    virtual SchedulerDecision get_decision(uint64_t epoch_id) const = 0;
 };
 
 struct EpochIntegrationBundle {
@@ -90,6 +83,8 @@ public:
     void attach_clock(std::unique_ptr<IClock> clock);
     void attach_scheduler(std::unique_ptr<EpochScheduler> scheduler);
     void attach_replay(std::unique_ptr<IReplayBuffer> replay);
+    void attach_mesh(std::unique_ptr<MeshCoherenceEngine> mesh);
+    void attach_policy(std::unique_ptr<ailee::policy::PolicyEngine> policy);
 
     IslaEpochResult run_epoch(const EpochIntegrationBundle& bundle);
 
@@ -100,6 +95,8 @@ private:
     std::unique_ptr<IClock> clock_;
     std::unique_ptr<EpochScheduler> scheduler_;
     std::unique_ptr<IReplayBuffer> replay_;
+    std::unique_ptr<MeshCoherenceEngine> mesh_;
+    std::unique_ptr<ailee::policy::PolicyEngine> policy_;
 };
 
 } // namespace ailee::l6

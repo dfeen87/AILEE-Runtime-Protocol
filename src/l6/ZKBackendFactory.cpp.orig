@@ -18,10 +18,10 @@ std::unique_ptr<IZKProvingBackend> make_backend(const ZKBackendConfig& config) {
         LOG_INFO(logger, "ZK backend: MOCK (deterministic)");
         return std::make_unique<ZKMockBackend>();
     case ZKBackendType::HALO2_NATIVE:
-        LOG_INFO(logger, "ZK backend: HALO2_NATIVE (deterministic high-fidelity implementation)");
+        LOG_WARN(logger, "ZK backend: HALO2_NATIVE (non-deterministic stub)");
         return std::make_unique<Halo2Backend>();
     case ZKBackendType::PLONK_NATIVE:
-        LOG_INFO(logger, "ZK backend: PLONK_NATIVE (deterministic high-fidelity implementation)");
+        LOG_WARN(logger, "ZK backend: PLONK_NATIVE (non-deterministic stub)");
         return std::make_unique<PlonkBackend>();
     default:
         LOG_INFO(logger, "ZK backend: MOCK (deterministic)");

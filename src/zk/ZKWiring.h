@@ -1,7 +1,7 @@
 #pragma once
 
 #include "ZKReplayCircuit.h"
-#include "../anchor/AnchorRecord.h"
+#include "anchor/AnchorRecord.h"
 
 namespace ailee {
 namespace zk {
