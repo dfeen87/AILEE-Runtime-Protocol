@@ -1,4 +1,4 @@
-#include "AnchorMetadataEncoder.h"
+#include "anchor/AnchorMetadataEncoder.h"
 #include <openssl/sha.h>
 #include <vector>
 

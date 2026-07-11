@@ -1,3 +1,4 @@
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #include "l4/StateRootPropagation.h"
 #include <openssl/sha.h>
 #include <algorithm>

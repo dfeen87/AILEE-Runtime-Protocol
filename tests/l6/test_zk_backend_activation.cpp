@@ -3,6 +3,8 @@
 #include "l6/ZKMockBackend.h"
 #include "l6/Halo2Backend.h"
 #include "l6/PlonkBackend.h"
+#include "l6/IslaRuntimeOrchestrator.h"
+#include "l6/RuntimeEnvironment.h"
 
 using namespace ailee::l6;
 
@@ -56,4 +58,34 @@ TEST(ZKBackendActivationTest, PlonkBackendIsDeterministic) {
     EXPECT_EQ(artifact1.metadata.transcript_id, "transcript_1");
 
     EXPECT_TRUE(backend.verify_proof(config, artifact1, constraints, transcript));
+}
+
+TEST(ZKBackendActivationTest, IslaThrowsOnInvalidActivationCI) {
+    RuntimeEnvironment env;
+    env.is_ci = true;
+    IslaRuntimeOrchestrator isla(env);
+
+    ZKBackendConfig halo2_config{ZKBackendType::HALO2_NATIVE, "test_circuit"};
+    { bool threw_DeterministicBackendException = false; try { isla.attach_backend(halo2_config); } catch(const DeterministicBackendException&) { threw_DeterministicBackendException = true; } EXPECT_TRUE(threw_DeterministicBackendException); }
+
+    ZKBackendConfig plonk_config{ZKBackendType::PLONK_NATIVE, "test_circuit"};
+    { bool threw_DeterministicBackendException = false; try { isla.attach_backend(plonk_config); } catch(const DeterministicBackendException&) { threw_DeterministicBackendException = true; } EXPECT_TRUE(threw_DeterministicBackendException); }
+
+    ZKBackendConfig mock_config{ZKBackendType::MOCK, "test_circuit"};
+    { bool no_throw = true; try { isla.attach_backend(mock_config); } catch(...) { no_throw = false; } EXPECT_TRUE(no_throw); }
+}
+
+TEST(ZKBackendActivationTest, IslaThrowsOnInvalidActivationNonCI) {
+    RuntimeEnvironment env;
+    env.is_ci = false;
+    IslaRuntimeOrchestrator isla(env);
+
+    ZKBackendConfig mock_config{ZKBackendType::MOCK, "test_circuit"};
+    { bool threw_DeterministicBackendException = false; try { isla.attach_backend(mock_config); } catch(const DeterministicBackendException&) { threw_DeterministicBackendException = true; } EXPECT_TRUE(threw_DeterministicBackendException); }
+
+    ZKBackendConfig halo2_config{ZKBackendType::HALO2_NATIVE, "test_circuit"};
+    { bool no_throw = true; try { isla.attach_backend(halo2_config); } catch(...) { no_throw = false; } EXPECT_TRUE(no_throw); }
+
+    ZKBackendConfig plonk_config{ZKBackendType::PLONK_NATIVE, "test_circuit"};
+    { bool no_throw = true; try { isla.attach_backend(plonk_config); } catch(...) { no_throw = false; } EXPECT_TRUE(no_throw); }
 }

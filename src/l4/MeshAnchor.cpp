@@ -1,3 +1,4 @@
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #include "l4/MeshAnchor.h"
 #include "l4/ClusterSim.h"
 #include "l4/ClusterTypes.h"
