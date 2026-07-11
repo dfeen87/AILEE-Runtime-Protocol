@@ -16,6 +16,8 @@ struct ReplayBufferConfig {
 
 class ReplayBuffer : public IReplayBuffer {
 public:
+    static void sort_history_by_sequence(std::vector<EpochIntegrationBundle>& history);
+public:
     explicit ReplayBuffer(const ReplayBufferConfig& config);
     ~ReplayBuffer() override;
 

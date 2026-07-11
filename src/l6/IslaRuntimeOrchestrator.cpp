@@ -239,3 +239,31 @@ IslaEpochResult IslaRuntimeOrchestrator::run_epoch(const EpochIntegrationBundle&
 }
 
 } // namespace ailee::l6
+namespace ailee::l6 {
+void IslaRuntimeOrchestrator::check_heartbeat_drift(const ClockSnapshot& clock_state, uint64_t expected_tick_duration) {
+    if (last_heartbeat_timestamp_ != 0) {
+        uint64_t interval = clock_state.timestamp > last_heartbeat_timestamp_ ?
+                            clock_state.timestamp - last_heartbeat_timestamp_ : 0;
+        recent_heartbeat_intervals_.push_back(interval);
+
+        if (recent_heartbeat_intervals_.size() > 10) {
+            recent_heartbeat_intervals_.erase(recent_heartbeat_intervals_.begin());
+        }
+
+        if (recent_heartbeat_intervals_.size() == 10) {
+            double total_drift = 0;
+            for (uint64_t ival : recent_heartbeat_intervals_) {
+                double expected = static_cast<double>(expected_tick_duration);
+                double drift = std::abs(static_cast<double>(ival) - expected) / expected;
+                total_drift += drift;
+            }
+            double avg_drift = total_drift / 10.0;
+
+            if (avg_drift > 0.005) {
+                throw std::runtime_error("Heartbeat drift exceeded 0.5% tolerance threshold");
+            }
+        }
+    }
+    last_heartbeat_timestamp_ = clock_state.timestamp;
+}
+} // namespace ailee::l6

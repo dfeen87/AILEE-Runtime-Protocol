@@ -5,6 +5,7 @@
 #include <array>
 #include <cstddef>
 #include <deque>
+#include <string>
 #include "l1_sync/sync_events.hpp"
 #include "l1_sync/bitcoin_clock.hpp"
 
@@ -58,12 +59,22 @@ public:
     const BitcoinClockState& get_clock() const { return clock; }
     const MempoolSnapshot& get_mempool() const { return mempool; }
 
+    // Hardening V27 Metrics
+    std::string compute_utxo_reflection_hash() const;
+    double get_delta_auc() const { return delta_auc; }
+    double get_spectral_drift() const { return spectral_drift; }
+    void simulate_sync_cycle_metrics();
+
 private:
     size_t max_buffer_size;
     std::deque<BlockHeader> header_buffer;
     MempoolSnapshot mempool;
     BitcoinClockState clock;
     std::vector<SyncEvent> pending_events;
+
+    double delta_auc = 0.0;
+    double spectral_drift = 0.0;
+    std::vector<double> historical_intervals;
 
     void update_clock();
     void sort_mempool();

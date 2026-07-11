@@ -90,7 +90,7 @@ ClockSnapshot BitcoinClock::get_snapshot() const {
         }
         uint64_t mtp = root["result"]["mediantime"].asUInt64();
 
-        return {height, mtp};
+        return {height, mtp, block_hash, "bitcoin-rpc"};
     } catch (const std::exception& e) {
         LOG_WARN(logger, "BitcoinClock error: " + std::string(e.what()));
         throw;

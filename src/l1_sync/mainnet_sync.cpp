@@ -81,6 +81,7 @@ void MainnetSyncManager::ingest_headers(const HeaderBatch& headers) {
     }
 
     update_clock();
+    simulate_sync_cycle_metrics();
 }
 
 void MainnetSyncManager::ingest_mempool_deltas(const MempoolDeltaBatch& deltas) {
@@ -161,5 +162,44 @@ void MainnetSyncManager::sort_mempool() {
     std::sort(mempool.begin(), mempool.end());
 }
 
+
+
+
+std::string ailee::l1_sync::MainnetSyncManager::compute_utxo_reflection_hash() const {
+    uint64_t sum = clock.height;
+    for (const auto& entry : mempool) {
+        sum += entry.fee;
+        sum += entry.size;
+        for (uint8_t b : entry.txid) {
+            sum += b;
+        }
+    }
+    char hex_chars[] = "0123456789abcdef";
+    std::string hash = "";
+    for (int i = 0; i < 8; ++i) {
+        hash += hex_chars[(sum >> ((7 - i) * 4)) & 0x0F];
+    }
+    return hash;
+}
+
+void ailee::l1_sync::MainnetSyncManager::simulate_sync_cycle_metrics() {
+    double new_auc = mempool.size() > 0 ? 0.85 + (mempool.size() * 0.001) : 0.80;
+    static double last_auc = 0.80;
+    delta_auc = new_auc - last_auc;
+    last_auc = new_auc;
+
+    if (historical_intervals.size() >= 5) {
+        double mean = 0;
+        for (double val : historical_intervals) mean += val;
+        mean /= historical_intervals.size();
+
+        double variance = 0;
+        for (double val : historical_intervals) variance += (val - mean) * (val - mean);
+
+        spectral_drift = (variance / historical_intervals.size()) * 0.0001;
+    } else {
+        spectral_drift = 0.0;
+    }
+}
 } // namespace l1_sync
 } // namespace ailee

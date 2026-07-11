@@ -42,6 +42,7 @@ public:
 };
 
 struct EpochIntegrationBundle {
+    uint64_t sequence_id; // Added for deterministic replay ordering
     uint64_t epoch_id;
     std::string state_root_hash;
     AnchorPlan anchor_plan;
@@ -95,6 +96,9 @@ public:
 
     IslaEpochResult run_epoch(const EpochIntegrationBundle& bundle);
 
+    // Checks Heartbeat drift
+    void check_heartbeat_drift(const ClockSnapshot& clock_state, uint64_t expected_tick_duration);
+
 private:
     RuntimeEnvironment env_;
     std::unique_ptr<IZKProvingBackend> backend_;
@@ -104,6 +108,9 @@ private:
     std::unique_ptr<IReplayBuffer> replay_;
     std::unique_ptr<MeshCoherenceEngine> mesh_;
     std::unique_ptr<ailee::policy::PolicyEngine> policy_;
+
+    std::vector<uint64_t> recent_heartbeat_intervals_;
+    uint64_t last_heartbeat_timestamp_ = 0;
 };
 
 } // namespace ailee::l6

@@ -611,6 +611,7 @@ endif()
 # Useful for testing adapters without running the full node
 add_library(ailee_adapters STATIC 
     src/l1_sync/mainnet_sync.cpp
+    src/simulation/validation/hice_contracts.cpp
     src/l1_sync/reorg_detector.cpp
     src/l1_sync/bitcoin_clock.cpp
     ${ADAPTER_SOURCES}
@@ -821,6 +822,10 @@ if(BUILD_TESTS)
         tests/l6/test_zk_proving_integration.cpp
         tests/l6/test_zk_orchestration_integration.cpp
         tests/l6/test_anchor_commitment_integration.cpp
+        tests/l6/test_isla_determinism.cpp
+        tests/simulation/test_mainnet_sync_metrics.cpp
+        tests/simulation/test_hice_contracts.cpp
+        tests/simulation/test_v27_simulation_stress.cpp
         tests/taproot/TaprootScriptTests.cpp
         tests/taproot/TaprootSignerTests.cpp
         tests/test_anchor_commit_txbuilder.cpp

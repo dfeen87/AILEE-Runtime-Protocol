@@ -23,6 +23,7 @@ void ReplayBuffer::record_epoch(const EpochIntegrationBundle& bundle, const Isla
 
     // Serialize to JSON for simplicity in V27
     Json::Value root;
+    root["sequence_id"] = static_cast<Json::UInt64>(bundle.sequence_id);
     root["epoch_id"] = static_cast<Json::UInt64>(bundle.epoch_id);
     root["state_root_hash"] = bundle.state_root_hash;
 
@@ -67,9 +68,11 @@ std::vector<EpochIntegrationBundle> ReplayBuffer::get_epoch_history() const {
         std::string value = it->value().ToString();
 
         Json::Value root;
+    root["sequence_id"] = static_cast<Json::UInt64>(bundle.sequence_id);
         Json::Reader reader;
         if (reader.parse(value, root)) {
             EpochIntegrationBundle bundle;
+            bundle.sequence_id = root.isMember("sequence_id") ? root["sequence_id"].asUInt64() : 0;
             bundle.epoch_id = root["epoch_id"].asUInt64();
             bundle.state_root_hash = root["state_root_hash"].asString();
 
@@ -118,3 +121,11 @@ size_t ReplayBuffer::max_size() const {
 }
 
 } // namespace ailee::l6
+void ReplayBuffer::sort_history_by_sequence(std::vector<EpochIntegrationBundle>& history) {
+    std::sort(history.begin(), history.end(), [](const EpochIntegrationBundle& a, const EpochIntegrationBundle& b) {
+        if (a.sequence_id == b.sequence_id) {
+            return a.epoch_id < b.epoch_id; // Tiebreaker
+        }
+        return a.sequence_id < b.sequence_id;
+    });
+}
