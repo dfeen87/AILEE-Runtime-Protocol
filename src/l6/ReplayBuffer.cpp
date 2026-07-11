@@ -58,4 +58,63 @@ void ReplayBuffer::record_epoch(const EpochIntegrationBundle& bundle, const Isla
     }
 }
 
+std::vector<EpochIntegrationBundle> ReplayBuffer::get_epoch_history() const {
+    std::vector<EpochIntegrationBundle> history;
+    if (!db_) return history;
+
+    rocksdb::Iterator* it = db_->NewIterator(rocksdb::ReadOptions());
+    for (it->SeekToFirst(); it->Valid(); it->Next()) {
+        std::string value = it->value().ToString();
+
+        Json::Value root;
+        Json::Reader reader;
+        if (reader.parse(value, root)) {
+            EpochIntegrationBundle bundle;
+            bundle.epoch_id = root["epoch_id"].asUInt64();
+            bundle.state_root_hash = root["state_root_hash"].asString();
+
+            if (root.isMember("clock_snapshot")) {
+                bundle.clock_snapshot.height = root["clock_snapshot"]["height"].asUInt64();
+                bundle.clock_snapshot.timestamp = root["clock_snapshot"]["timestamp"].asUInt64();
+                if (root["clock_snapshot"].isMember("hash")) {
+                    bundle.clock_snapshot.hash = root["clock_snapshot"]["hash"].asString();
+                }
+                if (root["clock_snapshot"].isMember("source")) {
+                    bundle.clock_snapshot.source = root["clock_snapshot"]["source"].asString();
+                }
+            }
+            history.push_back(bundle);
+        }
+    }
+    delete it;
+    return history;
+}
+
+void ReplayBuffer::remove_oldest() {
+    if (!db_) return;
+
+    rocksdb::Iterator* it = db_->NewIterator(rocksdb::ReadOptions());
+    it->SeekToFirst();
+    if (it->Valid()) {
+        db_->Delete(rocksdb::WriteOptions(), it->key());
+    }
+    delete it;
+}
+
+size_t ReplayBuffer::size() const {
+    if (!db_) return 0;
+    size_t count = 0;
+    rocksdb::Iterator* it = db_->NewIterator(rocksdb::ReadOptions());
+    for (it->SeekToFirst(); it->Valid(); it->Next()) {
+        count++;
+    }
+    delete it;
+    return count;
+}
+
+size_t ReplayBuffer::max_size() const {
+    // Arbitrary large number for max size
+    return 1000000;
+}
+
 } // namespace ailee::l6

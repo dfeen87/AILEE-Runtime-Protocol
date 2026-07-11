@@ -31,6 +31,8 @@ namespace ailee::l6 {
 struct ClockSnapshot {
     uint64_t height;
     uint64_t timestamp;
+    std::string hash;
+    std::string source;
 };
 
 class IClock {
@@ -68,6 +70,11 @@ public:
     virtual ~IReplayBuffer() = default;
     virtual void record_epoch(const EpochIntegrationBundle& bundle,
                               const IslaEpochResult& result) = 0;
+
+    virtual std::vector<EpochIntegrationBundle> get_epoch_history() const = 0;
+    virtual void remove_oldest() = 0;
+    virtual size_t size() const = 0;
+    virtual size_t max_size() const = 0;
 };
 
 class IslaRuntimeOrchestrator {

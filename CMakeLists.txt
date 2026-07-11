@@ -306,6 +306,14 @@ set(WNN_SOURCES
 
 # AILEE CORE Integration Sources
 set(AILEE_CORE_SOURCES
+    src/semantics/SemanticsTypes.cpp
+    src/semantics/EpochSemantics.cpp
+    src/semantics/ClockSemantics.cpp
+    src/semantics/MeshCoherenceSemantics.cpp
+    src/semantics/AttachmentSemantics.cpp
+    src/semantics/ReplaySemantics.cpp
+    src/semantics/MetadataSemantics.cpp
+    src/semantics/BackendActivationSemantics.cpp
     src/l6/ZKMockBackend.cpp
     src/l6/Halo2Backend.cpp
     src/l6/PlonkBackend.cpp

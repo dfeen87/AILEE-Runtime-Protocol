@@ -21,6 +21,11 @@ public:
 
     void record_epoch(const EpochIntegrationBundle& bundle, const IslaEpochResult& result) override;
 
+    std::vector<EpochIntegrationBundle> get_epoch_history() const override;
+    void remove_oldest() override;
+    size_t size() const override;
+    size_t max_size() const override;
+
 private:
     rocksdb::DB* db_;
 };

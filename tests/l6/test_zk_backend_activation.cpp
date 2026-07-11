@@ -77,15 +77,17 @@ TEST(ZKBackendActivationTest, IslaThrowsOnInvalidActivationCI) {
 
 TEST(ZKBackendActivationTest, IslaThrowsOnInvalidActivationNonCI) {
     RuntimeEnvironment env;
-    env.is_ci = false;
+    env.is_ci = false; // Maps to DEV environment in Semantics
     IslaRuntimeOrchestrator isla(env);
 
+    // MOCK is allowed in DEV
     ZKBackendConfig mock_config{ZKBackendType::MOCK, "test_circuit"};
-    { bool threw_DeterministicBackendException = false; try { isla.attach_backend(mock_config); } catch(const DeterministicBackendException&) { threw_DeterministicBackendException = true; } EXPECT_TRUE(threw_DeterministicBackendException); }
+    { bool no_throw = true; try { isla.attach_backend(mock_config); } catch(...) { no_throw = false; } EXPECT_TRUE(no_throw); }
 
     ZKBackendConfig halo2_config{ZKBackendType::HALO2_NATIVE, "test_circuit"};
     { bool no_throw = true; try { isla.attach_backend(halo2_config); } catch(...) { no_throw = false; } EXPECT_TRUE(no_throw); }
 
+    // PLONK is NOT allowed in DEV, only PROD
     ZKBackendConfig plonk_config{ZKBackendType::PLONK_NATIVE, "test_circuit"};
-    { bool no_throw = true; try { isla.attach_backend(plonk_config); } catch(...) { no_throw = false; } EXPECT_TRUE(no_throw); }
+    { bool threw_DeterministicBackendException = false; try { isla.attach_backend(plonk_config); } catch(const DeterministicBackendException&) { threw_DeterministicBackendException = true; } EXPECT_TRUE(threw_DeterministicBackendException); }
 }
