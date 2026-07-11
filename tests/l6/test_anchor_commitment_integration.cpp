@@ -42,7 +42,7 @@ namespace {
 
 TEST(AnchorCommitmentIntegrationTest, ValidProofHasNonEmpty64CharHexCommitment) {
     ZKMockBackend backend;
-    ZKBackendConfig config{ZKBackendType::MOCK, "test_circuit"};
+    ZKBackendConfig config{ZKBackendType::MOCK, "test_circuit", "", "", ""};
     ZKConstraintSet constraints{"constraint_1", 100};
     ZKTranscript transcript{"transcript_1", 10};
 
@@ -70,7 +70,7 @@ TEST(AnchorCommitmentIntegrationTest, ValidProofHasNonEmpty64CharHexCommitment) 
 
 TEST(AnchorCommitmentIntegrationTest, DifferentProofBytesProduceDifferentCommitments) {
     ZKMockBackend backend;
-    ZKBackendConfig config{ZKBackendType::MOCK, "test_circuit"};
+    ZKBackendConfig config{ZKBackendType::MOCK, "test_circuit", "", "", ""};
 
     OrchestrationContext ctx;
     ctx.epoch_id = 42;
@@ -91,7 +91,7 @@ TEST(AnchorCommitmentIntegrationTest, DifferentProofBytesProduceDifferentCommitm
 
 TEST(AnchorCommitmentIntegrationTest, SkippedProofProducesEmptyCommitment) {
     ZKMockBackend backend;
-    ZKBackendConfig config{ZKBackendType::MOCK, "test_circuit"};
+    ZKBackendConfig config{ZKBackendType::MOCK, "test_circuit", "", "", ""};
     ZKConstraintSet constraints{"constraint_1", 100};
     ZKTranscript transcript{"transcript_1", 10};
 
@@ -111,7 +111,7 @@ TEST(AnchorCommitmentIntegrationTest, SkippedProofProducesEmptyCommitment) {
 
 TEST(AnchorCommitmentIntegrationTest, FailedValidationProducesEmptyCommitment) {
     ZKMockBackend backend;
-    ZKBackendConfig config{ZKBackendType::MOCK, "test_circuit"};
+    ZKBackendConfig config{ZKBackendType::MOCK, "test_circuit", "", "", ""};
 
     // Using mismatched constraints during orchestration simulation isn't straightforward without a custom backend
     // unless we pass null for constraints or transcript (which the orchestrator checks)
@@ -146,7 +146,7 @@ public:
 
 TEST(AnchorCommitmentIntegrationTest, FailedVerificationProducesEmptyCommitment) {
     FailingZKMockBackend failing_backend;
-    ZKBackendConfig config{ZKBackendType::MOCK, "test_circuit"};
+    ZKBackendConfig config{ZKBackendType::MOCK, "test_circuit", "", "", ""};
     ZKConstraintSet constraints{"constraint_1", 100};
     ZKTranscript transcript{"transcript_1", 10};
 
@@ -166,7 +166,7 @@ TEST(AnchorCommitmentIntegrationTest, FailedVerificationProducesEmptyCommitment)
 }
 
 TEST(AnchorCommitmentIntegrationTest, NullBackendProducesEmptyCommitment) {
-    ZKBackendConfig config{ZKBackendType::MOCK, "test_circuit"};
+    ZKBackendConfig config{ZKBackendType::MOCK, "test_circuit", "", "", ""};
     ZKConstraintSet constraints{"constraint_1", 100};
     ZKTranscript transcript{"transcript_1", 10};
 

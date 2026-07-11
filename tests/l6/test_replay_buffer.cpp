@@ -16,7 +16,7 @@ TEST(ReplayBufferTest, InitializationAndRecord) {
         EpochIntegrationBundle bundle;
         bundle.epoch_id = 42;
         bundle.state_root_hash = "deadbeef";
-        bundle.clock_snapshot = {1000, 1600000000};
+        bundle.clock_snapshot = {1000, 1600000000, "0000000000000000000000000000000000000000000000000000000000000000", "mock"};
         bundle.scheduler_decision = {AnchorDecision::ANCHOR, ProofDecision::ATTACH_PROOF};
 
         IslaEpochResult result;
