@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
-#include "src/anchor/AnchorMetadata.h"
-#include "src/anchor/AnchorMetadataEncoder.h"
+#include "anchor/AnchorMetadata.h"
+#include "anchor/AnchorMetadataEncoder.h"
 #include <openssl/sha.h>
 #include <cstring>
 #include <vector>

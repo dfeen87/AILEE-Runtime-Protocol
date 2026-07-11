@@ -26,7 +26,7 @@ namespace {
         return ss.str();
     }
     
-    std::string computeExecutionHash(const std::string& moduleHash,
+    [[maybe_unused]] std::string computeExecutionHash(const std::string& moduleHash,
                                      const std::string& inputHash,
                                      const std::string& outputHash) {
         std::string combined = moduleHash + inputHash + outputHash;
@@ -114,13 +114,13 @@ void WasmEdgeEngine::configureResourceLimits() {
 
 // ==================== MODULE LOADING ====================
 
-bool WasmEdgeEngine::loadModule(const std::vector<uint8_t>& moduleBytes, 
-                                const std::string& moduleHash) {
+bool WasmEdgeEngine::loadModule([[maybe_unused]] const std::vector<uint8_t>& moduleBytes,
+                                [[maybe_unused]] const std::string& moduleHash) {
     std::cerr << "[WasmEdgeEngine] NOT_IMPLEMENTED_WASM: Module loading is disabled in deterministic fail-closed mode." << std::endl;
     return false;
 }
 
-void WasmEdgeEngine::unloadModule(const std::string& moduleHash) {
+void WasmEdgeEngine::unloadModule([[maybe_unused]] const std::string& moduleHash) {
     std::lock_guard<std::mutex> lock(cacheMutex_);
     
     auto it = moduleCache_.find(moduleHash);
@@ -141,7 +141,7 @@ WasmResult WasmEdgeEngine::executeWithTrace(const WasmCall& call) {
     return executeInternal(call, true);
 }
 
-WasmResult WasmEdgeEngine::executeInternal(const WasmCall& call, bool recordTrace) {
+WasmResult WasmEdgeEngine::executeInternal([[maybe_unused]] const WasmCall& call, [[maybe_unused]] bool recordTrace) {
     auto startTime = std::chrono::high_resolution_clock::now();
     
     WasmResult result;
@@ -239,7 +239,7 @@ void WasmEdgeEngine::resetStatistics() {
 
 // ==================== MODULE CACHE ====================
 
-WasmEdge_ModuleInstanceContext* WasmEdgeEngine::getOrLoadModule(const std::string& moduleHash) {
+WasmEdge_ModuleInstanceContext* WasmEdgeEngine::getOrLoadModule([[maybe_unused]] const std::string& moduleHash) {
     std::lock_guard<std::mutex> lock(cacheMutex_);
     
     auto it = moduleCache_.find(moduleHash);
@@ -252,7 +252,7 @@ WasmEdge_ModuleInstanceContext* WasmEdgeEngine::getOrLoadModule(const std::strin
     return nullptr;
 }
 
-std::string WasmEdgeEngine::wasmedgeResultToString(const WasmEdge_Result& result) {
+std::string WasmEdgeEngine::wasmedgeResultToString([[maybe_unused]] const WasmEdge_Result& result) {
     // In production, use WasmEdge_ResultGetMessage(result)
     return "WasmEdge result (simulated)";
 }

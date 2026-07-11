@@ -5,7 +5,7 @@ namespace core {
 namespace anchoring {
 
 ailee::protocol::AmbientAIAnchoringEpoch WnnAnchoringIntegration::anchor_wave_state(
-    const ailee::wnn::WaveStateCommitment& stateCommitment,
+    [[maybe_unused]] const ailee::wnn::WaveStateCommitment& stateCommitment,
     const ailee::consensus::AmbientL2Merkleizer& merkleizer,
     uint64_t epochId,
     uint64_t startHeight,
