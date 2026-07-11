@@ -238,8 +238,6 @@ IslaEpochResult IslaRuntimeOrchestrator::run_epoch(const EpochIntegrationBundle&
     return final_result;
 }
 
-} // namespace ailee::l6
-namespace ailee::l6 {
 void IslaRuntimeOrchestrator::check_heartbeat_drift(const ClockSnapshot& clock_state, uint64_t expected_tick_duration) {
     if (last_heartbeat_timestamp_ != 0) {
         uint64_t interval = clock_state.timestamp > last_heartbeat_timestamp_ ?
@@ -266,4 +264,5 @@ void IslaRuntimeOrchestrator::check_heartbeat_drift(const ClockSnapshot& clock_s
     }
     last_heartbeat_timestamp_ = clock_state.timestamp;
 }
+
 } // namespace ailee::l6

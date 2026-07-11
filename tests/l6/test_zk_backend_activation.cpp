@@ -9,25 +9,25 @@
 using namespace ailee::l6;
 
 TEST(ZKBackendActivationTest, FactoryCreatesMockBackend) {
-    ZKBackendConfig config{ZKBackendType::MOCK, "test_circuit"};
+    ZKBackendConfig config{ZKBackendType::MOCK, "test_circuit", "", "", ""};
     auto backend = make_backend(config);
     EXPECT_NE(dynamic_cast<ZKMockBackend*>(backend.get()), nullptr);
 }
 
 TEST(ZKBackendActivationTest, FactoryCreatesHalo2Backend) {
-    ZKBackendConfig config{ZKBackendType::HALO2_NATIVE, "test_circuit"};
+    ZKBackendConfig config{ZKBackendType::HALO2_NATIVE, "test_circuit", "", "", ""};
     auto backend = make_backend(config);
     EXPECT_NE(dynamic_cast<Halo2Backend*>(backend.get()), nullptr);
 }
 
 TEST(ZKBackendActivationTest, FactoryCreatesPlonkBackend) {
-    ZKBackendConfig config{ZKBackendType::PLONK_NATIVE, "test_circuit"};
+    ZKBackendConfig config{ZKBackendType::PLONK_NATIVE, "test_circuit", "", "", ""};
     auto backend = make_backend(config);
     EXPECT_NE(dynamic_cast<PlonkBackend*>(backend.get()), nullptr);
 }
 
 TEST(ZKBackendActivationTest, Halo2BackendIsDeterministic) {
-    ZKBackendConfig config{ZKBackendType::HALO2_NATIVE, "test_circuit"};
+    ZKBackendConfig config{ZKBackendType::HALO2_NATIVE, "test_circuit", "", "", ""};
     Halo2Backend backend;
     ZKConstraintSet constraints{"constraint_1", 100};
     ZKTranscript transcript{"transcript_1", 10};
@@ -44,7 +44,7 @@ TEST(ZKBackendActivationTest, Halo2BackendIsDeterministic) {
 }
 
 TEST(ZKBackendActivationTest, PlonkBackendIsDeterministic) {
-    ZKBackendConfig config{ZKBackendType::PLONK_NATIVE, "test_circuit"};
+    ZKBackendConfig config{ZKBackendType::PLONK_NATIVE, "test_circuit", "", "", ""};
     PlonkBackend backend;
     ZKConstraintSet constraints{"constraint_1", 100};
     ZKTranscript transcript{"transcript_1", 10};

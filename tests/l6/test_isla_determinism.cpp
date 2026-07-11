@@ -14,15 +14,15 @@ public:
 
 class DeterministicSchedulerStub : public EpochScheduler {
 public:
-    SchedulerDecision get_decision(uint64_t epoch_id) const override {
+    SchedulerDecision get_decision([[maybe_unused]] uint64_t epoch_id) const override {
         return {AnchorDecision::ANCHOR, ProofDecision::ATTACH_PROOF};
     }
 };
 
 class ReplayStub : public IReplayBuffer {
 public:
-    void record_epoch(const EpochIntegrationBundle& bundle, const IslaEpochResult& result) override {}
-        std::vector<EpochIntegrationBundle> get_epoch_history() const override { return {}; }
+    void record_epoch([[maybe_unused]] const EpochIntegrationBundle& bundle, [[maybe_unused]] const IslaEpochResult& result) override {}
+    std::vector<EpochIntegrationBundle> get_epoch_history() const override { return {}; }
     void remove_oldest() override {}
     size_t size() const override { return 0; }
     size_t max_size() const override { return 1000; }
@@ -44,11 +44,10 @@ TEST(IslaDeterminism, SameBundleProducesSameResult) {
     ZKTranscript transcript{"transcript_1", 10};
 
     EpochIntegrationBundle bundle{};
-    bundle.sequence_id = 1;
     bundle.epoch_id = 42;
-    bundle.clock_snapshot = {1000, 1600000000, "0000000000000000000000000000000000000000000000000000000000000000", "mock"};
     bundle.state_root_hash = "deadbeef1234567890abcdef1234567890abcdef1234567890abcdef12345678"; // 64 chars
     bundle.anchor_input.internal_key.fill(1);
+    bundle.clock_snapshot = {1000, 1600000000, "0000000000000000000000000000000000000000000000000000000000000000", "mock"};
     bundle.anchor_input.prev_txid.fill(2);
     bundle.anchor_input.prev_vout = 0;
     bundle.anchor_input.value_sats = 10000;

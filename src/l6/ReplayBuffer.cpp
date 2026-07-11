@@ -68,7 +68,6 @@ std::vector<EpochIntegrationBundle> ReplayBuffer::get_epoch_history() const {
         std::string value = it->value().ToString();
 
         Json::Value root;
-    root["sequence_id"] = static_cast<Json::UInt64>(bundle.sequence_id);
         Json::Reader reader;
         if (reader.parse(value, root)) {
             EpochIntegrationBundle bundle;
