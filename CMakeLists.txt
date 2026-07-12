@@ -759,20 +759,20 @@ option(BUILD_TESTS "Build unit tests" OFF)
 if(BUILD_TESTS)
     find_package(GTest QUIET)
     if(NOT GTest_FOUND)
-        add_library(GTest::gtest STATIC
-            tests/GTest::gtest/GTest::gtest.cpp
+        add_library(minigtest STATIC
+            tests/minigtest/minigtest.cpp
         )
-        target_include_directories(GTest::gtest PUBLIC
-            ${CMAKE_CURRENT_SOURCE_DIR}/tests/GTest::gtest
+        target_include_directories(minigtest PUBLIC
+            ${CMAKE_CURRENT_SOURCE_DIR}/tests/minigtest
         )
 
-        add_library(GTest::gtest_main GTest::gtest STATIC
-            tests/GTest::gtest/GTest::gtest_main GTest::gtest.cpp
+        add_library(minigtest_main STATIC
+            tests/minigtest/minigtest_main.cpp
         )
-        target_link_libraries(GTest::gtest_main GTest::gtest PUBLIC GTest::gtest)
+        target_link_libraries(minigtest_main PUBLIC minigtest)
 
-        add_library(GTest::gtest ALIAS GTest::gtest)
-        add_library(GTest::gtest_main ALIAS GTest::gtest_main GTest::gtest)
+        add_library(GTest::gtest ALIAS minigtest)
+        add_library(GTest::gtest_main ALIAS minigtest_main)
     endif()
     enable_testing()
 
@@ -781,7 +781,7 @@ if(BUILD_TESTS)
     )
     target_link_libraries(anchor_commit_tapleaf_tests
         ailee_adapters
-        GTest::gtest_main GTest::gtest
+        minigtest_main
         ${LIBS}
     )
 
@@ -841,7 +841,7 @@ if(BUILD_TESTS)
         ailee_adapters
         ailee_l5_compression
         GTest::gtest
-        GTest::gtest_main GTest::gtest
+        GTest::gtest_main
     )
     add_test(NAME AnchorMetadataTests COMMAND anchor_metadata_tests)
 
@@ -850,7 +850,7 @@ if(BUILD_TESTS)
         ailee_adapters
         ailee_l5_compression
         GTest::gtest
-        GTest::gtest_main GTest::gtest
+        GTest::gtest_main
     )
     
     add_test(NAME AdapterTests COMMAND ailee_tests)
@@ -865,14 +865,14 @@ if(BUILD_TESTS)
         )
         
         target_include_directories(reorg_detector_tests PRIVATE
-            ${CMAKE_CURRENT_SOURCE_DIR}/tests/GTest::gtest
+            ${CMAKE_CURRENT_SOURCE_DIR}/tests/minigtest
         )
         
         target_link_libraries(reorg_detector_tests
             PRIVATE
             ${ROCKSDB_LINK_LIBS}
             GTest::gtest
-            GTest::gtest_main GTest::gtest
+            GTest::gtest_main
         )
         
         target_compile_definitions(reorg_detector_tests PRIVATE AILEE_HAS_ROCKSDB=1)
@@ -886,7 +886,7 @@ if(BUILD_TESTS)
             PRIVATE
             ailee_adapters
             GTest::gtest
-            GTest::gtest_main GTest::gtest
+            GTest::gtest_main
         )
         add_test(NAME PolicyTests COMMAND policy_tests)
     endif()
@@ -976,22 +976,22 @@ if(NOT AILEE_USE_RUST_PROVER)
     target_include_directories(ailee_rust_ffi_fallback PUBLIC include)
 endif()
 add_executable(bitcoin_clock_tests tests/l6/test_bitcoin_clock.cpp src/l6/BitcoinClock.cpp)
-target_link_libraries(bitcoin_clock_tests PRIVATE ailee_adapters GTest::gtest_main GTest::gtest curl jsoncpp)
+target_link_libraries(bitcoin_clock_tests PRIVATE ailee_adapters minigtest_main curl jsoncpp)
 add_test(NAME BitcoinClockTests COMMAND bitcoin_clock_tests)
 add_executable(replay_buffer_tests tests/l6/test_replay_buffer.cpp src/l6/ReplayBuffer.cpp)
-target_link_libraries(replay_buffer_tests PRIVATE ailee_adapters GTest::gtest_main GTest::gtest jsoncpp ${ROCKSDB_LINK_LIBS})
+target_link_libraries(replay_buffer_tests PRIVATE ailee_adapters minigtest_main jsoncpp ${ROCKSDB_LINK_LIBS})
 add_test(NAME ReplayBufferTests COMMAND replay_buffer_tests)
 add_executable(mesh_coherence_engine_tests tests/l6/test_mesh_coherence_engine.cpp src/l6/MeshCoherenceEngine.cpp src/l6/auditor/TemporalAuditor.cpp)
-target_link_libraries(mesh_coherence_engine_tests PRIVATE ailee_adapters GTest::gtest_main GTest::gtest jsoncpp ${ROCKSDB_LINK_LIBS})
+target_link_libraries(mesh_coherence_engine_tests PRIVATE ailee_adapters minigtest_main jsoncpp ${ROCKSDB_LINK_LIBS})
 add_test(NAME MeshCoherenceEngineTests COMMAND mesh_coherence_engine_tests)
 add_executable(policy_engine_tests tests/l6/test_policy_engine.cpp src/policy/PolicyEngine.cpp src/l6/MeshCoherenceEngine.cpp src/l6/auditor/TemporalAuditor.cpp src/MeshCoherence.cpp)
-target_link_libraries(policy_engine_tests PRIVATE ailee_adapters GTest::gtest_main GTest::gtest jsoncpp ${ROCKSDB_LINK_LIBS})
+target_link_libraries(policy_engine_tests PRIVATE ailee_adapters minigtest_main jsoncpp ${ROCKSDB_LINK_LIBS})
 add_test(NAME PolicyEngineTests COMMAND policy_engine_tests)
 
 
 if(BUILD_TESTS)
     add_executable(v28_hice_tests tests/l6/test_v28_hice_integration.cpp src/simulation/validation/hice_contracts.cpp ${AILEE_CORE_SOURCES})
     target_include_directories(v28_hice_tests PRIVATE include)
-    target_link_libraries(v28_hice_tests GTest::gtest_main GTest::gtest OpenSSL::Crypto secp256k1 rocksdb ailee_adapters ailee_l5_compression)
+    target_link_libraries(v28_hice_tests GTest::gtest_main OpenSSL::Crypto secp256k1 rocksdb ailee_adapters ailee_l5_compression)
     add_test(NAME V28HiceTests COMMAND v28_hice_tests)
 endif()
