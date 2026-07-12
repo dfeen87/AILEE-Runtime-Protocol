@@ -58,6 +58,16 @@ TEST(V27SimulationStress, MultiNodeDeterministicReplay) {
         bundle.fee_sats = 500;
         bundle.constraints = &constraints;
         bundle.transcript = &transcript;
+        bundle.hice_metrics = {
+            0.5e-6, // covariance_error
+            0.5e-3, // spectral_drift
+            -0.01,  // delta_memory
+            0.005,  // context_leakage
+            0.98,   // null_matching_rate
+            0.05,   // delta_auc
+            0.04,   // ci_lower_bound
+            0.05    // ci_point_estimate
+        };
 
         for (int i = 0; i < NODE_COUNT; ++i) {
             final_results[i] = nodes[i]->run_epoch(bundle);

@@ -63,6 +63,12 @@ public:
     std::string compute_utxo_reflection_hash() const;
     double get_delta_auc() const { return delta_auc; }
     double get_spectral_drift() const { return spectral_drift; }
+    double get_covariance_error() const { return covariance_error; }
+    double get_delta_memory() const { return delta_memory; }
+    double get_context_leakage() const { return context_leakage; }
+    double get_null_matching_rate() const { return null_matching_rate; }
+    double get_ci_lower_bound() const { return ci_lower_bound; }
+    double get_ci_point_estimate() const { return ci_point_estimate; }
     void simulate_sync_cycle_metrics();
 
 private:
@@ -74,6 +80,12 @@ private:
 
     double delta_auc = 0.0;
     double spectral_drift = 0.0;
+    double covariance_error = 0.0;
+    double delta_memory = 0.0;
+    double context_leakage = 0.0;
+    double null_matching_rate = 0.0;
+    double ci_lower_bound = 0.0;
+    double ci_point_estimate = 0.0;
     std::vector<double> historical_intervals;
 
     void update_clock();

@@ -987,3 +987,11 @@ add_test(NAME MeshCoherenceEngineTests COMMAND mesh_coherence_engine_tests)
 add_executable(policy_engine_tests tests/l6/test_policy_engine.cpp src/policy/PolicyEngine.cpp src/l6/MeshCoherenceEngine.cpp src/MeshCoherence.cpp)
 target_link_libraries(policy_engine_tests PRIVATE ailee_adapters minigtest_main jsoncpp ${ROCKSDB_LINK_LIBS})
 add_test(NAME PolicyEngineTests COMMAND policy_engine_tests)
+
+
+if(BUILD_TESTS)
+    add_executable(v28_hice_tests tests/l6/test_v28_hice_integration.cpp src/simulation/validation/hice_contracts.cpp ${AILEE_CORE_SOURCES})
+    target_include_directories(v28_hice_tests PRIVATE include)
+    target_link_libraries(v28_hice_tests GTest::gtest_main OpenSSL::Crypto secp256k1 rocksdb ailee_adapters ailee_l5_compression)
+    add_test(NAME V28HiceTests COMMAND v28_hice_tests)
+endif()
