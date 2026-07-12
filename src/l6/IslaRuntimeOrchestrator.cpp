@@ -10,11 +10,21 @@
 #include "simulation/validation/hice_contracts.h"
 #include <stdexcept>
 #include <cstring>
+#include <openssl/sha.h>
 
 namespace ailee::l6 {
 
 IslaRuntimeOrchestrator::IslaRuntimeOrchestrator(const RuntimeEnvironment& env)
-    : env_(env), active_config_({ZKBackendType::MOCK, "", "", "", ""}) {}
+    : env_(env), backend_(nullptr), active_config_({ZKBackendType::MOCK, "", "", "", ""}), clock_(nullptr), scheduler_(nullptr), replay_(nullptr), mesh_(nullptr), policy_(nullptr) {
+
+    // Initialize V29 Temporal Auditor components
+    temporal_buffer_ = std::make_unique<auditor::TemporalMetricsBuffer>(10); // rolling window of 10
+
+    // Default max drifts (could be loaded from config)
+    double max_drift = env_.is_ci ? 1.0 : 5.0;
+    double max_anchor_drift = env_.is_ci ? 1.0 : 10.0;
+    temporal_auditor_ = std::make_unique<auditor::TemporalAuditor>(max_drift, max_anchor_drift);
+}
 
 void IslaRuntimeOrchestrator::attach_backend(const ZKBackendConfig& config) {
     if (!semantics::BackendActivationSemantics::is_backend_allowed(env_.get_environment_type(), config.type)) {
@@ -194,16 +204,47 @@ IslaEpochResult IslaRuntimeOrchestrator::run_epoch(const EpochIntegrationBundle&
         bundle.state_root_hash
     );
 
-    // 7. AnchorCommit Pipeline Consolidation using V27 CanonicalMetadata
+    // Convert state_root_hash (hex string) to array<uint8_t, 32>
+    std::array<uint8_t, 32> anchor_root = {0};
+    if (bundle.state_root_hash.length() == 64) {
+        for (size_t i = 0; i < 32; ++i) {
+            std::string byteString = bundle.state_root_hash.substr(2 * i, 2);
+            anchor_root[i] = static_cast<uint8_t>(strtol(byteString.c_str(), nullptr, 16));
+        }
+    } else {
+        size_t len = std::min(bundle.state_root_hash.size(), size_t(32));
+        std::memcpy(anchor_root.data(), bundle.state_root_hash.data(), len);
+    }
+
+    // Convert anchor payload hash to 32 bytes for the anchor element
+    std::array<uint8_t, 32> anchor_payload_hash = {0};
+    std::vector<uint8_t> anchor_bytes = final_result.zk_result.anchor_payload.to_bytes();
+    SHA256(anchor_bytes.data(), anchor_bytes.size(), anchor_payload_hash.data());
+
+    // Evaluate Temporal V29 Auditing Surface
+    auditor::TemporalEpochState temporal_state;
+    temporal_state.epoch_id = bundle.epoch_id;
+    temporal_state.metrics = bundle.hice_metrics;
+    temporal_state.anchor_element = anchor_payload_hash; // using anchor payload hash as anchor element
+    temporal_state.replay_element = anchor_root; // using state_root as replay element
+
+    auditor::ZkEpochValiditySurface validity_surface;
+    if (temporal_auditor_ && temporal_buffer_) {
+        validity_surface = temporal_auditor_->evaluate(*temporal_buffer_, temporal_state);
+        // Push current state for next epoch's evaluation
+        temporal_buffer_->push_state(temporal_state);
+    }
+
+    // 7. AnchorCommit Pipeline Consolidation using V27/V29 CanonicalMetadata
     if (final_result.zk_result.should_anchor) {
 
-        semantics::CanonicalMetadata meta = semantics::encode_metadata(bundle, final_result, coherence_score, policy_state.metadata_version);
+        semantics::CanonicalMetadata meta = semantics::encode_metadata_v29(
+            bundle, final_result, coherence_score, policy_state.metadata_version, validity_surface
+        );
         meta.backend_type = active_config_.type;
 
         final_result.metadata_hash = semantics::hash_canonical_metadata(meta);
 
-        // Convert state_root_hash (hex string) to array<uint8_t, 32>
-        std::array<uint8_t, 32> anchor_root = {0};
         if (bundle.state_root_hash.length() == 64) {
             for (size_t i = 0; i < 32; ++i) {
                 std::string byteString = bundle.state_root_hash.substr(2 * i, 2);

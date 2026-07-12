@@ -27,6 +27,8 @@ namespace ailee::l6 {
 class MeshCoherenceEngine;
 }
 #include "policy/PolicyEngine.h"
+#include "l6/auditor/TemporalAuditor.h"
+
 namespace ailee::l6 {
 
 struct ClockSnapshot {
@@ -121,6 +123,9 @@ private:
     std::unique_ptr<IReplayBuffer> replay_;
     std::unique_ptr<MeshCoherenceEngine> mesh_;
     std::unique_ptr<ailee::policy::PolicyEngine> policy_;
+
+    std::unique_ptr<auditor::TemporalMetricsBuffer> temporal_buffer_;
+    std::unique_ptr<auditor::TemporalAuditor> temporal_auditor_;
 
     std::vector<uint64_t> recent_heartbeat_intervals_;
     uint64_t last_heartbeat_timestamp_ = 0;
