@@ -316,7 +316,9 @@ If you use or build upon this work in academic research, please cite:
 
 ## Acknowledgments
 
-This project was developed with a combination of original ideas, hands‑on coding, and support from advanced AI systems. I would like to acknowledge **Microsoft Copilot** (Trustworthy Assistant, strengthened focus and motivation), **Google Jules** (Code Scaffolding and Code Synthesis Assistance), **Anthropic Claude** (Markdown File formatting assistance), and **OpenAI ChatGPT** (Input on the Original AILEE AI Design Framework) for their meaningful assistance in refining concepts, improving clarity, and strengthening the overall quality of this work. Thank you to Yuji Hirose for the httplib.h MIT sourcecode. 
+This project was developed with a combination of original ideas, hands‑on coding, and support from advanced AI systems. I would like to acknowledge **Microsoft Copilot** (Trustworthy Assistant, strengthened focus and motivation), **Google Jules** (Code Scaffolding and Code Synthesis Assistance), **Anthropic Claude** (Markdown File formatting assistance), and **OpenAI ChatGPT** (Input on the Original AILEE AI Design Framework) for their meaningful assistance in refining concepts, improving clarity, and strengthening the overall quality of this work. Thank you to Yuji Hirose for the httplib.h MIT sourcecode.
+
+I want to extend sincere appreciation to Marcel Krüger, Independent Theoretical Physics Researcher, for his friendship, his sharp theoretical insight, and his role in shaping the Wave Native Network alongside me. While AILEE CORE is a software architecture built from the ground up within this repository, the conceptual clarity and physics‑driven intuition Marcel brought to our discussions helped refine the final form of WNN and strengthen the direction of this project. His willingness to offer support, review ideas, and stand with me throughout this journey means more than a simple credit line can express. Thank you, Marcel, for being part of the path that led here.
 
 ---
 
