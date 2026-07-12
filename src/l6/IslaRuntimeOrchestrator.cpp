@@ -122,6 +122,17 @@ IslaEpochResult IslaRuntimeOrchestrator::run_epoch(const EpochIntegrationBundle&
         }
     }
 
+    // Evaluate HICE contracts based on V28 metrics
+    auto hice_result = ailee::simulation::validation::HiceValidator::evaluate_hice_contracts(
+        bundle.hice_metrics,
+        env_.get_hice_thresholds(),
+        env_.get_practical_margin()
+    );
+
+    if (!hice_result.all_ok()) {
+        throw DeterministicError("HICE contract validation failed – see result flags and metrics");
+    }
+
     // 2. read scheduler decision
     SchedulerDecision sched_dec = bundle.scheduler_decision;
     if (scheduler_) {

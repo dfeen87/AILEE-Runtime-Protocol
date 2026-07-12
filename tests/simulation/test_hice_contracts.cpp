@@ -64,3 +64,27 @@ TEST(HiceContractsTest, FailsOnNullMatchingRate) {
     EXPECT_FALSE(result.hice6_ok);
     EXPECT_FALSE(result.all_ok());
 }
+
+TEST(HiceContractsTest, FailsOnSpectralDrift) {
+    HiceMetrics metrics = { 0.5e-6, 2e-3, -0.02, 0.005, 0.98, 0.04, 0.035, 0.04 };
+    HiceResult result = HiceValidator::evaluate_hice_contracts(metrics, HiceThresholds::v27_defaults(), 0.02);
+
+    EXPECT_FALSE(result.hice3_ok);
+    EXPECT_FALSE(result.all_ok());
+}
+
+TEST(HiceContractsTest, FailsOnContextLeakage) {
+    HiceMetrics metrics = { 0.5e-6, 0.5e-3, -0.02, 0.02, 0.98, 0.04, 0.035, 0.04 };
+    HiceResult result = HiceValidator::evaluate_hice_contracts(metrics, HiceThresholds::v27_defaults(), 0.02);
+
+    EXPECT_FALSE(result.hice5_ok);
+    EXPECT_FALSE(result.all_ok());
+}
+
+TEST(HiceContractsTest, FailsOnDeltaAuc) {
+    HiceMetrics metrics = { 0.5e-6, 0.5e-3, -0.02, 0.005, 0.98, 0.02, 0.035, 0.04 };
+    HiceResult result = HiceValidator::evaluate_hice_contracts(metrics, HiceThresholds::v27_defaults(), 0.02);
+
+    EXPECT_FALSE(result.hice7_ok);
+    EXPECT_FALSE(result.all_ok());
+}

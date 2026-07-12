@@ -13,6 +13,7 @@
 #include "l6/DeterministicEpochAnchoring.h"
 #include "l6/ZKBackendFactory.h"
 #include "l6/Exceptions.h"
+#include "simulation/validation/hice_contracts.h"
 
 // Note: AnchorCommit classes are in namespace ailee::anchor
 #include "anchor/AnchorCommitTxBuilder.h"
@@ -57,6 +58,9 @@ struct EpochIntegrationBundle {
     // For orchestrate_epoch ZK integration:
     const ZKConstraintSet* constraints = nullptr;
     const ZKTranscript* transcript = nullptr;
+
+    // HICE Validation Metrics (V28)
+    ailee::simulation::validation::HiceMetrics hice_metrics = {};
 };
 
 struct IslaEpochResult {

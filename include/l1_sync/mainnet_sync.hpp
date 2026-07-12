@@ -8,6 +8,7 @@
 #include <string>
 #include "l1_sync/sync_events.hpp"
 #include "l1_sync/bitcoin_clock.hpp"
+#include "simulation/validation/hice_contracts.h"
 
 namespace ailee {
 namespace l1_sync {
@@ -65,6 +66,8 @@ public:
     double get_spectral_drift() const { return spectral_drift; }
     void simulate_sync_cycle_metrics();
 
+    ailee::simulation::validation::HiceMetrics get_hice_metrics() const;
+
 private:
     size_t max_buffer_size;
     std::deque<BlockHeader> header_buffer;
@@ -74,6 +77,15 @@ private:
 
     double delta_auc = 0.0;
     double spectral_drift = 0.0;
+
+    // V28 HICE Placeholder Metrics
+    double covariance_error = 0.0;
+    double delta_memory = 0.0;
+    double context_leakage = 0.0;
+    double null_matching_rate = 1.0;
+    double ci_lower_bound = 0.04;
+    double ci_point_estimate = 0.05;
+
     std::vector<double> historical_intervals;
 
     void update_clock();

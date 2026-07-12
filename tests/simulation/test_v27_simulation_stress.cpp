@@ -58,6 +58,7 @@ TEST(V27SimulationStress, MultiNodeDeterministicReplay) {
         bundle.fee_sats = 500;
         bundle.constraints = &constraints;
         bundle.transcript = &transcript;
+        bundle.hice_metrics.covariance_error = 0.5e-6; bundle.hice_metrics.spectral_drift = 0.0; bundle.hice_metrics.delta_memory = -0.01; bundle.hice_metrics.context_leakage = 0.001; bundle.hice_metrics.null_matching_rate = 0.99; bundle.hice_metrics.delta_auc = 0.05; bundle.hice_metrics.ci_lower_bound = 0.04; bundle.hice_metrics.ci_point_estimate = 0.05;
 
         for (int i = 0; i < NODE_COUNT; ++i) {
             final_results[i] = nodes[i]->run_epoch(bundle);
@@ -116,4 +117,28 @@ TEST(V27SimulationStress, HighFrequencyPassiveSyncAndHICE) {
     HiceResult result = HiceValidator::evaluate_hice_contracts(metrics, thresholds, practical_margin);
 
     EXPECT_TRUE(result.all_ok());
+}
+
+TEST(V27SimulationStress, RunEpochThrowsOnHiceFailure) {
+    RuntimeEnvironment env;
+    env.is_ci = true;
+    IslaRuntimeOrchestrator isla(env);
+
+    ZKBackendConfig mock_config{ZKBackendType::MOCK, "stress_circuit", "", "", ""};
+    isla.attach_backend(mock_config);
+
+    ZKConstraintSet constraints{"mock_constraints", 100};
+    ZKTranscript transcript{"mock_transcript", 10};
+
+    EpochIntegrationBundle bundle{};
+    bundle.epoch_id = 1;
+    bundle.state_root_hash = "deadbeef1234567890abcdef1234567890abcdef1234567890abcdef12345678";
+    bundle.clock_snapshot = {static_cast<uint64_t>(5000), 1600000000, "0000000000000000000000000000000000000000000000000000000000000000", "mock"};
+    bundle.constraints = &constraints;
+    bundle.transcript = &transcript;
+
+    // Set a failing metric
+    bundle.hice_metrics.covariance_error = 2e-6; // Fails HICE2
+
+    EXPECT_THROW(isla.run_epoch(bundle), DeterministicError);
 }

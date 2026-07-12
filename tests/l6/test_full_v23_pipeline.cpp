@@ -28,6 +28,7 @@ protected:
         bundle.proof_plan = ctx.proof_plan;
         bundle.constraints = c;
         bundle.transcript = t;
+        bundle.hice_metrics.covariance_error = 0.5e-6; bundle.hice_metrics.spectral_drift = 0.0; bundle.hice_metrics.delta_memory = -0.01; bundle.hice_metrics.context_leakage = 0.001; bundle.hice_metrics.null_matching_rate = 0.99; bundle.hice_metrics.delta_auc = 0.05; bundle.hice_metrics.ci_lower_bound = 0.04; bundle.hice_metrics.ci_point_estimate = 0.05;
         bundle.fee_sats = 1000;
 
         if (b) {

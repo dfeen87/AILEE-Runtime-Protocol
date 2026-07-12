@@ -200,6 +200,28 @@ void ailee::l1_sync::MainnetSyncManager::simulate_sync_cycle_metrics() {
     } else {
         spectral_drift = 0.0;
     }
+
+    // TODO(V29): replace with real HICE metric computation
+    covariance_error = 0.5e-6; // Deterministic placeholder
+    delta_memory = -0.01;      // Deterministic placeholder
+    context_leakage = 0.001;   // Deterministic placeholder
+    null_matching_rate = 0.99; // Deterministic placeholder
+    ci_lower_bound = 0.04;     // Deterministic placeholder
+    ci_point_estimate = 0.05;  // Deterministic placeholder
 }
+
+ailee::simulation::validation::HiceMetrics MainnetSyncManager::get_hice_metrics() const {
+    ailee::simulation::validation::HiceMetrics metrics;
+    metrics.covariance_error = covariance_error;
+    metrics.spectral_drift = spectral_drift;
+    metrics.delta_memory = delta_memory;
+    metrics.context_leakage = context_leakage;
+    metrics.null_matching_rate = null_matching_rate;
+    metrics.delta_auc = delta_auc;
+    metrics.ci_lower_bound = ci_lower_bound;
+    metrics.ci_point_estimate = ci_point_estimate;
+    return metrics;
+}
+
 } // namespace l1_sync
 } // namespace ailee
