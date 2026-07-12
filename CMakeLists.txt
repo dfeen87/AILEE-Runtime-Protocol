@@ -666,7 +666,7 @@ add_library(ailee_adapters STATIC
     src/l6/AnchorZKMetadata.cpp
     src/l6/ZKOrchestrationManager.cpp
     src/l6/IslaRuntimeOrchestrator.cpp
-    src/l6/MeshCoherenceEngine.cpp src/l6/auditor/TemporalAuditor.cpp
+    src/l6/MeshCoherenceEngine.cpp src/l6/auditor/TemporalAuditor.cpp src/l6/erl/TemporalEnergyCoordinator.cpp
     src/l6/ZKMetadata.cpp
     src/l6/ZKDeterministicValidator.cpp
     src/l6/ZKProvingBackend.cpp

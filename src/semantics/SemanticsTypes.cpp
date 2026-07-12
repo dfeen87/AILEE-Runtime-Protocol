@@ -11,6 +11,16 @@ PolicyState load_policy(const Config& config) {
     state.epoch_length = config.epoch_length;
     state.environment_type = config.environment_type;
     state.metadata_version = config.metadata_version;
+
+    state.alpha_drift = config.alpha_drift;
+    state.alpha_spectral = config.alpha_spectral;
+    state.alpha_memory = config.alpha_memory;
+    state.max_energy_drift = config.max_energy_drift;
+    state.base_cost_factor = config.base_cost_factor;
+    state.max_energy_anchor_drift = config.max_energy_anchor_drift;
+    state.energy_predictive_threshold = config.energy_predictive_threshold;
+    state.energy_stability_margin = config.energy_stability_margin;
+
     return state;
 }
 

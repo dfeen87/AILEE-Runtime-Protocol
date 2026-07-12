@@ -25,6 +25,13 @@ CanonicalMetadata encode_metadata_v29(const l6::EpochIntegrationBundle& bundle, 
     return meta;
 }
 
+CanonicalMetadata encode_metadata_v30(const l6::EpochIntegrationBundle& bundle, const l6::IslaEpochResult& result, double coherence_score, uint32_t protocol_version, const l6::auditor::ZkEpochValiditySurface& validity_surface, const EnergyResilienceSurface& energy_surface) {
+    CanonicalMetadata meta = encode_metadata_v29(bundle, result, coherence_score, protocol_version, validity_surface);
+    meta.has_energy_resilience_surface = true;
+    meta.energy_resilience_surface = energy_surface;
+    return meta;
+}
+
 std::array<uint8_t, 32> hash_canonical_metadata(const CanonicalMetadata& metadata) {
     // Deterministic serialization without floats
     std::stringstream ss;
@@ -43,6 +50,17 @@ std::array<uint8_t, 32> hash_canonical_metadata(const CanonicalMetadata& metadat
         uint64_t anchor_coh = static_cast<uint64_t>(metadata.validity_surface.anchor.anchor_coherence * 1000000.0);
 
         ss << "|" << drift << "|" << stability << "|" << anchor_coh;
+    }
+
+    if (metadata.has_energy_resilience_surface) {
+        // Encode a deterministic representation of the energy surface
+        int64_t e_drift = static_cast<int64_t>(metadata.energy_resilience_surface.energy_drift * 1000000.0);
+        uint64_t e_stability = static_cast<uint64_t>(metadata.energy_resilience_surface.energy_stability * 1000000.0);
+        uint64_t e_cost = static_cast<uint64_t>(metadata.energy_resilience_surface.energy_cost_of_drift * 1000000.0);
+        uint64_t e_anchor = static_cast<uint64_t>(metadata.energy_resilience_surface.energy_anchor_coherence * 1000000.0);
+        uint64_t e_predictive = static_cast<uint64_t>(metadata.energy_resilience_surface.energy_predictive_score * 1000000.0);
+
+        ss << "|" << e_drift << "|" << e_stability << "|" << e_cost << "|" << e_anchor << "|" << e_predictive;
     }
 
     std::string data = ss.str();
