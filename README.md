@@ -30,13 +30,14 @@
 
 ## 🎯 Overview
 
-**AILEE-Core** is a Bitcoin Layer-2 orchestration and verification framework. It leverages ambient AI for intelligent task scheduling and a recovery-first design to extend Bitcoin's capabilities without modifying its consensus rules.
+**AILEE‑Core** is a Bitcoin Layer‑2 orchestration and verification framework that provides deterministic off‑chain computation, state‑integrity validation, and federated learning coordination. It extends Bitcoin’s capabilities through a recovery‑first design and **ambient intelligence** that remains strictly advisory, ensuring temporal insight without altering Bitcoin’s consensus rules.  
+AILEE‑Core operates as a governed execution environment: the **Governor** establishes deterministic heartbeat, the **Auditor** enforces temporal coherence, the **Energy Resilience Layer** stabilizes runtime behavior, and **IAO** provides forward‑looking orchestration while preserving strict determinism.
 
 ---
 
 ## ⚠️ Protocol Status & Safety Notice
 
-AILEE Core has evolved into a **deterministic, reproducible Bitcoin L2 protocol** with verified execution paths, canonical state roots, and Wave Native Network integration.  
+AILEE‑Core has evolved into a **deterministic, reproducible Bitcoin Layer‑2 protocol** with verified execution paths, canonical state roots, and Wave Native Network integration.  
 Version 12 introduces:
 
 - deterministic execution  
@@ -47,18 +48,18 @@ Version 12 introduces:
 - full re‑execution path  
 - automated verification script  
 
-This establishes AILEE Core as a **verifiable protocol**, not a prototype.
+These guarantees establish AILEE‑Core as a **verifiable protocol**, not a prototype.
 
-All core components in this repository are **real implementations** — no stubs, mocks, or placeholder cryptographic primitives are used. The deterministic runtime, reproducibility package, and Wave Native Network integration are fully functional.
+All core components in this repository are **real implementations** — no stubs, mocks, or placeholder cryptographic primitives. The deterministic runtime, reproducibility package, and Wave Native Network integration operate as fully functional, verifiable subsystems.
 
-However, before mainnet fund custody, the following production‑grade hardening steps are still required:
+However, before mainnet fund custody, several production‑grade hardening steps remain:
 
 - ZK proof system must be upgraded to audited circuits (Halo2, PLONK, Groth16)  
-- Signature verification must undergo formal review  
-- Networking layers must be security‑audited  
+- Signature verification requires formal review  
+- Networking layers must undergo security auditing  
 - Third‑party audits are required for any production deployment  
 
-AILEE Core V12 is a **protocol‑grade deterministic release**, but **not yet a mainnet‑ready financial system**.
+AILEE‑Core V12 is a **protocol‑grade deterministic release**, but **not yet a mainnet‑ready financial system**.
 
 > “AILEE-CORE is not a prototype anymore — but we’re not a custodial mainnet system.”
 
