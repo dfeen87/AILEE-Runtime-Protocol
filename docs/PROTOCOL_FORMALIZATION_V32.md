@@ -76,3 +76,48 @@ The AILEE protocol has evolved through strict architectural shifts to arrive at 
 *   **V27 (Semantics & Structs):** Unified the state representation by moving configuration and state structures into the `ailee::semantics` namespace, replacing legacy constructs with canonical metadata structures.
 *   **V28 - V31 (Temporal Pipeline):** Sequentially introduced the Governor (V28), Auditor (V29), ERL (V30), and IAO (V31), creating a layered temporal architecture that scores multi-epoch coherence and drives intelligence-assisted orchestration.
 *   **V32 (Protocol Formalization):** The current standard. Consolidates all previous deterministic guarantees, architectural layers, and runtime behaviors into a formalized Bitcoin L2 protocol specification.
+
+## 8. Developer Tooling Suite
+
+The V32 Developer Tooling Suite provides deterministic utilities that enhance reproducibility, verification, and federation onboarding. These tools operate strictly externally to the core runtime, ensuring that the deterministic protocol behavior is preserved without side-effects or monkey patches. They follow standard practices seen in Lightning BOLTs and OP Stack.
+
+All tools are built using Python 3, require minimal dependencies, and produce deterministic JSON reports to `stdout` (with an optional `--out` flag for file storage).
+
+### 8.1. Deterministic Build Verifier (`tools/build_verifier.py`)
+Recomputes build hashes, receipt hashes, and validates the frozen genesis state against the canonical reproducibility artifacts (e.g., `v12_build_manifest.json`, `v12_receipt_manifest.json`, `v12_reexecution_manifest.json`).
+
+**Usage:**
+```bash
+python3 tools/build_verifier.py --dir . --out verification_report.json
+```
+
+### 8.2. Epoch Replay Inspector (`tools/epoch_inspector.py`)
+Replays deterministic transitions for specific epochs by invoking the core C++ orchestrator binary. It captures the resulting JSON state root and compares it bit-for-bit against expected canonical roots.
+
+**Usage:**
+```bash
+python3 tools/epoch_inspector.py --run-epoch 0 --manifest v12_receipt_manifest.json
+```
+
+### 8.3. State Root Comparison Tool (`tools/state_root_comparator.py`)
+A utility to detect non-deterministic drift across builds by comparing state roots. It supports two operational modes:
+*   **Mode A (File Comparison):** Compares two existing state root JSON files.
+*   **Mode B (On-The-Fly):** Invokes the orchestrator for a specific epoch and compares the dynamically generated state root to a canonical file.
+
+**Usage (Mode A):**
+```bash
+python3 tools/state_root_comparator.py --expected canonical_root.json --actual local_root.json
+```
+
+**Usage (Mode B):**
+```bash
+python3 tools/state_root_comparator.py --run-epoch 0 --compare-to canonical_root.json
+```
+
+### 8.4. Wave Network Integration Helper (`tools/wave_network_helper.py`)
+Validates Wave Native Network configuration files for federated deployments. It ensures network structure is sound by checking node properties, endpoint validity, and strictly enforcing that all node public keys are 32-byte (64 character) hex-encoded strings.
+
+**Usage:**
+```bash
+python3 tools/wave_network_helper.py --config wave_federation_config.json
+```
