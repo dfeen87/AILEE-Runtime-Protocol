@@ -7,6 +7,7 @@
 #include "semantics/AttachmentSemantics.h"
 #include "semantics/ReplaySemantics.h"
 #include "semantics/MetadataSemantics.h"
+#include "simulation/validation/hice_contracts.h"
 #include <stdexcept>
 #include <cstring>
 
@@ -138,6 +139,16 @@ IslaEpochResult IslaRuntimeOrchestrator::run_epoch(const EpochIntegrationBundle&
         local_snapshot.latest_l1_height = clock_state.height;
         local_snapshot.latest_l2_epoch = bundle.epoch_id;
         coherence_score = mesh_->get_normalized_coherence_score(local_snapshot);
+    }
+
+    // V28 HICE Validation Check (after coherence_score and clock drift updates)
+    auto thresholds = env_.load_hice_thresholds_from_config();
+    auto margin = env_.load_practical_margin_from_config();
+    auto hice_result = ailee::simulation::validation::HiceValidator::evaluate_hice_contracts(
+        bundle.hice_metrics, thresholds, margin
+    );
+    if (!hice_result.all_ok()) {
+        throw DeterministicBackendException("HICE contract validation failed - see result flags and metrics");
     }
 
     // V27 semantic override for anchor and proof decisions
