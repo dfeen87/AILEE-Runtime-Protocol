@@ -1,4 +1,4 @@
-# AILEE Protocol Core for Bitcoin: **Ambient AI + Bitcoin Layer-2 Orchestration Framework**
+# AILEE Protocol Core for Bitcoin: **Ambient AI + Wave Native Network. Bitcoin Layer-2 Orchestration Framework**
 
 *Building Intelligent, Verifiable, and Sustainable Bitcoin Infrastructure*
 
