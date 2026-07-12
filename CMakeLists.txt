@@ -666,7 +666,7 @@ add_library(ailee_adapters STATIC
     src/l6/AnchorZKMetadata.cpp
     src/l6/ZKOrchestrationManager.cpp
     src/l6/IslaRuntimeOrchestrator.cpp
-    src/l6/MeshCoherenceEngine.cpp
+    src/l6/MeshCoherenceEngine.cpp src/l6/auditor/TemporalAuditor.cpp
     src/l6/ZKMetadata.cpp
     src/l6/ZKDeterministicValidator.cpp
     src/l6/ZKProvingBackend.cpp
@@ -981,10 +981,10 @@ add_test(NAME BitcoinClockTests COMMAND bitcoin_clock_tests)
 add_executable(replay_buffer_tests tests/l6/test_replay_buffer.cpp src/l6/ReplayBuffer.cpp)
 target_link_libraries(replay_buffer_tests PRIVATE ailee_adapters minigtest_main jsoncpp ${ROCKSDB_LINK_LIBS})
 add_test(NAME ReplayBufferTests COMMAND replay_buffer_tests)
-add_executable(mesh_coherence_engine_tests tests/l6/test_mesh_coherence_engine.cpp src/l6/MeshCoherenceEngine.cpp)
+add_executable(mesh_coherence_engine_tests tests/l6/test_mesh_coherence_engine.cpp src/l6/MeshCoherenceEngine.cpp src/l6/auditor/TemporalAuditor.cpp)
 target_link_libraries(mesh_coherence_engine_tests PRIVATE ailee_adapters minigtest_main jsoncpp ${ROCKSDB_LINK_LIBS})
 add_test(NAME MeshCoherenceEngineTests COMMAND mesh_coherence_engine_tests)
-add_executable(policy_engine_tests tests/l6/test_policy_engine.cpp src/policy/PolicyEngine.cpp src/l6/MeshCoherenceEngine.cpp src/MeshCoherence.cpp)
+add_executable(policy_engine_tests tests/l6/test_policy_engine.cpp src/policy/PolicyEngine.cpp src/l6/MeshCoherenceEngine.cpp src/l6/auditor/TemporalAuditor.cpp src/MeshCoherence.cpp)
 target_link_libraries(policy_engine_tests PRIVATE ailee_adapters minigtest_main jsoncpp ${ROCKSDB_LINK_LIBS})
 add_test(NAME PolicyEngineTests COMMAND policy_engine_tests)
 
