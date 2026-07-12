@@ -245,6 +245,28 @@ ctest --verbose
 
 </div>
 
+### Temporal Architecture Components
+
+- **V28 Governor:** Provides deterministic parameter adjustment and protocol governance, computing absolute bounds from fixed baselines to prevent drift over multi-epoch cycles.
+- **V29 Auditor:** Ensures multi-epoch temporal coherence through strict, reproducible metric validations. It mathematically scores state transitions over rolling windows to enforce stability.
+- **V30 Energy Resilience Layer (ERL):** Manages Byzantine node resilience and resource allocation deterministically, penalizing unstable actors while ensuring protocol progression under adverse conditions.
+- **V31 Intelligence‑Assisted Orchestration (IAO):** Drives the high-level scheduling and execution of epochs, seamlessly integrating state transitions with deterministic ZK proofs and anchored commitments.
+
+### Orchestration Pipeline Overview
+
+The complete temporal architecture of AILEE‑Core functions as a cohesive pipeline (Governor → Auditor → ERL → IAO):
+1. **Governor:** Sets deterministic thresholds and bounds for the protocol.
+2. **Auditor:** Scrutinizes ongoing epochs against these bounds for temporal coherence and stability.
+3. **ERL:** Evaluates node participation and enforces energy-efficient, resilient execution constraints based on Auditor feedback.
+4. **IAO:** Orchestrates the final epoch execution, ensuring the transition yields a canonical state root ready for anchoring.
+
+### Design Principles
+
+- **Determinism:** Bit-for-bit reproducible execution across all architectures, stripping away local timing and scheduler ambiguity.
+- **Temporal Coherence:** Anchoring network actions to globally synchronized, phase-coherent boundaries rather than local wall-clock timers.
+- **Auditable Trust Assumptions:** Explicit, verifiable dependencies mapped to deterministic zero-knowledge proofs and cryptographic commitments.
+- **Forward‑Looking Orchestration:** Autonomous, deterministic parameter tuning that adapts to changing network states without losing historical lineage.
+
 ---
 
 ## 🔐 Security Model
@@ -333,6 +355,10 @@ The deterministic heartbeat loop operates as follows:
 - **Heartbeat → epoch execution:** The heartbeat triggers the epoch scheduler to deterministically advance the current epoch and schedule its execution.
 - **Epoch execution → new state root:** The deterministic runtime processes the epoch, computing a mathematically reproducible L2 state root.
 - **State root → Bitcoin anchoring:** The finalized state root is formatted as a verifiable anchor commitment, ready to be submitted to the Bitcoin L1.
+
+### Deterministic Execution & Bitcoin-Anchored Recovery
+
+The protocol is driven by a **governed heartbeat** that enforces strict **deterministic execution** at every step. This model guarantees that given the same frozen genesis state and sequence of wave-phase boundaries, any node will compute the exact same L2 state root, ensuring absolute **replay guarantees** across disparate environments. To secure this lineage, the runtime employs a **Bitcoin‑anchored recovery** strategy: each finalized state root is formatted as a verifiable Taproot or OP_RETURN commitment and settled to the Bitcoin L1. This establishes an immutable sequence of checkpoints, allowing trust-minimized, deterministic re-execution of the entire L2 state from genesis.
 
 ## Deterministic Guarantees Introduced in V13 (Heartbeat Release)
 
