@@ -666,7 +666,7 @@ add_library(ailee_adapters STATIC
     src/l6/AnchorZKMetadata.cpp
     src/l6/ZKOrchestrationManager.cpp
     src/l6/IslaRuntimeOrchestrator.cpp
-    src/l6/MeshCoherenceEngine.cpp src/l6/auditor/TemporalAuditor.cpp src/l6/erl/TemporalEnergyCoordinator.cpp
+    src/l6/MeshCoherenceEngine.cpp src/l6/auditor/TemporalAuditor.cpp src/l6/erl/TemporalEnergyCoordinator.cpp src/l6/iao/IntelligenceAssistedOrchestrator.cpp
     src/l6/ZKMetadata.cpp
     src/l6/ZKDeterministicValidator.cpp
     src/l6/ZKProvingBackend.cpp
@@ -994,4 +994,11 @@ if(BUILD_TESTS)
     target_include_directories(v28_hice_tests PRIVATE include)
     target_link_libraries(v28_hice_tests GTest::gtest_main OpenSSL::Crypto secp256k1 rocksdb ailee_adapters ailee_l5_compression)
     add_test(NAME V28HiceTests COMMAND v28_hice_tests)
+endif()
+
+if(BUILD_TESTING)
+    add_executable(test_iao tests/l6/iao/test_intelligence_assisted_orchestrator.cpp src/l6/iao/IntelligenceAssistedOrchestrator.cpp src/l6/auditor/TemporalAuditor.cpp)
+    target_include_directories(test_iao PRIVATE include)
+    target_link_libraries(test_iao PRIVATE gtest_main gtest pthread)
+    add_test(NAME IAOTest COMMAND test_iao)
 endif()

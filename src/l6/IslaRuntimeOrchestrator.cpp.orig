@@ -24,11 +24,6 @@ IslaRuntimeOrchestrator::IslaRuntimeOrchestrator(const RuntimeEnvironment& env)
     double max_drift = env_.is_ci ? 1.0 : 5.0;
     double max_anchor_drift = env_.is_ci ? 1.0 : 10.0;
     temporal_auditor_ = std::make_unique<auditor::TemporalAuditor>(max_drift, max_anchor_drift);
-
-    semantics::Config sem_config;
-    sem_config.environment_type = env_.get_environment_type();
-    energy_coordinator_ = std::make_unique<erl::TemporalEnergyCoordinator>(sem_config);
-    iao_ = std::make_unique<iao::IntelligenceAssistedOrchestrator>();
 }
 
 void IslaRuntimeOrchestrator::attach_backend(const ZKBackendConfig& config) {
@@ -237,17 +232,6 @@ IslaEpochResult IslaRuntimeOrchestrator::run_epoch(const EpochIntegrationBundle&
     if (temporal_auditor_ && temporal_buffer_) {
         validity_surface = temporal_auditor_->evaluate(*temporal_buffer_, temporal_state);
         // Push current state for next epoch's evaluation
-        erl::EnergyAdaptationDecision energy_decision;
-        if (energy_coordinator_) {
-            energy_decision = energy_coordinator_->evaluate(bundle.hice_metrics, validity_surface);
-        }
-        if (iao_) {
-            final_result.guidance_report = iao_->evaluate(
-                *temporal_buffer_,
-                validity_surface,
-                energy_decision
-            );
-        }
         temporal_buffer_->push_state(temporal_state);
     }
 

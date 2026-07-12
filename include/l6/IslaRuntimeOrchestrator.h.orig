@@ -28,7 +28,6 @@ class MeshCoherenceEngine;
 }
 #include "policy/PolicyEngine.h"
 #include "l6/auditor/TemporalAuditor.h"
-#include "l6/iao/IntelligenceAssistedOrchestrator.h"
 
 namespace ailee::l6 {
 
@@ -80,9 +79,6 @@ struct IslaEpochResult {
     ailee::anchor::AnchorCommitTx anchor_tx;
     ailee::anchor::AnchorCommitValidationResult validation;
     std::array<uint8_t, 32> metadata_hash;
-
-    // V31 IAO Report
-    iao::OrchestrationGuidanceReport guidance_report;
 };
 
 class IReplayBuffer {
@@ -130,8 +126,6 @@ private:
 
     std::unique_ptr<auditor::TemporalMetricsBuffer> temporal_buffer_;
     std::unique_ptr<auditor::TemporalAuditor> temporal_auditor_;
-    std::unique_ptr<erl::TemporalEnergyCoordinator> energy_coordinator_;
-    std::unique_ptr<iao::IntelligenceAssistedOrchestrator> iao_;
 
     std::vector<uint64_t> recent_heartbeat_intervals_;
     uint64_t last_heartbeat_timestamp_ = 0;
