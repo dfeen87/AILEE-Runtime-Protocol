@@ -65,27 +65,27 @@ std::string risk_band_to_string(ailee::RiskBand band) {
 }
 
 json risk_score_to_json(const ailee::RiskScore& score) {
-    return {
-        {"value", score.value},
-        {"band", risk_band_to_string(score.band)}
-    };
+    json j = json::object();
+    j["value"] = score.value;
+    j["band"] = risk_band_to_string(score.band);
+    return j;
 }
 
 json posture_report_to_json(const ailee::PostureReport& report) {
-    return {
-        {"risk", risk_score_to_json(report.risk)},
-        {"regime", report.regime},
-        {"summary", report.summary},
-        {"confidence", report.confidence}
-    };
+    json j = json::object();
+    j["risk"] = risk_score_to_json(report.risk);
+    j["regime"] = report.regime;
+    j["summary"] = report.summary;
+    j["confidence"] = report.confidence;
+    return j;
 }
 
 json advisory_to_json(const ailee::Advisory& adv) {
-    return {
-        {"posture", posture_report_to_json(adv.posture)},
-        {"recommended_action", adv.recommended_action},
-        {"action_approved", adv.action_approved}
-    };
+    json j = json::object();
+    j["posture"] = posture_report_to_json(adv.posture);
+    j["recommended_action"] = adv.recommended_action;
+    j["action_approved"] = adv.action_approved;
+    return j;
 }
 
 } // namespace
