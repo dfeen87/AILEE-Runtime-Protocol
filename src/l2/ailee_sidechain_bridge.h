@@ -220,12 +220,12 @@ public:
             {"signerId", data_.signerId},
             {"publicKey", data_.publicKey},
             {"btcAddress", data_.btcAddress},
-            {"stake", static_cast<uint64_t>(data_.stake)},
-            {"reputationScore", static_cast<uint64_t>(data_.reputationScore)},
-            {"signatureCount", static_cast<uint64_t>(data_.signatureCount)},
-            {"missedSignatures", static_cast<uint64_t>(data_.missedSignatures)},
-            {"active", data_.active},
-            {"joinedTime", static_cast<uint64_t>(data_.joinedTime)}
+            {"stake", nlohmann::json::number_unsigned_t(data_.stake)},
+            {"reputationScore", nlohmann::json::number_unsigned_t(data_.reputationScore)},
+            {"signatureCount", nlohmann::json::number_unsigned_t(data_.signatureCount)},
+            {"missedSignatures", nlohmann::json::number_unsigned_t(data_.missedSignatures)},
+            {"joinedTime", nlohmann::json::number_unsigned_t(data_.joinedTime)}
+
         };
     }
 
@@ -510,14 +510,14 @@ public:
             {"pegId", data_.pegId},
             {"aileeSourceAddress", data_.aileeSourceAddress},
             {"btcDestAddress", data_.btcDestAddress},
-            {"aileeBurnAmount", static_cast<uint64_t>(data_.aileeBurnAmount)},
-            {"btcReleaseAmount", static_cast<uint64_t>(data_.btcReleaseAmount)},
-            {"aileeBurnTxHeight", static_cast<uint64_t>(data_.aileeBurnTxHeight)},
-            {"aileeConfirmations", static_cast<uint64_t>(data_.aileeConfirmations)},
+            {"aileeBurnAmount", nlohmann::json::number_unsigned_t(data_.aileeBurnAmount)},
+            {"btcReleaseAmount", nlohmann::json::number_unsigned_t(data_.btcReleaseAmount)},
+            {"aileeBurnTxHeight", nlohmann::json::number_unsigned_t(data_.aileeBurnTxHeight)},
+            {"aileeConfirmations", nlohmann::json::number_unsigned_t(data_.aileeConfirmations)},
             {"btcReleaseTxId", data_.btcReleaseTxId},
             {"anchorCommitmentHash", data_.anchorCommitmentHash},
-            {"initiatedTime", static_cast<uint64_t>(data_.initiatedTime)},
-            {"completedTime", static_cast<uint64_t>(data_.completedTime)},
+            {"initiatedTime", nlohmann::json::number_unsigned_t(data_.initiatedTime)},
+            {"completedTime", nlohmann::json::number_unsigned_t(data_.completedTime)},
             {"status", static_cast<int>(data_.status)},
             {"signatures", sigs}
         };
