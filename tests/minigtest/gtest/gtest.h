@@ -198,6 +198,14 @@ inline void ExpectTrue(bool result,
     ::testing::detail::ExpectBinary((A) != (B), (A), (B), "!=", #A, #B,        \
                                     __FILE__, __LINE__, true)
 
+#define EXPECT_DOUBLE_EQ(A, B)                                                \
+    ::testing::detail::ExpectBinary(std::abs((A) - (B)) < 1e-9, (A), (B), "==", #A, #B, \
+                                    __FILE__, __LINE__, false)
+
+#define EXPECT_NEAR(A, B, C)                                                  \
+    ::testing::detail::ExpectBinary(std::abs((A) - (B)) <= (C), (A), (B), "NEAR", #A, #B, \
+                                    __FILE__, __LINE__, false)
+
 namespace testing {
 class Test {
 public:
@@ -211,14 +219,17 @@ public:
     class TEST_FIXTURE##_##TEST_NAME##_Test : public TEST_FIXTURE {           \
     public:                                                                   \
         void TestBody();                                                      \
+        void RunTest() {                                                      \
+            SetUp();                                                          \
+            try {                                                             \
+                TestBody();                                                   \
+            } catch(...) {}                                                   \
+            TearDown();                                                       \
+        }                                                                     \
     };                                                                        \
     static void TEST_FIXTURE##_##TEST_NAME##_Run() {                          \
         TEST_FIXTURE##_##TEST_NAME##_Test test;                               \
-        test.SetUp();                                                         \
-        try {                                                                 \
-            test.TestBody();                                                  \
-        } catch(...) {}                                                       \
-        test.TearDown();                                                      \
+        test.RunTest();                                                       \
     }                                                                         \
     namespace {                                                               \
         const bool TEST_FIXTURE##_##TEST_NAME##_registered = []() {           \
