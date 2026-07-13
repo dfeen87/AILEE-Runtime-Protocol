@@ -53,10 +53,6 @@ endif()
 # ============================================================================
 
 find_library(SECP256K1_LIB secp256k1 PATHS /opt/homebrew/lib)
-target_link_libraries(ailee_node PRIVATE ${SECP256K1_LIB})
-target_link_libraries(ailee_service PRIVATE ${SECP256K1_LIB})
-target_link_libraries(ailee_adapters PRIVATE ${SECP256K1_LIB})
-target_link_libraries(ailee_l2_verify PRIVATE ${SECP256K1_LIB})
 
 # 1. OpenSSL (Required for SHA256 in Recovery Protocol & Gold Bridge)
 find_package(OpenSSL REQUIRED)
@@ -542,7 +538,20 @@ add_custom_target(verify_build ALL
 
 add_executable(ailee_node ${CORE_SOURCES})
 add_dependencies(ailee_node generate_metadata_hpp)
-target_link_libraries(ailee_node PRIVATE ailee_adapters ailee_l5_compression)
+
+target_link_libraries(ailee_node
+    PRIVATE
+        ailee_adapters
+        ailee_l5_compression
+        OpenSSL::SSL
+        OpenSSL::Crypto
+        ${SECP256K1_LIB}
+        ${CURL_LIBRARIES}
+        jsoncpp_lib
+        ${ROCKSDB_LINK_LIBS}
+        Threads::Threads
+        $<IF:$<BOOL:${AILEE_USE_RUST_PROVER}>,ailee_rust_prover,ailee_rust_ffi_fallback>
+)
 
 # --- Layer-2 Service Executable ---
 add_executable(ailee_service
@@ -553,25 +562,15 @@ add_dependencies(ailee_service generate_metadata_hpp)
 
 target_link_libraries(ailee_service
     PRIVATE
-    Threads::Threads
-    OpenSSL::SSL
-    OpenSSL::Crypto
-    ${libsecp256k1_LIBRARIES}
+        Threads::Threads
+        OpenSSL::SSL
+        OpenSSL::Crypto
+        ${SECP256K1_LIB}
+        ${libsecp256k1_LIBRARIES}
 )
 if(nlohmann_json_FOUND)
     target_link_libraries(ailee_service PRIVATE nlohmann_json::nlohmann_json)
 endif()
-
-target_link_libraries(ailee_node
-    PRIVATE
-    ${libsecp256k1_LIBRARIES}
-    $<IF:$<BOOL:${AILEE_USE_RUST_PROVER}>,ailee_rust_prover,ailee_rust_ffi_fallback>
-    OpenSSL::SSL
-    OpenSSL::Crypto
-    ${CURL_LIBRARIES}
-    ${libsecp256k1_LIBRARIES}
-    Threads::Threads
-)
 
 target_compile_definitions(ailee_node PRIVATE
     AILEE_COMMIT_HASH=\"${AILEE_COMMIT_HASH}\"
@@ -580,7 +579,6 @@ target_compile_definitions(ailee_node PRIVATE
 )
 
 if(jsoncpp_FOUND)
-    target_link_libraries(ailee_node PRIVATE jsoncpp_lib)
     target_compile_definitions(ailee_node PRIVATE AILEE_HAS_JSONCPP=1)
 endif()
 
@@ -607,13 +605,13 @@ add_executable(ailee_l2_verify
 
 target_link_libraries(ailee_l2_verify
     PRIVATE
-    ${CURL_LIBRARIES}
-    jsoncpp_lib
-    ${libsecp256k1_LIBRARIES}
-    $<IF:$<BOOL:${AILEE_USE_RUST_PROVER}>,ailee_rust_prover,ailee_rust_ffi_fallback>
-    OpenSSL::SSL
-    OpenSSL::Crypto
-    ${libsecp256k1_LIBRARIES}
+        ${CURL_LIBRARIES}
+        jsoncpp_lib
+        ${SECP256K1_LIB}
+        ${libsecp256k1_LIBRARIES}
+        $<IF:$<BOOL:${AILEE_USE_RUST_PROVER}>,ailee_rust_prover,ailee_rust_ffi_fallback>
+        OpenSSL::SSL
+        OpenSSL::Crypto
 )
 
 # Link yaml-cpp if found (for policy system)
@@ -625,7 +623,6 @@ endif()
 
 # Link RocksDB if found (for persistent storage)
 if(RocksDB_FOUND)
-    target_link_libraries(ailee_node PRIVATE ${ROCKSDB_LINK_LIBS})
     target_compile_definitions(ailee_node PRIVATE AILEE_HAS_ROCKSDB=1)
     message(STATUS "RocksDB support enabled (Libs: ${ROCKSDB_LINK_LIBS})")
 else()
@@ -737,12 +734,13 @@ target_link_libraries(ailee_l5_compression PRIVATE ailee_adapters)
 
 target_link_libraries(ailee_adapters
     PRIVATE
-    $<IF:$<BOOL:${AILEE_USE_RUST_PROVER}>,ailee_rust_prover,ailee_rust_ffi_fallback>
-    OpenSSL::SSL
-    OpenSSL::Crypto
-    ${CURL_LIBRARIES}
-    ${libsecp256k1_LIBRARIES}
-    Threads::Threads
+        $<IF:$<BOOL:${AILEE_USE_RUST_PROVER}>,ailee_rust_prover,ailee_rust_ffi_fallback>
+        OpenSSL::SSL
+        OpenSSL::Crypto
+        ${SECP256K1_LIB}
+        ${CURL_LIBRARIES}
+        ${libsecp256k1_LIBRARIES}
+        Threads::Threads
 )
 
 target_compile_definitions(ailee_adapters PUBLIC
