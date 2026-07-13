@@ -114,6 +114,22 @@ IslaEpochResult IslaRuntimeOrchestrator::run_epoch(const EpochIntegrationBundle&
     sem_config.environment_type = env_.get_environment_type();
     semantics::PolicyState policy_state = semantics::load_policy(sem_config);
 
+    // --- V33 Isla Mode Integration ---
+    // 1. Compute and apply tuning decision *before* core epoch processing
+    isla::IslaTuningDecision current_tuning = {
+        batch_size_,
+        proof_interval_ms_,
+        worker_allocation_,
+        anchor_cadence_
+    };
+    isla::IslaTuningDecision next_decision = isla_engine_.computeDecision(
+        isla_metrics_state_.epoch_window,
+        isla_metrics_state_.perf_window,
+        isla_metrics_state_.econ_window,
+        current_tuning
+    );
+    applyTuning(next_decision);
+
     // 1. read clock state
     ClockSnapshot clock_state = bundle.clock_snapshot;
     if (clock_ && !env_.is_ci) {
@@ -309,7 +325,40 @@ IslaEpochResult IslaRuntimeOrchestrator::run_epoch(const EpochIntegrationBundle&
         semantics::ReplaySemantics::enforce_replay_retention(*replay_, policy_state.max_replay_epochs);
     }
 
+    // TODO: Accumulate some synthetic metrics based on epoch result for the next window.
+    // In a real system, these would be populated from actual telemetry.
+    isla_metrics_state_.epoch_window.epochs.push_back({
+        0.0, // dispute_rate
+        0,   // reorg_alerts
+        100.0, // finalization_latency
+        200.0  // anchor_confirmation_time
+    });
+    isla_metrics_state_.perf_window.epochs.push_back({
+        1000.0, // proof_generation_time
+        0.8, // prover_utilization
+        1.0 // backlog_clearance_rate
+    });
+    isla_metrics_state_.econ_window.epochs.push_back({
+        10.0, // sat_per_vbyte_fee_band
+        0.1, // anchor_cost_ratio
+        0.1 // l2_backlog_pressure
+    });
+
+    // Window management (e.g. keep last 8 epochs)
+    if (isla_metrics_state_.epoch_window.epochs.size() > 8) {
+        isla_metrics_state_.epoch_window.epochs.erase(isla_metrics_state_.epoch_window.epochs.begin());
+        isla_metrics_state_.perf_window.epochs.erase(isla_metrics_state_.perf_window.epochs.begin());
+        isla_metrics_state_.econ_window.epochs.erase(isla_metrics_state_.econ_window.epochs.begin());
+    }
+
     return final_result;
+}
+
+void IslaRuntimeOrchestrator::applyTuning(const isla::IslaTuningDecision& decision) {
+    batch_size_ = decision.new_batch_size;
+    proof_interval_ms_ = decision.new_proof_interval_ms;
+    worker_allocation_ = decision.new_worker_allocation;
+    anchor_cadence_ = decision.new_anchor_cadence;
 }
 
 void IslaRuntimeOrchestrator::check_heartbeat_drift(const ClockSnapshot& clock_state, uint64_t expected_tick_duration) {
