@@ -153,7 +153,8 @@ private:
                 auto api_key = req.get_header_value("X-API-Key");
                 if (api_key != config_.api_key) {
                     res.status = 401;
-                    json error_response = {
+                    json error_response;
+error_response = {
                         {"error", "Unauthorized"},
                         {"message", "Invalid or missing API key"}
                     };
@@ -173,7 +174,8 @@ private:
                 buffer << file.rdbuf();
                 res.set_content(buffer.str(), "text/html");
             } else {
-                json response = {
+                json response;
+                response = {
                     {"name", "AILEE Protocol Core API"},
                     {"version", "1.0.0"},
                     {"description", "REST API for AILEE Bitcoin Layer-2 Protocol"},
@@ -197,7 +199,8 @@ private:
         server_->Get("/api/health", [](const httplib::Request&, httplib::Response& res) {
             auto now = std::chrono::system_clock::now();
             auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
-            json response = {
+            json response;
+                response = {
                 {"status", "healthy"},
                 {"timestamp", static_cast<double>(ms)}
             };
@@ -209,7 +212,8 @@ private:
             if (status_callback_) {
                 try {
                     NodeStatus status = status_callback_();
-                    json response = {
+                    json response;
+                response = {
                         {"running", status.running},
                         {"version", status.version},
                         {"uptime_seconds", json::number_unsigned(status.uptime_seconds)},
@@ -225,11 +229,13 @@ private:
                     res.set_content(response.dump(), "application/json");
                 } catch (const std::exception& e) {
                     res.status = 500;
-                    json error = {{"error", e.what()}};
+                    json error;
+                error = {{"error", e.what()}};
                     res.set_content(error.dump(), "application/json");
                 }
             } else {
-                json response = {
+                json response;
+                response = {
                     {"status", "running"},
                     {"message", "Status callback not configured"}
                 };
@@ -241,7 +247,8 @@ private:
         server_->Get("/api/metrics", [this](const httplib::Request&, httplib::Response& res) {
             auto now = std::chrono::system_clock::now();
             auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
-            json metrics = {
+            json metrics;
+metrics = {
                 {"timestamp", static_cast<double>(ms)},
                 {"node", {
                     {"type", "AILEE-Core"},
@@ -266,7 +273,8 @@ private:
 
         // Layer-2 state endpoint - now with real block data
         server_->Get("/api/l2/state", [this](const httplib::Request&, httplib::Response& res) {
-            json state = {
+            json state;
+state = {
                 {"layer", "Layer-2"},
                 {"protocol", "AILEE-Core"},
                 {"description", "Bitcoin-anchored Layer-2 state"}
@@ -297,7 +305,8 @@ private:
 
         // Orchestration tasks endpoint
         server_->Get("/api/orchestration/tasks", [this](const httplib::Request&, httplib::Response& res) {
-            json tasks = {
+            json tasks;
+tasks = {
                 {"tasks", json::array({})},
                 {"total", 0}
             };
@@ -313,7 +322,8 @@ private:
 
         // Latest anchor endpoint
         server_->Get("/api/anchors/latest", [this](const httplib::Request&, httplib::Response& res) {
-            json anchor = {
+            json anchor;
+anchor = {
                 {"message", "Bitcoin anchoring is active"}
             };
             
@@ -336,7 +346,8 @@ private:
                 
                 if (!request_body.contains("task_type") || !request_body.contains("task_data")) {
                     res.status = 400;
-                    json error = {
+                    json error;
+                error = {
                         {"error", "Invalid request"},
                         {"message", "task_type and task_data are required"}
                     };
@@ -352,7 +363,8 @@ private:
                 std::ostringstream task_id_stream;
                 task_id_stream << "task_" << ms << "_" << counter;
                 
-                json response = {
+                json response;
+                response = {
                     {"status", "accepted"},
                     {"task_id", task_id_stream.str()},
                     {"message", "Task submitted successfully"}
@@ -363,7 +375,8 @@ private:
                 
             } catch (const std::exception& e) {
                 res.status = 400;
-                json error = {
+                json error;
+                error = {
                     {"error", "Invalid request"},
                     {"message", e.what()}
                 };
@@ -375,7 +388,8 @@ private:
         server_->Get(R"(/api/replay/tick/(\d+))", [this](const httplib::Request& req, httplib::Response& res) {
             if (!replay_tick_callback_) {
                 res.status = 501;
-                json error = {
+                json error;
+                error = {
                     {"error", "Not Implemented"},
                     {"message", "Replay tick callback not configured"}
                 };
@@ -388,7 +402,8 @@ private:
                 std::string tick_json = replay_tick_callback_(index);
                 if (tick_json.empty()) {
                     res.status = 404;
-                    json error = {
+                    json error;
+                error = {
                         {"error", "Not Found"},
                         {"message", "Tick index out of bounds"}
                     };
@@ -398,7 +413,8 @@ private:
                 }
             } catch (...) {
                 res.status = 400;
-                json error = {
+                json error;
+                error = {
                     {"error", "Invalid Request"},
                     {"message", "Invalid tick index format"}
                 };
@@ -410,7 +426,8 @@ private:
         server_->Get("/api/federation/view", [this](const httplib::Request&, httplib::Response& res) {
             if (!federation_view_callback_) {
                 res.status = 501;
-                json error = {
+                json error;
+                error = {
                     {"error", "Not Implemented"},
                     {"message", "Federation view callback not configured"}
                 };
@@ -420,7 +437,8 @@ private:
 
             if (!federation_mode_.load()) {
                 res.status = 200;
-                json response = {
+                json response;
+                response = {
                     {"status", "disabled"},
                     {"message", "Federation mode is OFF"}
                 };
@@ -437,7 +455,8 @@ private:
         server_->Get("/api/sync/events", [this](const httplib::Request&, httplib::Response& res) {
             if (!sync_events_callback_) {
                 res.status = 501;
-                json error = {
+                json error;
+                error = {
                     {"error", "Not Implemented"},
                     {"message", "Sync events callback not configured"}
                 };
@@ -450,7 +469,8 @@ private:
         server_->Get("/api/sync/clock", [this](const httplib::Request&, httplib::Response& res) {
             if (!sync_clock_callback_) {
                 res.status = 501;
-                json error = {
+                json error;
+                error = {
                     {"error", "Not Implemented"},
                     {"message", "Sync clock callback not configured"}
                 };
@@ -463,7 +483,8 @@ private:
         server_->Get("/api/replay/tick", [this](const httplib::Request&, httplib::Response& res) {
             if (!latest_replay_tick_callback_) {
                 res.status = 501;
-                json error = {
+                json error;
+                error = {
                     {"error", "Not Implemented"},
                     {"message", "Latest replay tick callback not configured"}
                 };
@@ -475,7 +496,8 @@ private:
 
         // Heartbeat (simple liveness flag)
         server_->Get("/api/heartbeat", [this](const httplib::Request&, httplib::Response& res) {
-            json response = {
+            json response;
+                response = {
                 {"status", heartbeat_ok_ ? "ok" : "degraded"}
             };
             res.set_content(response.dump(), "application/json");
@@ -483,7 +505,8 @@ private:
 
         // Eject (no-op placeholder)
         server_->Post("/api/eject", [this](const httplib::Request&, httplib::Response& res) {
-            json response = {
+            json response;
+                response = {
                 {"status", "accepted"},
                 {"message", "Eject requested (no-op in testnet)"}
             };
@@ -493,7 +516,8 @@ private:
 
         // Reject (no-op placeholder)
         server_->Post("/api/reject", [this](const httplib::Request&, httplib::Response& res) {
-            json response = {
+            json response;
+                response = {
                 {"status", "accepted"},
                 {"message", "Reject requested (no-op in testnet)"}
             };
@@ -507,14 +531,16 @@ private:
                 json body = json::parse(req.body);
                 bool enable = body.value("enable", false);
                 federation_mode_.store(enable);
-                json response = {
+                json response;
+                response = {
                     {"status", "ok"},
                     {"federation_mode", enable ? "ON" : "OFF"}
                 };
                 res.set_content(response.dump(), "application/json");
             } catch (...) {
                 res.status = 400;
-                json error = {{"error", "Invalid request"}};
+                json error;
+                error = {{"error", "Invalid request"}};
                 res.set_content(error.dump(), "application/json");
             }
         });
@@ -525,14 +551,16 @@ private:
                 json body = json::parse(req.body);
                 bool enable = body.value("enable", false);
                 replay_mode_.store(enable);
-                json response = {
+                json response;
+                response = {
                     {"status", "ok"},
                     {"replay_mode", enable ? "ON" : "OFF"}
                 };
                 res.set_content(response.dump(), "application/json");
             } catch (...) {
                 res.status = 400;
-                json error = {{"error", "Invalid request"}};
+                json error;
+                error = {{"error", "Invalid request"}};
                 res.set_content(error.dump(), "application/json");
             }
         });
@@ -541,7 +569,8 @@ private:
         server_->Get("/api/mesh/envelopes", [this](const httplib::Request&, httplib::Response& res) {
             if (!mesh_envelopes_callback_) {
                 res.status = 501;
-                json error = {
+                json error;
+                error = {
                     {"error", "Not Implemented"},
                     {"message", "Mesh envelopes callback not configured"}
                 };
@@ -551,7 +580,8 @@ private:
 
             if (!federation_mode_.load()) {
                 res.status = 200;
-                json response = {
+                json response;
+                response = {
                     {"status", "disabled"},
                     {"message", "Federation mode is OFF"}
                 };
@@ -564,7 +594,8 @@ private:
 
         // Refresh All (just a convenience ping)
         server_->Post("/api/refresh/all", [this](const httplib::Request&, httplib::Response& res) {
-            json response = {
+            json response;
+                response = {
                 {"status", "ok"},
                 {"message", "Refresh requested"}
             };
@@ -576,7 +607,8 @@ private:
             try {
                 if (!mempool_) {
                     res.status = 503;
-                    json error = {
+                    json error;
+                error = {
                         {"error", "Service Unavailable"},
                         {"message", "Mempool not initialized"}
                     };
@@ -592,7 +624,8 @@ private:
                     !request_body.contains("amount") ||
                     !request_body.contains("tx_hash")) {
                     res.status = 400;
-                    json error = {
+                    json error;
+                error = {
                         {"error", "Invalid request"},
                         {"message", "from_address, to_address, amount, and tx_hash are required"}
                     };
@@ -621,7 +654,8 @@ private:
                 // Add to mempool (returns false if duplicate)
                 if (!mempool_->addTransaction(tx)) {
                     res.status = 409;
-                    json error = {
+                    json error;
+                error = {
                         {"error", "Conflict"},
                         {"message", "Transaction with this hash already exists in mempool"}
                     };
@@ -633,7 +667,8 @@ private:
                           << "... from " << tx.fromAddress << " to " << tx.toAddress 
                           << " amount " << tx.amount << std::endl;
                 
-                json response = {
+                json response;
+                response = {
                     {"status", "accepted"},
                     {"tx_hash", tx.txHash},
                     {"message", "Transaction submitted to mempool"}
@@ -644,7 +679,8 @@ private:
                 
             } catch (const std::exception& e) {
                 res.status = 400;
-                json error = {
+                json error;
+                error = {
                     {"error", "Invalid request"},
                     {"message", e.what()}
                 };
@@ -654,7 +690,8 @@ private:
 
         // 404 handler
         server_->set_error_handler([](const httplib::Request&, httplib::Response& res) {
-            json error = {
+            json error;
+                error = {
                 {"error", "Not Found"},
                 {"message", "The requested endpoint does not exist"},
                 {"status_code", res.status}
