@@ -216,7 +216,7 @@ public:
     }
 
     nlohmann::json to_json() const {
-        nlohmann::json j;
+        nlohmann::json j = nlohmann::json::object();
         j["signerId"] = data_.signerId;
         j["publicKey"] = data_.publicKey;
         j["btcAddress"] = data_.btcAddress;
@@ -227,8 +227,6 @@ public:
         j["active"] = data_.active;
         j["joinedTime"] = static_cast<std::uint64_t>(data_.joinedTime);
         return j;
-    }
-
     }
 
     void from_json(const nlohmann::json& j) {
@@ -496,35 +494,34 @@ public:
     }
 
     nlohmann::json to_json() const {
-    nlohmann::json sigs(nlohmann::json::object_t{});
-    for (const auto& [k, v] : data_.signatures) {
-        std::string sigHex;
-        sigHex.reserve(v.size() * 2);
-        for (uint8_t byte : v) {
-            char buf[3];
-            snprintf(buf, sizeof(buf), "%02x", byte);
-            sigHex += buf;
+        nlohmann::json sigs = nlohmann::json::object();
+        for (const auto& [k, v] : data_.signatures) {
+            std::string sigHex;
+            sigHex.reserve(v.size() * 2);
+            for (uint8_t byte : v) {
+                char buf[3];
+                snprintf(buf, sizeof(buf), "%02x", byte);
+                sigHex += buf;
+            }
+            sigs[k] = sigHex;
         }
-        sigs[k] = sigHex;
+
+        nlohmann::json j = nlohmann::json::object();
+        j["pegId"] = data_.pegId;
+        j["aileeSourceAddress"] = data_.aileeSourceAddress;
+        j["btcDestAddress"] = data_.btcDestAddress;
+        j["aileeBurnAmount"] = static_cast<std::uint64_t>(data_.aileeBurnAmount);
+        j["btcReleaseAmount"] = static_cast<std::uint64_t>(data_.btcReleaseAmount);
+        j["aileeBurnTxHeight"] = static_cast<std::uint64_t>(data_.aileeBurnTxHeight);
+        j["aileeConfirmations"] = static_cast<std::uint64_t>(data_.aileeConfirmations);
+        j["btcReleaseTxId"] = data_.btcReleaseTxId;
+        j["anchorCommitmentHash"] = data_.anchorCommitmentHash;
+        j["initiatedTime"] = static_cast<std::uint64_t>(data_.initiatedTime);
+        j["completedTime"] = static_cast<std::uint64_t>(data_.completedTime);
+        j["status"] = static_cast<int>(data_.status);
+        j["signatures"] = sigs;
+        return j;
     }
-
-    nlohmann::json j;
-    j["pegId"] = data_.pegId;
-    j["aileeSourceAddress"] = data_.aileeSourceAddress;
-    j["btcDestAddress"] = data_.btcDestAddress;
-    j["aileeBurnAmount"] = static_cast<std::uint64_t>(data_.aileeBurnAmount);
-    j["btcReleaseAmount"] = static_cast<std::uint64_t>(data_.btcReleaseAmount);
-    j["aileeBurnTxHeight"] = static_cast<std::uint64_t>(data_.aileeBurnTxHeight);
-    j["aileeConfirmations"] = static_cast<std::uint64_t>(data_.aileeConfirmations);
-    j["btcReleaseTxId"] = data_.btcReleaseTxId;
-    j["anchorCommitmentHash"] = data_.anchorCommitmentHash;
-    j["initiatedTime"] = static_cast<std::uint64_t>(data_.initiatedTime);
-    j["completedTime"] = static_cast<std::uint64_t>(data_.completedTime);
-    j["status"] = static_cast<int>(data_.status);
-    j["signatures"] = sigs;
-    return j;
-}
-
 
     void from_json(const nlohmann::json& j) {
         data_.pegId = j.value("pegId", "");
@@ -846,14 +843,14 @@ void persistSigners(const std::vector<std::string>& signerIds) {
         }
 
         auto active_signers = federation_->getActiveSigners();
-        nlohmann::json::array_t arr;
+        nlohmann::json arr = nlohmann::json::array();
         for (const auto& s : active_signers) {
             arr.push_back(s);
         }
         ailee::storage::PersistentStorage::BatchOp idxOp;
         idxOp.type = ailee::storage::PersistentStorage::BatchOpType::PUT;
         idxOp.key = "bridge/federation/signer_index";
-        idxOp.value = nlohmann::json(arr).dump();
+        idxOp.value = arr.dump();
         ops.push_back(idxOp);
 
         if (!ops.empty()) {
@@ -1084,14 +1081,14 @@ bool verifyPegOutSignature(
                 pegOp.value = it->second->to_json().dump();
                 ops.push_back(pegOp);
 
-                nlohmann::json::array_t arr;
+                nlohmann::json arr = nlohmann::json::array();
                 for (const auto& [id, _] : pegouts_) {
                     arr.push_back(id);
                 }
                 ailee::storage::PersistentStorage::BatchOp idxOp;
                 idxOp.type = ailee::storage::PersistentStorage::BatchOpType::PUT;
                 idxOp.key = "bridge/pegout_index";
-                idxOp.value = nlohmann::json(arr).dump();
+                idxOp.value = arr.dump();
                 ops.push_back(idxOp);
 
                 for (const auto& [signerId, signature] : data.signatures) {
