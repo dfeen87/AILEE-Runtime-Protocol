@@ -399,12 +399,12 @@ nlohmann::json L2StateDiff::toJson() const {
         hexChanges.push_back(hex[b & 0xf]);
     }
 
-    nlohmann::json::array_t refs;
+    nlohmann::json refs = nlohmann::json::array();
     for (const auto& ref : proofRefs) {
-        refs.push_back(nlohmann::json(ref));
+        refs.push_back(ref);
     }
 
-    nlohmann::json j;
+    nlohmann::json j = nlohmann::json::object();
     j["height"] = static_cast<std::uint64_t>(height);
     j["priorStateRoot"] = priorStateRoot;
     j["newStateRoot"] = newStateRoot;
