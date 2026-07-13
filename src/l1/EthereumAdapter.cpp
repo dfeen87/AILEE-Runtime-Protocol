@@ -16,7 +16,7 @@ public:
                                                      cfg.authUsername,
                                                      cfg.authPassword);
         rpcEndpoint_ = cfg.nodeEndpoint;
-        auto resp = rpcClient_->call("eth_chainId", nlohmann::json::array({}), onError);
+        auto resp = rpcClient_->call("eth_chainId", nlohmann::json::array(), onError);
         if (!resp || !resp->contains("result")) {
             return false;
         }
@@ -93,7 +93,7 @@ public:
     }
     std::optional<uint64_t> height() {
         if (!rpcClient_) return std::nullopt;
-        auto resp = rpcClient_->call("eth_blockNumber", nlohmann::json::array({}), nullptr);
+        auto resp = rpcClient_->call("eth_blockNumber", nlohmann::json::array(), nullptr);
         if (!resp || !resp->contains("result")) return std::nullopt;
         return parseHexU64((*resp)["result"].get<std::string>());
     }
