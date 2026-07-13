@@ -1,7 +1,7 @@
 #include "l6/BitcoinClock.h"
 #include "Logging.h"
 #include <curl/curl.h>
-#include <jsoncpp/json/json.h>
+#include <json/json.h>
 #include <stdexcept>
 #include <sstream>
 
