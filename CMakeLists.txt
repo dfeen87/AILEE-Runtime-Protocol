@@ -283,9 +283,6 @@ set(ADAPTER_SOURCES
     src/l1/EvmBaseAdapter.cpp
     src/l1/CardanoAdapter.cpp
     src/l1/PolkadotAdapter.cpp
-    src/l1/LitecoinAdapter.cpp
-    src/l1/DogecoinAdapter.cpp
-    src/l1/AdapterRegistry.cpp
 )
 
 # AmbientAI Sources (new mesh intelligence layer)
@@ -699,46 +696,46 @@ target_link_libraries(ailee_adapters
     Threads::Threads
 )
 
-target_compile_definitions(ailee_adapters PRIVATE
+target_compile_definitions(ailee_adapters PUBLIC
     AILEE_COMMIT_HASH=\"${AILEE_COMMIT_HASH}\"
     AILEE_BUILD_NUMBER=\"${AILEE_BUILD_NUMBER}\"
     AILEE_PROTOCOL_VERSION=\"${AILEE_PROTOCOL_VERSION}\"
 )
 
 if(jsoncpp_FOUND)
-    target_link_libraries(ailee_adapters PRIVATE jsoncpp_lib)
-    target_compile_definitions(ailee_adapters PRIVATE AILEE_HAS_JSONCPP=1)
+    target_link_libraries(ailee_adapters PUBLIC jsoncpp_lib)
+    target_compile_definitions(ailee_adapters PUBLIC AILEE_HAS_JSONCPP=1)
 endif()
 
 # Link nlohmann/json if available (header-only)
 if(nlohmann_json_FOUND)
-    target_link_libraries(ailee_adapters PRIVATE nlohmann_json::nlohmann_json)
+    target_link_libraries(ailee_adapters PUBLIC nlohmann_json::nlohmann_json)
 endif()
 
 # Link yaml-cpp to library as well
 if(yaml-cpp_FOUND)
-    target_link_libraries(ailee_adapters PRIVATE yaml-cpp)
+    target_link_libraries(ailee_adapters PUBLIC yaml-cpp)
 endif()
 
 # Link RocksDB to library as well
 if(RocksDB_FOUND)
-    target_link_libraries(ailee_adapters PRIVATE ${ROCKSDB_LINK_LIBS})
-    target_compile_definitions(ailee_adapters PRIVATE AILEE_HAS_ROCKSDB=1)
+    target_link_libraries(ailee_adapters PUBLIC ${ROCKSDB_LINK_LIBS})
+    target_compile_definitions(ailee_adapters PUBLIC AILEE_HAS_ROCKSDB=1)
 endif()
 
 # Link libp2p to library as well
 if(LIBP2P_FOUND)
-    target_link_libraries(ailee_adapters PRIVATE ${LIBP2P_LIBRARIES})
-    target_compile_definitions(ailee_adapters PRIVATE AILEE_HAS_LIBP2P=1)
+    target_link_libraries(ailee_adapters PUBLIC ${LIBP2P_LIBRARIES})
+    target_compile_definitions(ailee_adapters PUBLIC AILEE_HAS_LIBP2P=1)
 endif()
 
 # Robust ZeroMQ Linking for library
 if(TARGET cppzmq)
-    target_link_libraries(ailee_adapters PRIVATE cppzmq)
-    target_compile_definitions(ailee_adapters PRIVATE AILEE_HAS_ZMQ=1)
+    target_link_libraries(ailee_adapters PUBLIC cppzmq)
+    target_compile_definitions(ailee_adapters PUBLIC AILEE_HAS_ZMQ=1)
 elseif(ZeroMQ_LIBRARY)
-    target_link_libraries(ailee_adapters PRIVATE ${ZeroMQ_LIBRARY})
-    target_compile_definitions(ailee_adapters PRIVATE AILEE_HAS_ZMQ=1)
+    target_link_libraries(ailee_adapters PUBLIC ${ZeroMQ_LIBRARY})
+    target_compile_definitions(ailee_adapters PUBLIC AILEE_HAS_ZMQ=1)
 endif()
 
 # ============================================================================
@@ -748,7 +745,7 @@ endif()
 option(AILEE_BITCOIN_WRITE_ENABLED "Enable Bitcoin write operations (sendrawtransaction, sign, etc.)" OFF)
 if(NOT AILEE_BITCOIN_WRITE_ENABLED)
     target_compile_definitions(ailee_node PRIVATE AILEE_BITCOIN_WRITE_DISABLED=1)
-    target_compile_definitions(ailee_adapters PRIVATE AILEE_BITCOIN_WRITE_DISABLED=1)
+    target_compile_definitions(ailee_adapters PUBLIC AILEE_BITCOIN_WRITE_DISABLED=1)
     message(STATUS "Bitcoin write operations: DISABLED (shadow/read-only mode)")
 else()
     message(STATUS "Bitcoin write operations: ENABLED")
@@ -761,9 +758,6 @@ set(GTest_FOUND FALSE)
 
 option(BUILD_TESTS "Build unit tests" OFF)
 if(BUILD_TESTS)
-
-    # Force fallback GTest implementation for CI
-    set(GTest_FOUND FALSE)
 
     find_package(GTest QUIET)
     if(NOT GTest_FOUND)
@@ -780,8 +774,6 @@ if(BUILD_TESTS)
         target_link_libraries(minigtest_main PUBLIC minigtest)
 
         add_library(GTest::gtest ALIAS minigtest)
-        add_library(gtest_main ALIAS minigtest_main)
-
         add_library(GTest::gtest_main ALIAS minigtest_main)
     endif()
 
@@ -791,9 +783,12 @@ if(BUILD_TESTS)
         tests/test_anchor_commit_tapleaf.cpp
     )
     target_link_libraries(anchor_commit_tapleaf_tests
+        PRIVATE
         ailee_adapters
-        minigtest_main
+        GTest::gtest
+        GTest::gtest_main
     )
+    add_test(NAME AnchorCommitTapleafTests COMMAND anchor_commit_tapleaf_tests)
 
     add_executable(ailee_tests EXCLUDE_FROM_ALL
         tests/NodeIdentityTests.cpp
@@ -852,7 +847,7 @@ if(BUILD_TESTS)
         ailee_adapters
         ailee_l5_compression
         GTest::gtest
-        gtest_main gtest
+        GTest::gtest_main
     )
     add_test(NAME AnchorMetadataTests COMMAND anchor_metadata_tests)
 
@@ -861,7 +856,7 @@ if(BUILD_TESTS)
         ailee_adapters
         ailee_l5_compression
         GTest::gtest
-        gtest_main gtest
+        GTest::gtest_main
     )
     add_test(NAME AdapterTests COMMAND ailee_tests)
 
@@ -873,15 +868,15 @@ if(BUILD_TESTS)
             src/l1/ReorgDetector.cpp
             src/l1/SettlementIngestion.cpp
         )
+        target_include_directories(reorg_detector_tests PRIVATE include)
 
         target_link_libraries(reorg_detector_tests
             PRIVATE
-            ${ROCKSDB_LINK_LIBS}
+            ailee_adapters
             GTest::gtest
             GTest::gtest_main
         )
 
-        target_compile_definitions(reorg_detector_tests PRIVATE AILEE_HAS_ROCKSDB=1)
         add_test(NAME ReorgDetectorTests COMMAND reorg_detector_tests)
     endif()
 
@@ -892,7 +887,7 @@ if(BUILD_TESTS)
             PRIVATE
             ailee_adapters
             GTest::gtest
-            gtest_main gtest
+            GTest::gtest_main
         )
         add_test(NAME PolicyTests COMMAND policy_tests)
     endif()
@@ -982,35 +977,40 @@ if(NOT AILEE_USE_RUST_PROVER)
     add_library(ailee_rust_ffi_fallback STATIC src/security/ailee_rust_ffi_fallback.cpp)
     target_include_directories(ailee_rust_ffi_fallback PUBLIC include)
 endif()
-add_executable(bitcoin_clock_tests tests/l6/test_bitcoin_clock.cpp src/l6/BitcoinClock.cpp)
-target_link_libraries(bitcoin_clock_tests PRIVATE ailee_adapters GTest::gtest GTest::gtest_main ${ROCKSDB_LINK_LIBS})
-add_test(NAME BitcoinClockTests COMMAND bitcoin_clock_tests)
-add_executable(replay_buffer_tests tests/l6/test_replay_buffer.cpp src/l6/ReplayBuffer.cpp)
-target_link_libraries(replay_buffer_tests PRIVATE ailee_adapters GTest::gtest GTest::gtest_main jsoncpp ${ROCKSDB_LINK_LIBS})
-add_test(NAME ReplayBufferTests COMMAND replay_buffer_tests)
-add_executable(mesh_coherence_engine_tests tests/l6/test_mesh_coherence_engine.cpp src/l6/MeshCoherenceEngine.cpp src/l6/auditor/TemporalAuditor.cpp)
-target_link_libraries(mesh_coherence_engine_tests PRIVATE ailee_adapters GTest::gtest GTest::gtest_main ${ROCKSDB_LINK_LIBS})
-add_test(NAME MeshCoherenceEngineTests COMMAND mesh_coherence_engine_tests)
-add_executable(policy_engine_tests tests/l6/test_policy_engine.cpp src/policy/PolicyEngine.cpp src/l6/MeshCoherenceEngine.cpp src/l6/auditor/TemporalAuditor.cpp src/MeshCoherence.cpp)
-target_link_libraries(policy_engine_tests PRIVATE ailee_adapters gtest_main gtest jsoncpp ${ROCKSDB_LINK_LIBS})
-add_test(NAME PolicyEngineTests COMMAND policy_engine_tests)
-
 
 if(BUILD_TESTS)
+    add_executable(bitcoin_clock_tests tests/l6/test_bitcoin_clock.cpp src/l6/BitcoinClock.cpp)
+    target_include_directories(bitcoin_clock_tests PRIVATE include)
+    target_link_libraries(bitcoin_clock_tests PRIVATE ailee_adapters GTest::gtest GTest::gtest_main)
+    add_test(NAME BitcoinClockTests COMMAND bitcoin_clock_tests)
+
+    add_executable(replay_buffer_tests tests/l6/test_replay_buffer.cpp src/l6/ReplayBuffer.cpp)
+    target_include_directories(replay_buffer_tests PRIVATE include)
+    target_link_libraries(replay_buffer_tests PRIVATE ailee_adapters GTest::gtest GTest::gtest_main)
+    add_test(NAME ReplayBufferTests COMMAND replay_buffer_tests)
+
+    add_executable(mesh_coherence_engine_tests tests/l6/test_mesh_coherence_engine.cpp src/l6/MeshCoherenceEngine.cpp src/l6/auditor/TemporalAuditor.cpp)
+    target_include_directories(mesh_coherence_engine_tests PRIVATE include)
+    target_link_libraries(mesh_coherence_engine_tests PRIVATE ailee_adapters GTest::gtest GTest::gtest_main)
+    add_test(NAME MeshCoherenceEngineTests COMMAND mesh_coherence_engine_tests)
+
+    add_executable(policy_engine_tests tests/l6/test_policy_engine.cpp src/policy/PolicyEngine.cpp src/l6/MeshCoherenceEngine.cpp src/l6/auditor/TemporalAuditor.cpp src/MeshCoherence.cpp)
+    target_include_directories(policy_engine_tests PRIVATE include)
+    target_link_libraries(policy_engine_tests PRIVATE ailee_adapters GTest::gtest GTest::gtest_main)
+    add_test(NAME PolicyEngineTests COMMAND policy_engine_tests)
+
     add_executable(v28_hice_tests tests/l6/test_v28_hice_integration.cpp src/simulation/validation/hice_contracts.cpp ${AILEE_CORE_SOURCES})
     target_include_directories(v28_hice_tests PRIVATE include)
-    target_link_libraries(v28_hice_tests gtest_main gtest OpenSSL::Crypto secp256k1 rocksdb ailee_adapters ailee_l5_compression)
+    target_link_libraries(v28_hice_tests PRIVATE ailee_adapters ailee_l5_compression GTest::gtest GTest::gtest_main)
     add_test(NAME V28HiceTests COMMAND v28_hice_tests)
-endif()
 
-if(BUILD_TESTING)
     add_executable(test_iao tests/l6/iao/test_intelligence_assisted_orchestrator.cpp src/l6/iao/IntelligenceAssistedOrchestrator.cpp src/l6/auditor/TemporalAuditor.cpp)
     target_include_directories(test_iao PRIVATE include)
-    target_link_libraries(test_iao PRIVATE gtest_main gtest pthread)
-    add_test(NAME IAOTest COMMAND test_iao)
+    target_link_libraries(test_iao PRIVATE ailee_adapters GTest::gtest GTest::gtest_main)
+    add_test(NAME IAOTests COMMAND test_iao)
 
     add_executable(test_isla_mode tests/l6/isla/test_isla_mode_engine.cpp src/l6/isla/IslaModeEngine.cpp src/l6/isla/IslaMetrics.cpp)
     target_include_directories(test_isla_mode PRIVATE include src)
-    target_link_libraries(test_isla_mode PRIVATE gtest_main gtest pthread)
+    target_link_libraries(test_isla_mode PRIVATE ailee_adapters GTest::gtest GTest::gtest_main)
     add_test(NAME IslaModeEngineTests COMMAND test_isla_mode)
 endif()
