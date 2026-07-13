@@ -1,5 +1,6 @@
 #include "l6/PlonkBackend.h"
 #include <openssl/sha.h>
+#include <stdexcept>
 
 namespace ailee::l6 {
 
@@ -76,6 +77,34 @@ bool PlonkBackend::verify_proof(
     std::vector<uint8_t> expected_proof_bytes = compute_dummy_proof_bytes(input_bytes);
 
     return (artifact.proof_bytes == expected_proof_bytes) && (artifact.metadata.proof_id == compute_hash_hex(artifact.proof_bytes));
+}
+
+ZKProofArtifact PlonkBackend::generate_recursive_proof(
+    const ZKBackendConfig& config,
+    const ZKConstraintSet& constraints,
+    const ZKTranscript& transcript,
+    const ZKRecursionBundle& recursion_bundle
+) {
+    (void)config;
+    (void)constraints;
+    (void)transcript;
+    (void)recursion_bundle;
+    throw std::runtime_error("PlonkBackend: Native stub recursive proof generation not yet implemented.");
+}
+
+bool PlonkBackend::verify_recursive_proof(
+    const ZKBackendConfig& config,
+    const ZKProofArtifact& artifact,
+    const ZKConstraintSet& constraints,
+    const ZKTranscript& transcript,
+    const ZKRecursionBundle& recursion_bundle
+) {
+    (void)config;
+    (void)artifact;
+    (void)constraints;
+    (void)transcript;
+    (void)recursion_bundle;
+    throw std::runtime_error("PlonkBackend: Native stub recursive proof validation not yet implemented.");
 }
 
 } // namespace ailee::l6

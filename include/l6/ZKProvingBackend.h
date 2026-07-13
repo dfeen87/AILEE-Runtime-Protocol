@@ -21,11 +21,6 @@ struct ZKBackendConfig {
     std::string verification_key_path; // path to verification key (stub for now)
 };
 
-struct ZKProofArtifact {
-    ZKProofMetadata metadata; // protocol-level metadata
-    std::vector<uint8_t> proof_bytes; // opaque proof bytes from backend
-};
-
 class IZKProvingBackend {
 public:
     virtual ~IZKProvingBackend() = default;
@@ -41,6 +36,21 @@ public:
         const ZKProofArtifact& artifact,
         const ZKConstraintSet& constraints,
         const ZKTranscript& transcript
+    ) = 0;
+
+    virtual ZKProofArtifact generate_recursive_proof(
+        const ZKBackendConfig& config,
+        const ZKConstraintSet& constraints,
+        const ZKTranscript& transcript,
+        const ZKRecursionBundle& recursion_bundle
+    ) = 0;
+
+    virtual bool verify_recursive_proof(
+        const ZKBackendConfig& config,
+        const ZKProofArtifact& artifact,
+        const ZKConstraintSet& constraints,
+        const ZKTranscript& transcript,
+        const ZKRecursionBundle& recursion_bundle
     ) = 0;
 };
 

@@ -140,6 +140,27 @@ public:
     }
 
     bool verify_proof(const ZKBackendConfig& config, const ZKProofArtifact& artifact, const ZKConstraintSet& constraints, const ZKTranscript& transcript) override {
+        (void)config;
+        (void)artifact;
+        (void)constraints;
+        (void)transcript;
+        return false;
+    }
+
+    ZKProofArtifact generate_recursive_proof(const ZKBackendConfig& config, const ZKConstraintSet& constraints, const ZKTranscript& transcript, const ZKRecursionBundle& recursion_bundle) override {
+        (void)config;
+        (void)constraints;
+        (void)transcript;
+        (void)recursion_bundle;
+        throw std::runtime_error("Not implemented");
+    }
+
+    bool verify_recursive_proof(const ZKBackendConfig& config, const ZKProofArtifact& artifact, const ZKConstraintSet& constraints, const ZKTranscript& transcript, const ZKRecursionBundle& recursion_bundle) override {
+        (void)config;
+        (void)artifact;
+        (void)constraints;
+        (void)transcript;
+        (void)recursion_bundle;
         return false; // Force failure
     }
 };

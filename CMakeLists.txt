@@ -666,6 +666,7 @@ add_library(ailee_adapters STATIC
     src/l6/AnchorZKMetadata.cpp
     src/l6/ZKOrchestrationManager.cpp
     src/l6/IslaRuntimeOrchestrator.cpp
+    src/l6/ZKRecursionManager.cpp
     src/l6/MeshCoherenceEngine.cpp src/l6/auditor/TemporalAuditor.cpp src/l6/erl/TemporalEnergyCoordinator.cpp src/l6/iao/IntelligenceAssistedOrchestrator.cpp
     src/l6/ZKMetadata.cpp
     src/l6/ZKDeterministicValidator.cpp
@@ -823,6 +824,7 @@ if(BUILD_TESTS)
         tests/l6/test_zk_orchestration_integration.cpp
         tests/l6/test_anchor_commitment_integration.cpp
         tests/l6/test_isla_determinism.cpp
+        tests/l6/test_zk_recursion.cpp
         tests/simulation/test_mainnet_sync_metrics.cpp
         tests/simulation/test_hice_contracts.cpp
         tests/simulation/test_v27_simulation_stress.cpp
@@ -864,9 +866,9 @@ if(BUILD_TESTS)
             src/l1/SettlementIngestion.cpp
         )
         
-        target_include_directories(reorg_detector_tests PRIVATE
-            ${CMAKE_CURRENT_SOURCE_DIR}/tests/minigtest
-        )
+        # target_include_directories(reorg_detector_tests PRIVATE
+        #     ${CMAKE_CURRENT_SOURCE_DIR}/tests/minigtest
+        # )
         
         target_link_libraries(reorg_detector_tests
             PRIVATE
@@ -976,16 +978,16 @@ if(NOT AILEE_USE_RUST_PROVER)
     target_include_directories(ailee_rust_ffi_fallback PUBLIC include)
 endif()
 add_executable(bitcoin_clock_tests tests/l6/test_bitcoin_clock.cpp src/l6/BitcoinClock.cpp)
-target_link_libraries(bitcoin_clock_tests PRIVATE ailee_adapters minigtest_main curl jsoncpp)
+target_link_libraries(bitcoin_clock_tests PRIVATE ailee_adapters GTest::gtest_main curl jsoncpp)
 add_test(NAME BitcoinClockTests COMMAND bitcoin_clock_tests)
 add_executable(replay_buffer_tests tests/l6/test_replay_buffer.cpp src/l6/ReplayBuffer.cpp)
-target_link_libraries(replay_buffer_tests PRIVATE ailee_adapters minigtest_main jsoncpp ${ROCKSDB_LINK_LIBS})
+target_link_libraries(replay_buffer_tests PRIVATE ailee_adapters GTest::gtest_main jsoncpp ${ROCKSDB_LINK_LIBS})
 add_test(NAME ReplayBufferTests COMMAND replay_buffer_tests)
 add_executable(mesh_coherence_engine_tests tests/l6/test_mesh_coherence_engine.cpp src/l6/MeshCoherenceEngine.cpp src/l6/auditor/TemporalAuditor.cpp)
-target_link_libraries(mesh_coherence_engine_tests PRIVATE ailee_adapters minigtest_main jsoncpp ${ROCKSDB_LINK_LIBS})
+target_link_libraries(mesh_coherence_engine_tests PRIVATE ailee_adapters GTest::gtest_main jsoncpp ${ROCKSDB_LINK_LIBS})
 add_test(NAME MeshCoherenceEngineTests COMMAND mesh_coherence_engine_tests)
 add_executable(policy_engine_tests tests/l6/test_policy_engine.cpp src/policy/PolicyEngine.cpp src/l6/MeshCoherenceEngine.cpp src/l6/auditor/TemporalAuditor.cpp src/MeshCoherence.cpp)
-target_link_libraries(policy_engine_tests PRIVATE ailee_adapters minigtest_main jsoncpp ${ROCKSDB_LINK_LIBS})
+target_link_libraries(policy_engine_tests PRIVATE ailee_adapters GTest::gtest_main jsoncpp ${ROCKSDB_LINK_LIBS})
 add_test(NAME PolicyEngineTests COMMAND policy_engine_tests)
 
 
