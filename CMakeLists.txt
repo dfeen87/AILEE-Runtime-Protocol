@@ -757,6 +757,7 @@ endif()
 # ============================================================================
 # Unit Tests (Optional)
 # ============================================================================
+set(GTest_FOUND FALSE)
 
 option(BUILD_TESTS "Build unit tests" OFF)
 if(BUILD_TESTS)
