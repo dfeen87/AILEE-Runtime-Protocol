@@ -52,6 +52,12 @@ endif()
 # Dependencies
 # ============================================================================
 
+find_library(SECP256K1_LIB secp256k1 PATHS /opt/homebrew/lib)
+target_link_libraries(ailee_node PRIVATE ${SECP256K1_LIB})
+target_link_libraries(ailee_service PRIVATE ${SECP256K1_LIB})
+target_link_libraries(ailee_adapters PRIVATE ${SECP256K1_LIB})
+target_link_libraries(ailee_l2_verify PRIVATE ${SECP256K1_LIB})
+
 # 1. OpenSSL (Required for SHA256 in Recovery Protocol & Gold Bridge)
 find_package(OpenSSL REQUIRED)
 
