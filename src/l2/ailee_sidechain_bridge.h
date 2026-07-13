@@ -220,12 +220,11 @@ public:
             {"signerId", data_.signerId},
             {"publicKey", data_.publicKey},
             {"btcAddress", data_.btcAddress},
-            {"stake", nlohmann::json::number_unsigned_t(data_.stake)},
-            {"reputationScore", nlohmann::json::number_unsigned_t(data_.reputationScore)},
-            {"signatureCount", nlohmann::json::number_unsigned_t(data_.signatureCount)},
-            {"missedSignatures", nlohmann::json::number_unsigned_t(data_.missedSignatures)},
-            {"joinedTime", nlohmann::json::number_unsigned_t(data_.joinedTime)}
-
+            {"stake", nlohmann::json(static_cast<uint64_t>(data_.stake))},
+            {"reputationScore", nlohmann::json(static_cast<uint64_t>(data_.reputationScore))},
+            {"signatureCount", nlohmann::json(static_cast<uint64_t>(data_.signatureCount))},
+            {"missedSignatures", nlohmann::json(static_cast<uint64_t>(data_.missedSignatures))},
+            {"joinedTime", nlohmann::json(static_cast<uint64_t>(data_.joinedTime))}
         };
     }
 
@@ -510,14 +509,14 @@ public:
             {"pegId", data_.pegId},
             {"aileeSourceAddress", data_.aileeSourceAddress},
             {"btcDestAddress", data_.btcDestAddress},
-            {"aileeBurnAmount", nlohmann::json::number_unsigned_t(data_.aileeBurnAmount)},
-            {"btcReleaseAmount", nlohmann::json::number_unsigned_t(data_.btcReleaseAmount)},
-            {"aileeBurnTxHeight", nlohmann::json::number_unsigned_t(data_.aileeBurnTxHeight)},
-            {"aileeConfirmations", nlohmann::json::number_unsigned_t(data_.aileeConfirmations)},
+            {"aileeBurnAmount", nlohmann::json(static_cast<uint64_t>(data_.aileeBurnAmount))},
+            {"btcReleaseAmount", nlohmann::json(static_cast<uint64_t>(data_.btcReleaseAmount))},
+            {"aileeBurnTxHeight", nlohmann::json(static_cast<uint64_t>(data_.aileeBurnTxHeight))},
+            {"aileeConfirmations", nlohmann::json(static_cast<uint64_t>(data_.aileeConfirmations))},
             {"btcReleaseTxId", data_.btcReleaseTxId},
             {"anchorCommitmentHash", data_.anchorCommitmentHash},
-            {"initiatedTime", nlohmann::json::number_unsigned_t(data_.initiatedTime)},
-            {"completedTime", nlohmann::json::number_unsigned_t(data_.completedTime)},
+            {"initiatedTime", nlohmann::json(static_cast<uint64_t>(data_.initiatedTime))},
+            {"completedTime", nlohmann::json(static_cast<uint64_t>(data_.completedTime))},
             {"status", static_cast<int>(data_.status)},
             {"signatures", sigs}
         };
