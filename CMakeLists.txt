@@ -986,7 +986,7 @@ add_executable(bitcoin_clock_tests tests/l6/test_bitcoin_clock.cpp src/l6/Bitcoi
 target_link_libraries(bitcoin_clock_tests PRIVATE ailee_adapters gtest_main gtest curl jsoncpp)
 add_test(NAME BitcoinClockTests COMMAND bitcoin_clock_tests)
 add_executable(replay_buffer_tests tests/l6/test_replay_buffer.cpp src/l6/ReplayBuffer.cpp)
-target_link_libraries(replay_buffer_tests PRIVATE ailee_adapters gtest_main gtest jsoncpp ${ROCKSDB_LINK_LIBS})
+target_link_libraries(replay_buffer_tests PRIVATE ailee_adapters GTest::gtest GTest::gtest_main jsoncpp ${ROCKSDB_LINK_LIBS})
 add_test(NAME ReplayBufferTests COMMAND replay_buffer_tests)
 add_executable(mesh_coherence_engine_tests tests/l6/test_mesh_coherence_engine.cpp src/l6/MeshCoherenceEngine.cpp src/l6/auditor/TemporalAuditor.cpp)
 target_link_libraries(mesh_coherence_engine_tests PRIVATE ailee_adapters gtest_main gtest jsoncpp ${ROCKSDB_LINK_LIBS})
