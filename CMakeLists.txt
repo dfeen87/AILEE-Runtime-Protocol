@@ -793,7 +793,6 @@ if(BUILD_TESTS)
     target_link_libraries(anchor_commit_tapleaf_tests
         ailee_adapters
         minigtest_main
-        ${LIBS}
     )
 
     add_executable(ailee_tests EXCLUDE_FROM_ALL
