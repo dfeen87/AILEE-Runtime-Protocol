@@ -1,7 +1,7 @@
 #include "l6/ReplayBuffer.h"
 #include <rocksdb/db.h>
 #include <stdexcept>
-#include <jsoncpp/json/json.h>
+#include <json/json.h>
 
 namespace ailee::l6 {
 
