@@ -29,13 +29,13 @@ struct ProverIdentity {
     bool banned = false;
 
     nlohmann::json toJson() const {
-        return {
-            {"pubkey", pubkey},
-            {"reputation", reputation},
-            {"capacity", capacity},
-            {"latency_ms", latency_ms},
-            {"banned", banned}
-        };
+        nlohmann::json j;
+        j["pubkey"] = pubkey;
+        j["reputation"] = reputation;
+        j["capacity"] = capacity;
+        j["latency_ms"] = latency_ms;
+        j["banned"] = banned;
+        return j;
     }
 
     static ProverIdentity fromJson(const nlohmann::json& j) {
@@ -58,14 +58,14 @@ struct ProverJob {
     std::uint32_t retry_count = 0;
 
     nlohmann::json toJson() const {
-        return {
-            {"job_id", job_id},
-            {"payload", payload},
-            {"assigned_prover", assigned_prover},
-            {"assigned_at_ms", nlohmann::json(static_cast<uint64_t>(assigned_at_ms))},
-            {"completed", completed},
-            {"retry_count", nlohmann::json(static_cast<uint64_t>(retry_count))}
-        };
+        nlohmann::json j;
+        j["job_id"] = job_id;
+        j["payload"] = payload;
+        j["assigned_prover"] = assigned_prover;
+        j["assigned_at_ms"] = static_cast<std::uint64_t>(assigned_at_ms);
+        j["completed"] = completed;
+        j["retry_count"] = static_cast<std::uint32_t>(retry_count);
+        return j;
     }
 
     static ProverJob fromJson(const nlohmann::json& j) {
