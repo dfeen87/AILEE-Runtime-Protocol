@@ -1,5 +1,6 @@
 #include "l6/ZKMockBackend.h"
 #include <openssl/sha.h>
+#include <stdexcept>
 
 namespace ailee::l6 {
 
@@ -37,6 +38,31 @@ std::vector<uint8_t> compute_mock_proof_bytes(
     return std::vector<uint8_t>(digest, digest + 32);
 }
 
+std::vector<uint8_t> compute_mock_recursive_proof_bytes(
+    const std::string& circuit_id,
+    const ZKConstraintSet& constraints,
+    const ZKTranscript& transcript,
+    const ZKRecursionBundle& recursion_bundle
+) {
+    std::vector<uint8_t> input_bytes;
+
+    auto constraints_bytes = constraints.to_bytes();
+    input_bytes.insert(input_bytes.end(), constraints_bytes.begin(), constraints_bytes.end());
+
+    auto transcript_bytes = transcript.to_bytes();
+    input_bytes.insert(input_bytes.end(), transcript_bytes.begin(), transcript_bytes.end());
+
+    input_bytes.insert(input_bytes.end(), circuit_id.begin(), circuit_id.end());
+
+    auto recursion_bytes = recursion_bundle.to_bytes();
+    input_bytes.insert(input_bytes.end(), recursion_bytes.begin(), recursion_bytes.end());
+
+    uint8_t digest[32];
+    SHA256(input_bytes.data(), input_bytes.size(), digest);
+
+    return std::vector<uint8_t>(digest, digest + 32);
+}
+
 } // namespace
 
 ZKProofArtifact ZKMockBackend::generate_proof(
@@ -63,6 +89,39 @@ bool ZKMockBackend::verify_proof(
     const ZKTranscript& transcript
 ) {
     std::vector<uint8_t> expected_bytes = compute_mock_proof_bytes(config.circuit_id, constraints, transcript);
+    return expected_bytes == artifact.proof_bytes && artifact.metadata.proof_id == hex_encode(artifact.proof_bytes);
+}
+
+ZKProofArtifact ZKMockBackend::generate_recursive_proof(
+    const ZKBackendConfig& config,
+    const ZKConstraintSet& constraints,
+    const ZKTranscript& transcript,
+    const ZKRecursionBundle& recursion_bundle
+) {
+    if (recursion_bundle.previous_proof_artifact.proof_bytes.empty()) {
+        throw std::invalid_argument("ZKMockBackend: previous proof artifact is empty for recursive proof generation.");
+    }
+
+    ZKProofArtifact artifact;
+
+    artifact.proof_bytes = compute_mock_recursive_proof_bytes(config.circuit_id, constraints, transcript, recursion_bundle);
+
+    artifact.metadata.proof_id = hex_encode(artifact.proof_bytes);
+    artifact.metadata.constraint_set_id = constraints.id;
+    artifact.metadata.transcript_id = transcript.id;
+    artifact.metadata.logical_size_bytes = artifact.proof_bytes.size();
+
+    return artifact;
+}
+
+bool ZKMockBackend::verify_recursive_proof(
+    const ZKBackendConfig& config,
+    const ZKProofArtifact& artifact,
+    const ZKConstraintSet& constraints,
+    const ZKTranscript& transcript,
+    const ZKRecursionBundle& recursion_bundle
+) {
+    std::vector<uint8_t> expected_bytes = compute_mock_recursive_proof_bytes(config.circuit_id, constraints, transcript, recursion_bundle);
     return expected_bytes == artifact.proof_bytes && artifact.metadata.proof_id == hex_encode(artifact.proof_bytes);
 }
 

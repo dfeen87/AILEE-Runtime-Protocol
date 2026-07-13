@@ -63,6 +63,12 @@ public:
     bool verify_proof(const ZKBackendConfig& config, const ZKProofArtifact& artifact, const ZKConstraintSet& constraints, const ZKTranscript& transcript) override {
         return ptr->verify_proof(config, artifact, constraints, transcript);
     }
+    ZKProofArtifact generate_recursive_proof(const ZKBackendConfig& config, const ZKConstraintSet& constraints, const ZKTranscript& transcript, const ZKRecursionBundle& recursion_bundle) override {
+        return ptr->generate_recursive_proof(config, constraints, transcript, recursion_bundle);
+    }
+    bool verify_recursive_proof(const ZKBackendConfig& config, const ZKProofArtifact& artifact, const ZKConstraintSet& constraints, const ZKTranscript& transcript, const ZKRecursionBundle& recursion_bundle) override {
+        return ptr->verify_recursive_proof(config, artifact, constraints, transcript, recursion_bundle);
+    }
 };
 
 void IslaRuntimeOrchestrator::attach_backend(IZKProvingBackend* backend, const ZKBackendConfig& config) {

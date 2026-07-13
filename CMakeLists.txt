@@ -666,6 +666,7 @@ add_library(ailee_adapters STATIC
     src/l6/AnchorZKMetadata.cpp
     src/l6/ZKOrchestrationManager.cpp
     src/l6/IslaRuntimeOrchestrator.cpp
+    src/l6/ZKRecursionManager.cpp
     src/l6/MeshCoherenceEngine.cpp src/l6/auditor/TemporalAuditor.cpp src/l6/erl/TemporalEnergyCoordinator.cpp src/l6/iao/IntelligenceAssistedOrchestrator.cpp
     src/l6/ZKMetadata.cpp
     src/l6/ZKDeterministicValidator.cpp
@@ -823,6 +824,7 @@ if(BUILD_TESTS)
         tests/l6/test_zk_orchestration_integration.cpp
         tests/l6/test_anchor_commitment_integration.cpp
         tests/l6/test_isla_determinism.cpp
+        tests/l6/test_zk_recursion.cpp
         tests/simulation/test_mainnet_sync_metrics.cpp
         tests/simulation/test_hice_contracts.cpp
         tests/simulation/test_v27_simulation_stress.cpp

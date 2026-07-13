@@ -39,4 +39,17 @@ std::vector<uint8_t> ZKProofMetadata::to_bytes() const {
     return result;
 }
 
+std::vector<uint8_t> ZKProofArtifact::to_bytes() const {
+    std::vector<uint8_t> result = metadata.to_bytes();
+    result.insert(result.end(), proof_bytes.begin(), proof_bytes.end());
+    return result;
+}
+
+std::vector<uint8_t> ZKRecursionBundle::to_bytes() const {
+    std::vector<uint8_t> result = previous_proof_artifact.to_bytes();
+    write_string(result, previous_state_root);
+    write_uint64_le(result, previous_epoch_id);
+    return result;
+}
+
 } // namespace ailee::l6

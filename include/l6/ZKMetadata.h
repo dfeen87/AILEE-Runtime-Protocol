@@ -29,4 +29,20 @@ struct ZKProofMetadata {
     std::vector<uint8_t> to_bytes() const;
 };
 
+// Moved from ZKProvingBackend.h to avoid circular dependency
+struct ZKProofArtifact {
+    ZKProofMetadata metadata; // protocol-level metadata
+    std::vector<uint8_t> proof_bytes; // opaque proof bytes from backend
+
+    std::vector<uint8_t> to_bytes() const;
+};
+
+struct ZKRecursionBundle {
+    ZKProofArtifact previous_proof_artifact;
+    std::string previous_state_root;
+    uint64_t previous_epoch_id;
+
+    std::vector<uint8_t> to_bytes() const;
+};
+
 } // namespace ailee::l6
