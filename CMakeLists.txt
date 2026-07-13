@@ -843,7 +843,7 @@ if(BUILD_TESTS)
         ailee_adapters
         ailee_l5_compression
         GTest::gtest
-        GTest::gtest_main
+        gtest_main gtest
     )
     add_test(NAME AnchorMetadataTests COMMAND anchor_metadata_tests)
 
@@ -852,7 +852,7 @@ if(BUILD_TESTS)
         ailee_adapters
         ailee_l5_compression
         GTest::gtest
-        GTest::gtest_main
+        gtest_main gtest
     )
     
     add_test(NAME AdapterTests COMMAND ailee_tests)
@@ -874,7 +874,7 @@ if(BUILD_TESTS)
             PRIVATE
             ${ROCKSDB_LINK_LIBS}
             GTest::gtest
-            GTest::gtest_main
+            gtest_main gtest
         )
         
         target_compile_definitions(reorg_detector_tests PRIVATE AILEE_HAS_ROCKSDB=1)
@@ -888,7 +888,7 @@ if(BUILD_TESTS)
             PRIVATE
             ailee_adapters
             GTest::gtest
-            GTest::gtest_main
+            gtest_main gtest
         )
         add_test(NAME PolicyTests COMMAND policy_tests)
     endif()
@@ -978,23 +978,23 @@ if(NOT AILEE_USE_RUST_PROVER)
     target_include_directories(ailee_rust_ffi_fallback PUBLIC include)
 endif()
 add_executable(bitcoin_clock_tests tests/l6/test_bitcoin_clock.cpp src/l6/BitcoinClock.cpp)
-target_link_libraries(bitcoin_clock_tests PRIVATE ailee_adapters GTest::gtest_main curl jsoncpp)
+target_link_libraries(bitcoin_clock_tests PRIVATE ailee_adapters gtest_main gtest curl jsoncpp)
 add_test(NAME BitcoinClockTests COMMAND bitcoin_clock_tests)
 add_executable(replay_buffer_tests tests/l6/test_replay_buffer.cpp src/l6/ReplayBuffer.cpp)
-target_link_libraries(replay_buffer_tests PRIVATE ailee_adapters GTest::gtest_main jsoncpp ${ROCKSDB_LINK_LIBS})
+target_link_libraries(replay_buffer_tests PRIVATE ailee_adapters gtest_main gtest jsoncpp ${ROCKSDB_LINK_LIBS})
 add_test(NAME ReplayBufferTests COMMAND replay_buffer_tests)
 add_executable(mesh_coherence_engine_tests tests/l6/test_mesh_coherence_engine.cpp src/l6/MeshCoherenceEngine.cpp src/l6/auditor/TemporalAuditor.cpp)
-target_link_libraries(mesh_coherence_engine_tests PRIVATE ailee_adapters GTest::gtest_main jsoncpp ${ROCKSDB_LINK_LIBS})
+target_link_libraries(mesh_coherence_engine_tests PRIVATE ailee_adapters gtest_main gtest jsoncpp ${ROCKSDB_LINK_LIBS})
 add_test(NAME MeshCoherenceEngineTests COMMAND mesh_coherence_engine_tests)
 add_executable(policy_engine_tests tests/l6/test_policy_engine.cpp src/policy/PolicyEngine.cpp src/l6/MeshCoherenceEngine.cpp src/l6/auditor/TemporalAuditor.cpp src/MeshCoherence.cpp)
-target_link_libraries(policy_engine_tests PRIVATE ailee_adapters GTest::gtest_main jsoncpp ${ROCKSDB_LINK_LIBS})
+target_link_libraries(policy_engine_tests PRIVATE ailee_adapters gtest_main gtest jsoncpp ${ROCKSDB_LINK_LIBS})
 add_test(NAME PolicyEngineTests COMMAND policy_engine_tests)
 
 
 if(BUILD_TESTS)
     add_executable(v28_hice_tests tests/l6/test_v28_hice_integration.cpp src/simulation/validation/hice_contracts.cpp ${AILEE_CORE_SOURCES})
     target_include_directories(v28_hice_tests PRIVATE include)
-    target_link_libraries(v28_hice_tests GTest::gtest_main OpenSSL::Crypto secp256k1 rocksdb ailee_adapters ailee_l5_compression)
+    target_link_libraries(v28_hice_tests gtest_main gtest OpenSSL::Crypto secp256k1 rocksdb ailee_adapters ailee_l5_compression)
     add_test(NAME V28HiceTests COMMAND v28_hice_tests)
 endif()
 
@@ -1003,4 +1003,9 @@ if(BUILD_TESTING)
     target_include_directories(test_iao PRIVATE include)
     target_link_libraries(test_iao PRIVATE gtest_main gtest pthread)
     add_test(NAME IAOTest COMMAND test_iao)
+
+    add_executable(test_isla_mode tests/l6/isla/test_isla_mode_engine.cpp src/l6/isla/IslaModeEngine.cpp src/l6/isla/IslaMetrics.cpp)
+    target_include_directories(test_isla_mode PRIVATE include src)
+    target_link_libraries(test_isla_mode PRIVATE gtest_main gtest pthread)
+    add_test(NAME IslaModeEngineTests COMMAND test_isla_mode)
 endif()

@@ -29,6 +29,9 @@ class MeshCoherenceEngine;
 #include "policy/PolicyEngine.h"
 #include "l6/auditor/TemporalAuditor.h"
 #include "l6/iao/IntelligenceAssistedOrchestrator.h"
+#include "l6/isla/IslaModeEngine.hpp"
+#include "l6/isla/IslaMetrics.hpp"
+#include "l6/isla/IslaTuningDecision.hpp"
 
 namespace ailee::l6 {
 
@@ -85,6 +88,13 @@ struct IslaEpochResult {
     iao::OrchestrationGuidanceReport guidance_report;
 };
 
+// Orchestrator State for metrics gathering
+struct IslaOrchestratorState {
+    isla::EpochMetricsWindow epoch_window;
+    isla::PerformanceMetricsWindow perf_window;
+    isla::EconomicMetricsWindow econ_window;
+};
+
 class IReplayBuffer {
 public:
     virtual ~IReplayBuffer() = default;
@@ -115,6 +125,9 @@ public:
 
     IslaEpochResult run_epoch(const EpochIntegrationBundle& bundle);
 
+    // Apply Isla Tuning Decision
+    void applyTuning(const isla::IslaTuningDecision& decision);
+
     // Checks Heartbeat drift
     void check_heartbeat_drift(const ClockSnapshot& clock_state, uint64_t expected_tick_duration);
 
@@ -135,6 +148,16 @@ private:
 
     std::vector<uint64_t> recent_heartbeat_intervals_;
     uint64_t last_heartbeat_timestamp_ = 0;
+
+    // V33 Isla Mode State
+    isla::IslaModeEngine isla_engine_;
+    IslaOrchestratorState isla_metrics_state_;
+
+    // Tuning parameters
+    uint32_t batch_size_ = 1;
+    uint32_t proof_interval_ms_ = 1000;
+    uint32_t worker_allocation_ = 1;
+    isla::AnchorCadence anchor_cadence_ = isla::AnchorCadence::NORMAL;
 };
 
 } // namespace ailee::l6
