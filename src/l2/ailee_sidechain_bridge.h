@@ -163,10 +163,10 @@ public:
         std::string signerId;
         std::string publicKey;
         std::string btcAddress;
-        uint64_t stake;                // ADU staked for participation
-        uint64_t reputationScore;      // Performance tracking
-        uint64_t signatureCount;       // Total signatures provided
-        uint64_t missedSignatures;     // Missed signature requests
+        uint64_t stake;
+        uint64_t reputationScore;
+        uint64_t signatureCount;
+        uint64_t missedSignatures;
         bool active;
         uint64_t joinedTime;
     };
@@ -181,7 +181,7 @@ public:
         data_.publicKey = pubKey;
         data_.btcAddress = btcAddr;
         data_.stake = stake;
-        data_.reputationScore = 100;  // Start at 100%
+        data_.reputationScore = 100;
         data_.signatureCount = 0;
         data_.missedSignatures = 0;
         data_.active = true;
@@ -190,20 +190,14 @@ public:
 
     void recordSignature() {
         data_.signatureCount++;
-        
-        // Improve reputation (max 100)
         if (data_.reputationScore < 100) {
-            data_.reputationScore = std::min<uint64_t>(100UL, data_.reputationScore + 1);
+            data_.reputationScore = std::min<uint64_t>(100ULL, data_.reputationScore + 1);
         }
     }
 
     void recordMissedSignature() {
         data_.missedSignatures++;
-        
-        // Degrade reputation
-        data_.reputationScore = std::max<uint64_t>(0UL, data_.reputationScore - 5);
-        
-        // Auto-deactivate after 10 missed signatures
+        data_.reputationScore = std::max<uint64_t>(0ULL, data_.reputationScore - 5);
         if (data_.missedSignatures >= 10) {
             data_.active = false;
         }
@@ -212,7 +206,7 @@ public:
     double getResponseRate() const {
         uint64_t total = data_.signatureCount + data_.missedSignatures;
         if (total == 0) return 1.0;
-        return static_cast<double>(data_.signatureCount) / total;
+        return static_cast<double>(data_.signatureCount) / static_cast<double>(total);
     }
 
     nlohmann::json to_json() const {
@@ -220,12 +214,12 @@ public:
         j["signerId"] = data_.signerId;
         j["publicKey"] = data_.publicKey;
         j["btcAddress"] = data_.btcAddress;
-        j["stake"] = static_cast<std::uint64_t>(data_.stake);
-        j["reputationScore"] = static_cast<std::uint64_t>(data_.reputationScore);
-        j["signatureCount"] = static_cast<std::uint64_t>(data_.signatureCount);
-        j["missedSignatures"] = static_cast<std::uint64_t>(data_.missedSignatures);
+        j["stake"] = static_cast<double>(data_.stake);
+        j["reputationScore"] = static_cast<double>(data_.reputationScore);
+        j["signatureCount"] = static_cast<double>(data_.signatureCount);
+        j["missedSignatures"] = static_cast<double>(data_.missedSignatures);
         j["active"] = data_.active;
-        j["joinedTime"] = static_cast<std::uint64_t>(data_.joinedTime);
+        j["joinedTime"] = static_cast<double>(data_.joinedTime);
         return j;
     }
 
