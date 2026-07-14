@@ -5,10 +5,34 @@
 
 #include "protocol/ProtocolFrame.hpp"
 
+// Forward declarations for bind_network_* functions
+namespace reflection {
+    struct ReflectionSnapshot;
+}
+
+namespace l1 {
+    struct SettlementIngestion;
+}
+
+namespace mesh {
+    struct MeshCoherenceResult;
+}
+
+// Forward declarations for network snapshots
+struct NetworkBlockSnapshot;
+struct NetworkMempoolSnapshot;
+struct NetworkPeerSnapshot;
+
+// ---------------------------------------------------------
+// RemotePeerRoute
+// ---------------------------------------------------------
 struct RemotePeerRoute {
     std::string address;
 };
 
+// ---------------------------------------------------------
+// NetworkBinding
+// ---------------------------------------------------------
 class NetworkBinding {
 public:
     // Local node identity
@@ -27,3 +51,17 @@ private:
     std::string local_id_;
     // In a fuller system, this would be a map<peerId, route>
 };
+
+// ---------------------------------------------------------
+// bind_network_* function declarations
+// ---------------------------------------------------------
+
+reflection::ReflectionSnapshot
+bind_network_block(const NetworkBlockSnapshot& net_block);
+
+l1::SettlementIngestion
+bind_network_mempool(const NetworkMempoolSnapshot& net_mempool,
+                     const NetworkBlockSnapshot& net_block);
+
+mesh::MeshCoherenceResult
+bind_network_peer(const NetworkPeerSnapshot& net_peer);
