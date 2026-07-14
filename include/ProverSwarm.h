@@ -63,11 +63,13 @@ struct ProverJob {
         j["payload"] = payload;
         j["assigned_prover"] = assigned_prover;
 
-        // Direct assignment avoids ambiguous overload resolution that occurs
-        // when wrapping the value in a functional-style nlohmann::json(...) cast.
-        j["assigned_at_ms"] = assigned_at_ms;
+        // Use emplace() rather than operator[]= for the integer fields: on this
+        // toolchain operator= resolves ambiguously between overloaded implicit
+        // conversions for uint64_t/uint32_t, whereas emplace() perfect-forwards
+        // directly into basic_json's constructor and avoids the ambiguity.
+        j.emplace("assigned_at_ms", assigned_at_ms);
         j["completed"] = completed;
-        j["retry_count"] = retry_count;
+        j.emplace("retry_count", retry_count);
 
         return j;
     }
