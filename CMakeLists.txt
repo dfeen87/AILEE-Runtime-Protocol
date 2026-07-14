@@ -444,6 +444,7 @@ set(CORE_SOURCES
     src/l2/BlockProducer.cpp
     src/l2/Mempool.cpp
     src/AILEEWebServer.cpp
+    src/broadcast/BroadcastEngine.cpp
     ${ADAPTER_SOURCES}
     ${AMBIENT_NODE_SOURCES}
     ${AMBIENT_MESH_SOURCES}
