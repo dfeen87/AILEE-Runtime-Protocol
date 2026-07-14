@@ -6,10 +6,41 @@
 #include <chrono>
 #include <cmath>
 
+#include "protocol/ProtocolFrame.hpp"   // <-- added
+#include <openssl/sha.h>                // <-- added
+
 namespace ailee::sched {
 
 namespace {
 
+// ---------------------------------------------------------
+// Optional: verify inbound activation frames before scheduling
+// ---------------------------------------------------------
+static bool verify_activation_frame(const ProtocolFrame& pf)
+{
+    // Recreate signed data exactly as sign_frame() does
+    std::string data = pf.frame_id + pf.type + pf.version +
+                       pf.node_id + std::to_string(pf.timestamp) +
+                       pf.payload;
+
+    unsigned char hash[SHA256_DIGEST_LENGTH];
+    SHA256(reinterpret_cast<const unsigned char*>(data.data()),
+           data.size(), hash);
+
+    std::string hex;
+    hex.reserve(SHA256_DIGEST_LENGTH * 2);
+    static const char* digits = "0123456789abcdef";
+    for (int i = 0; i < SHA256_DIGEST_LENGTH; ++i) {
+        hex.push_back(digits[(hash[i] >> 4) & 0xF]);
+        hex.push_back(digits[hash[i] & 0xF]);
+    }
+
+    return (hex == pf.signature);
+}
+
+// ---------------------------------------------------------
+// Existing requirement checks (unchanged)
+// ---------------------------------------------------------
 bool meetsRequirements(const NodeMetrics& node, const ResourceRequirements& req) {
     if (node.capabilities.cpuCores < req.minCpuCores) return false;
     if (node.capabilities.memoryGB < req.minMemoryGB) return false;
@@ -49,6 +80,33 @@ Assignment buildAssignment(const TaskPayload& task, const NodeMetrics& node, dou
 
 } // namespace
 
+// ---------------------------------------------------------
+// NEW: Activation-aware scheduling entry point
+// ---------------------------------------------------------
+Assignment WeightedOrchestrator::assignFromActivationFrame(
+    const ProtocolFrame& pf,
+    const std::vector<NodeMetrics>& candidates)
+{
+    // Only accept valid signed frames
+    if (!verify_activation_frame(pf)) {
+        Assignment a;
+        a.assigned = false;
+        a.reason = "invalid activation frame signature";
+        return a;
+    }
+
+    // Convert activation payload → TaskPayload
+    TaskPayload task;
+    task.taskId = pf.frame_id;  // deterministic mapping
+    task.requirements = {};     // future: decode from pf.payload
+
+    // Use normal weighted scheduling
+    return assignBestWorker(task, candidates, 0.5, 0.3, 0.2);
+}
+
+// ---------------------------------------------------------
+// Existing scheduling logic (unchanged)
+// ---------------------------------------------------------
 Assignment WeightedOrchestrator::assignBestWorker(const TaskPayload& task,
                                                   const std::vector<NodeMetrics>& candidates,
                                                   double trustW,
