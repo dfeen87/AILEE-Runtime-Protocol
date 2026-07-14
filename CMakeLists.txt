@@ -497,6 +497,14 @@ target_link_libraries(ailee_node
 target_include_directories(ailee_node PRIVATE src/broadcast src/json)
 
 # ============================================================================
+# Fallback Rust FFI Library
+# ============================================================================
+
+add_library(ailee_rust_ffi_fallback STATIC
+    src/security/ailee_rust_ffi_fallback.cpp
+)
+
+# ============================================================================
 # Rust Prover Integration
 # ============================================================================
 
