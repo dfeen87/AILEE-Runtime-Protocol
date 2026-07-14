@@ -2,8 +2,7 @@
 #include <cstring>
 #include <algorithm>
 
-#include "protocol/ProtocolFrame.hpp"   // signature verification
-#include "network/MainnetDiscovery.hpp" // mainnet peer discovery + verification
+#include "network/MainnetDiscovery.hpp"
 #include <openssl/sha.h>
 
 namespace ailee {
@@ -12,56 +11,14 @@ namespace l3 {
 // ============================================================================
 // GLOBAL MAINNET DISCOVERY POINTER
 // ============================================================================
-// This pointer is bound externally (during system initialization).
-// PeerSync uses it to:
-//   - register new peers discovered via protocol frames
-//   - mark peers as verified after signature validation
-//   - support mainnet sync negotiation
-// ============================================================================
 static MainnetDiscovery* g_discovery = nullptr;
 
-// Bind discovery subsystem to PeerSync
 void bind_mainnet_discovery(MainnetDiscovery* d) {
     g_discovery = d;
 }
 
 // ============================================================================
-// DETERMINISTIC SIGNATURE VERIFICATION
-// ============================================================================
-// This recreates the exact signed data used by BroadcastEngine::sign_frame()
-// and compares it to the provided signature. No randomness, no external state.
-// ============================================================================
-static bool verify_signature(const ProtocolFrame& pf)
-{
-    std::string data = pf.frame_id + pf.type + pf.version +
-                       pf.node_id + std::to_string(pf.timestamp) +
-                       pf.payload;
-
-    unsigned char hash[SHA256_DIGEST_LENGTH];
-    SHA256(reinterpret_cast<const unsigned char*>(data.data()),
-           data.size(), hash);
-
-    std::string hex;
-    hex.reserve(SHA256_DIGEST_LENGTH * 2);
-    static const char* digits = "0123456789abcdef";
-
-    for (int i = 0; i < SHA256_DIGEST_LENGTH; ++i) {
-        hex.push_back(digits[(hash[i] >> 4) & 0xF]);
-        hex.push_back(digits[hash[i] & 0xF]);
-    }
-
-    return (hex == pf.signature);
-}
-
-// ============================================================================
 // MAIN PEER SYNC COMPUTATION
-// ============================================================================
-// This function:
-//   1. Verifies protocol frame signatures
-//   2. Negotiates mainnet sync (peer verification)
-//   3. Computes sync status deterministically
-//   4. Computes coherence delta
-//   5. Returns a PeerSyncState struct
 // ============================================================================
 PeerSyncState compute_peer_sync(
     const l2::ExecutionEnvelope& local_envelope,
@@ -71,39 +28,23 @@ PeerSyncState compute_peer_sync(
     std::memset(&state, 0, sizeof(state));
 
     // ------------------------------------------------------------------------
-    // SIGNATURE VERIFICATION + MAINNET SYNC NEGOTIATION
+    // MAINNET DISCOVERY HOOK (BASED ON REMOTE SUMMARY)
     // ------------------------------------------------------------------------
-    if (remote_envelope.has_protocol_frame) {
-        const ProtocolFrame& pf = remote_envelope.protocol_frame;
+    if (g_discovery) {
+        // Use remote node identity fingerprint as a deterministic peer key.
+        std::string peerIdHex(
+            reinterpret_cast<const char*>(remote_envelope.remote_summary.node_identity_fingerprint),
+            32
+        );
 
-        bool sig_ok = verify_signature(pf);
-
-        if (!sig_ok) {
-            // Invalid signature → deterministic recovery path
-            state.sync_status = SyncStatus::NEEDS_RECOVERY;
-            state.coherence_delta = -999; // explicit invalid-frame marker
-            return state;
+        if (!g_discovery->hasPeer(peerIdHex)) {
+            g_discovery->addPeer(peerIdHex, "unknown");
         }
-
-        // --------------------------------------------------------------------
-        // MAINNET DISCOVERY HOOK
-        // --------------------------------------------------------------------
-        // If signature is valid:
-        //   - ensure peer exists in discovery table
-        //   - mark peer as verified
-        // This is the core of mainnet sync negotiation.
-        // --------------------------------------------------------------------
-        if (g_discovery) {
-            if (!g_discovery->hasPeer(pf.node_id)) {
-                // GossipLayer may later update the address
-                g_discovery->addPeer(pf.node_id, "unknown");
-            }
-            g_discovery->verifyPeer(pf.node_id);
-        }
+        g_discovery->verifyPeer(peerIdHex);
     }
 
     // ------------------------------------------------------------------------
-    // EXISTING SYNC LOGIC (UNCHANGED)
+    // EXISTING SYNC LOGIC
     // ------------------------------------------------------------------------
     std::memcpy(&state.local_envelope, &local_envelope, sizeof(l2::ExecutionEnvelope));
     std::memcpy(&state.remote_envelope, &remote_envelope, sizeof(GossipEnvelope));
@@ -146,7 +87,7 @@ PeerSyncState compute_peer_sync(
 }
 
 // ============================================================================
-// SUMMARY BUILDER (UNCHANGED)
+// SUMMARY BUILDER
 // ============================================================================
 PeerSyncSummary summarize_peer_sync(const PeerSyncState& state) {
     PeerSyncSummary summary;
