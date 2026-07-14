@@ -57,9 +57,6 @@
 #include "AILEEWebServer.h"
 #include "l4/ClusterSim.h"
 
-#include "BroadcastEngine.hpp"
-#include "json_loader.hpp"
-
 // ---------------------------------------------------------
 // Enhanced Structured Logging with Levels and File Output
 // ---------------------------------------------------------
@@ -1096,13 +1093,6 @@ int main(int argc, char* argv[]) {
     std::cout << "AILEE build number: " << ailee::build::BuildInfo::getBuildNumber() << "\n";
     std::cout << "AILEE protocol version: " << ailee::build::BuildInfo::getProtocolVersion() << "\n";
 
-void trigger_activation() {
-    auto payload = JsonLoader::load("protocol/broadcasts/v33_activation.json");
-    BroadcastEngine::emit("activation", "v33.2.1", payload);
-}
-
-int main(int argc, char** argv) {
-
     // Load and validate configuration
     Config cfg = loadConfigFromEnv();
 
@@ -1115,11 +1105,6 @@ int main(int argc, char** argv) {
         closeLogFile();
         return 1;
     }
-
-    Runtime::init();
-    trigger_activation();   // ← correct placement
-    Runtime::run();
-}
 
     log(LogLevel::INFO, "Configuration loaded successfully");
     log(LogLevel::INFO, "Node ID: " + cfg.nodeId + " | Region: " + cfg.region);
