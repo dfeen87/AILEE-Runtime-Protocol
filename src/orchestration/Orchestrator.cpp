@@ -5,8 +5,12 @@
 #include <algorithm>
 #include <chrono>
 #include <cmath>
+#include <unordered_map>
+#include <json/json.h> 
 
 #include "protocol/ProtocolFrame.hpp"
+#include "network/MainnetDiscovery.hpp"
+#include "BroadcastEngine.hpp" 
 #include <openssl/sha.h>
 
 namespace ailee::sched {
@@ -36,6 +40,33 @@ static bool verify_activation_frame_signature(const ProtocolFrame& pf)
 
     return (hex == pf.signature);
 }
+
+// ---------------------------------------------------------
+// Activation replay protection + ledger
+// ---------------------------------------------------------
+struct ActivationLedgerEntry {
+    std::string frameId;
+    uint64_t    committedAt;
+};
+
+class ActivationLedger {
+public:
+    bool hasSeen(const std::string& frameId) const {
+        return seen_.count(frameId) > 0;
+    }
+
+    void recordCommit(const std::string& frameId) {
+        auto now = std::chrono::system_clock::now().time_since_epoch();
+        uint64_t ts = std::chrono::duration_cast<std::chrono::seconds>(now).count();
+        seen_[frameId] = ActivationLedgerEntry{frameId, ts};
+    }
+
+private:
+    std::unordered_map<std::string, ActivationLedgerEntry> seen_;
+};
+
+// Global ledger instance for now (could be a member later)
+static ActivationLedger g_activation_ledger;
 
 // ---------------------------------------------------------
 // Basic activation handshake policy
@@ -123,15 +154,23 @@ struct ActivationCommitContext {
     std::string lastFrameId;
 };
 
-// ---------------------------------------------------------
-// Activation-aware entry point with handshake + commit
-// ---------------------------------------------------------
 Assignment WeightedOrchestrator::assignFromActivationFrame(
     const ProtocolFrame& pf,
     const std::vector<NodeMetrics>& candidates)
 {
-    // Local commit context (could be moved to a member if you want persistence)
     ActivationCommitContext ctx;
+
+    // 0. Replay protection: reject already‑committed frame_ids
+    if (g_activation_ledger.hasSeen(pf.frame_id)) {
+        ctx.state = ActivationCommitState::FAILED;
+        ctx.lastReason = "activation replay detected for frame_id=" + pf.frame_id;
+        ctx.lastFrameId = pf.frame_id;
+
+        Assignment a;
+        a.assigned = false;
+        a.reason = ctx.lastReason;
+        return a;
+    }
 
     // 1. Handshake
     std::string reason;
@@ -152,8 +191,8 @@ Assignment WeightedOrchestrator::assignFromActivationFrame(
 
     // 2. Minimal mapping from activation frame → TaskPayload
     TaskPayload task;
-    task.taskId = pf.frame_id;      // deterministic mapping
-    task.requirements = {};         // TODO: decode from pf.payload when schema is defined
+    task.taskId = pf.frame_id;
+    task.requirements = {};
 
     // 3. Schedule worker
     auto assignment = assignBestWorker(task, candidates, 0.5, 0.3, 0.2);
@@ -167,12 +206,11 @@ Assignment WeightedOrchestrator::assignFromActivationFrame(
         return a;
     }
 
-    // 4. Commit activation (simple state flip)
+    // 4. Commit activation + record in ledger
     ctx.state = ActivationCommitState::COMMITTED;
     ctx.lastReason = "activation committed";
-    // In a fuller system, you’d persist ctx, emit events, and propagate commit.
+    g_activation_ledger.recordCommit(pf.frame_id);
 
-    // 5. Return successful assignment
     return assignment;
 }
 
