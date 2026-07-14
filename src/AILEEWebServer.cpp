@@ -35,13 +35,13 @@ public:
 
     bool start() {
         if (running_) return false;
-        
+
         running_ = true;
         server_thread_ = std::thread([this]() {
-            std::cout << "[WebServer] Starting on " << config_.host 
+            std::cout << "[WebServer] Starting on " << config_.host
                       << ":" << config_.port << std::endl;
-            
-            if (config_.enable_ssl && !config_.ssl_cert_path.empty() 
+
+            if (config_.enable_ssl && !config_.ssl_cert_path.empty()
                 && !config_.ssl_key_path.empty()) {
                 // ERROR: SSL was requested but is not fully implemented.
                 // Refusing to silently downgrade to plain HTTP — fail-closed.
@@ -55,7 +55,7 @@ public:
             }
             running_ = false;
         });
-        
+
         return true;
     }
 
@@ -130,84 +130,13 @@ private:
 
         // 1. Pre-routing handler (CORS + API key)
         server_->set_pre_routing_handler([this](const httplib::Request& req, httplib::Response& res) {
-            ...
-        });
-
-        // 2. Dashboard route
-        server_->Get("/", ...);
-
-        // 3. All your GET /api/... endpoints
-        server_->Get("/api/health", ...);
-        server_->Get("/api/status", ...);
-        server_->Get("/api/metrics", ...);
-        server_->Get("/api/l2/state", ...);
-        server_->Get("/api/orchestration/tasks", ...);
-        server_->Get("/api/anchors/latest", ...);
-        server_->Get(R"(/api/replay/tick/(\d+))", ...);
-        server_->Get("/api/federation/view", ...);
-        server_->Get("/api/sync/events", ...);
-        server_->Get("/api/sync/clock", ...);
-        server_->Get("/api/replay/tick", ...);
-        server_->Get("/api/heartbeat", ...);
-        server_->Get("/api/mesh/envelopes", ...);
-
-        // 4. All your POST /api/... endpoints
-        server_->Post("/api/orchestration/submit", ...);
-        server_->Post("/api/eject", ...);
-        server_->Post("/api/reject", ...);
-        server_->Post("/api/federation/mode", ...);
-        server_->Post("/api/replay/mode", ...);
-        server_->Post("/api/refresh/all", ...);
-        server_->Post("/api/transactions/submit", ...);
-
-        // ⭐ 5. Your new broadcast endpoint — THIS IS THE CORRECT PLACE
-        server_->Post("/api/broadcast/mainnet", [this](const httplib::Request& req, httplib::Response& res) {
-            json response;
-
-            try {
-                if (!block_producer_) {
-                    res.status = 503;
-                    response = {
-                        {"error", "Service Unavailable"},
-                        {"message", "BlockProducer not initialized"}
-                    };
-                    res.set_content(response.dump(), "application/json");
-                    return;
-                }
-
-                std::cout << "[WebServer] Mainnet broadcast requested" << std::endl;
-                block_producer_->broadcastLatestBlockToMainnet();
-
-                response = {
-                    {"status", "ok"},
-                    {"message", "Mainnet broadcast triggered"}
-                };
-                res.status = 200;
-                res.set_content(response.dump(), "application/json");
-
-            } catch (const std::exception& e) {
-                res.status = 500;
-                response = {
-                    {"error", "Internal Server Error"},
-                    {"message", e.what()}
-                };
-                res.set_content(response.dump(), "application/json");
-            }
-        });
-
-        // 6. 404 handler (must stay LAST)
-        server_->set_error_handler([](const httplib::Request&, httplib::Response& res) {
-            ...
-        });
-    }
-
-        // Enforce API key on /api/* routes when a key is configured.
+            // Enforce API key on /api/* routes when a key is configured.
             if (!config_.api_key.empty() && req.path.find("/api/") == 0) {
                 auto api_key = req.get_header_value("X-API-Key");
                 if (api_key != config_.api_key) {
                     res.status = 401;
                     json error_response;
-error_response = {
+                    error_response = {
                         {"error", "Unauthorized"},
                         {"message", "Invalid or missing API key"}
                     };
@@ -219,7 +148,7 @@ error_response = {
             return httplib::Server::HandlerResponse::Unhandled;
         });
 
-        // Serve the web dashboard
+        // 2. Dashboard route
         server_->Get("/", [](const httplib::Request&, httplib::Response& res) {
             std::ifstream file("web/index.html");
             if (file) {
@@ -248,12 +177,14 @@ error_response = {
             }
         });
 
+        // 3. GET /api/... endpoints
+
         // Health check endpoint
         server_->Get("/api/health", [](const httplib::Request&, httplib::Response& res) {
             auto now = std::chrono::system_clock::now();
             auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
             json response;
-                response = {
+            response = {
                 {"status", "healthy"},
                 {"timestamp", static_cast<double>(ms)}
             };
@@ -266,7 +197,7 @@ error_response = {
                 try {
                     NodeStatus status = status_callback_();
                     json response;
-                response = {
+                    response = {
                         {"running", status.running},
                         {"version", status.version},
                         {"uptime_seconds", json::number_unsigned(status.uptime_seconds)},
@@ -283,7 +214,7 @@ error_response = {
                 } catch (const std::exception& e) {
                     res.status = 500;
                     json error;
-                error = {{"error", e.what()}};
+                    error = {{"error", e.what()}};
                     res.set_content(error.dump(), "application/json");
                 }
             } else {
@@ -301,14 +232,14 @@ error_response = {
             auto now = std::chrono::system_clock::now();
             auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
             json metrics;
-metrics = {
+            metrics = {
                 {"timestamp", static_cast<double>(ms)},
                 {"node", {
                     {"type", "AILEE-Core"},
                     {"layer", "Bitcoin Layer-2"}
                 }}
             };
-            
+
             if (status_callback_) {
                 try {
                     NodeStatus status = status_callback_();
@@ -320,26 +251,26 @@ metrics = {
                     // Ignore errors for metrics
                 }
             }
-            
+
             res.set_content(metrics.dump(), "application/json");
         });
 
         // Layer-2 state endpoint - now with real block data
         server_->Get("/api/l2/state", [this](const httplib::Request&, httplib::Response& res) {
             json state;
-state = {
+            state = {
                 {"layer", "Layer-2"},
                 {"protocol", "AILEE-Core"},
                 {"description", "Bitcoin-anchored Layer-2 state"}
             };
-            
+
             if (ledger_) {
                 state["ledger"] = {
                     {"status", "active"},
                     {"type", "federated"}
                 };
             }
-            
+
             // Add block producer state if available
             if (block_producer_) {
                 auto blockState = block_producer_->getState();
@@ -352,34 +283,34 @@ state = {
                 state["total_transactions"] = 0;
                 state["last_anchor_height"] = 0;
             }
-            
+
             res.set_content(state.dump(), "application/json");
         });
 
         // Orchestration tasks endpoint
         server_->Get("/api/orchestration/tasks", [this](const httplib::Request&, httplib::Response& res) {
             json tasks;
-tasks = {
+            tasks = {
                 {"tasks", json::array({})},
                 {"total", 0}
             };
-            
+
             if (orchestrator_) {
                 tasks["status"] = "available";
             } else {
                 tasks["status"] = "not_configured";
             }
-            
+
             res.set_content(tasks.dump(), "application/json");
         });
 
         // Latest anchor endpoint
         server_->Get("/api/anchors/latest", [this](const httplib::Request&, httplib::Response& res) {
             json anchor;
-anchor = {
+            anchor = {
                 {"message", "Bitcoin anchoring is active"}
             };
-            
+
             if (status_callback_) {
                 try {
                     NodeStatus status = status_callback_();
@@ -388,53 +319,8 @@ anchor = {
                     anchor["last_anchor_hash"] = "N/A";
                 }
             }
-            
-            res.set_content(anchor.dump(), "application/json");
-        });
 
-        // Submit task endpoint (POST)
-        server_->Post("/api/orchestration/submit", [this](const httplib::Request& req, httplib::Response& res) {
-            try {
-                json request_body = json::parse(req.body);
-                
-                if (!request_body.contains("task_type") || !request_body.contains("task_data")) {
-                    res.status = 400;
-                    json error;
-                error = {
-                        {"error", "Invalid request"},
-                        {"message", "task_type and task_data are required"}
-                    };
-                    res.set_content(error.dump(), "application/json");
-                    return;
-                }
-                
-                static std::atomic<uint64_t> task_counter{0};
-                auto now = std::chrono::system_clock::now();
-                auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
-                uint64_t counter = task_counter.fetch_add(1);
-                
-                std::ostringstream task_id_stream;
-                task_id_stream << "task_" << ms << "_" << counter;
-                
-                json response;
-                response = {
-                    {"status", "accepted"},
-                    {"task_id", task_id_stream.str()},
-                    {"message", "Task submitted successfully"}
-                };
-                
-                res.status = 202;
-                res.set_content(response.dump(), "application/json");
-                
-            } catch (const std::exception& e) {
-                res.status = 400;
-                json error;
-                error = {
-                    {"error", "Invalid request"},
-                    {"message", e.what()}
-                };
-                res.set_content(error.dump(), "application/json");
-            }
+            res.set_content(anchor.dump(), "application/json");
         });
 
         // Deterministic Replay Tick endpoint
@@ -456,7 +342,7 @@ anchor = {
                 if (tick_json.empty()) {
                     res.status = 404;
                     json error;
-                error = {
+                    error = {
                         {"error", "Not Found"},
                         {"message", "Tick index out of bounds"}
                     };
@@ -504,7 +390,7 @@ anchor = {
         });
 
         // V17 Telemetry Endpoints
-        
+
         server_->Get("/api/sync/events", [this](const httplib::Request&, httplib::Response& res) {
             if (!sync_events_callback_) {
                 res.status = 501;
@@ -550,16 +436,90 @@ anchor = {
         // Heartbeat (simple liveness flag)
         server_->Get("/api/heartbeat", [this](const httplib::Request&, httplib::Response& res) {
             json response;
-                response = {
+            response = {
                 {"status", heartbeat_ok_ ? "ok" : "degraded"}
             };
             res.set_content(response.dump(), "application/json");
         });
 
+        // Mesh envelopes for Deterministic Mesh panel
+        server_->Get("/api/mesh/envelopes", [this](const httplib::Request&, httplib::Response& res) {
+            if (!mesh_envelopes_callback_) {
+                res.status = 501;
+                json error;
+                error = {
+                    {"error", "Not Implemented"},
+                    {"message", "Mesh envelopes callback not configured"}
+                };
+                res.set_content(error.dump(), "application/json");
+                return;
+            }
+
+            if (!federation_mode_.load()) {
+                res.status = 200;
+                json response;
+                response = {
+                    {"status", "disabled"},
+                    {"message", "Federation mode is OFF"}
+                };
+                res.set_content(response.dump(), "application/json");
+                return;
+            }
+
+            res.set_content(mesh_envelopes_callback_(), "application/json");
+        });
+
+        // 4. POST /api/... endpoints
+
+        // Submit task endpoint (POST)
+        server_->Post("/api/orchestration/submit", [this](const httplib::Request& req, httplib::Response& res) {
+            try {
+                json request_body = json::parse(req.body);
+
+                if (!request_body.contains("task_type") || !request_body.contains("task_data")) {
+                    res.status = 400;
+                    json error;
+                    error = {
+                        {"error", "Invalid request"},
+                        {"message", "task_type and task_data are required"}
+                    };
+                    res.set_content(error.dump(), "application/json");
+                    return;
+                }
+
+                static std::atomic<uint64_t> task_counter{0};
+                auto now = std::chrono::system_clock::now();
+                auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
+                uint64_t counter = task_counter.fetch_add(1);
+
+                std::ostringstream task_id_stream;
+                task_id_stream << "task_" << ms << "_" << counter;
+
+                json response;
+                response = {
+                    {"status", "accepted"},
+                    {"task_id", task_id_stream.str()},
+                    {"message", "Task submitted successfully"}
+                };
+
+                res.status = 202;
+                res.set_content(response.dump(), "application/json");
+
+            } catch (const std::exception& e) {
+                res.status = 400;
+                json error;
+                error = {
+                    {"error", "Invalid request"},
+                    {"message", e.what()}
+                };
+                res.set_content(error.dump(), "application/json");
+            }
+        });
+
         // Eject (no-op placeholder)
         server_->Post("/api/eject", [this](const httplib::Request&, httplib::Response& res) {
             json response;
-                response = {
+            response = {
                 {"status", "accepted"},
                 {"message", "Eject requested (no-op in testnet)"}
             };
@@ -570,7 +530,7 @@ anchor = {
         // Reject (no-op placeholder)
         server_->Post("/api/reject", [this](const httplib::Request&, httplib::Response& res) {
             json response;
-                response = {
+            response = {
                 {"status", "accepted"},
                 {"message", "Reject requested (no-op in testnet)"}
             };
@@ -618,37 +578,10 @@ anchor = {
             }
         });
 
-        // Mesh envelopes for Deterministic Mesh panel
-        server_->Get("/api/mesh/envelopes", [this](const httplib::Request&, httplib::Response& res) {
-            if (!mesh_envelopes_callback_) {
-                res.status = 501;
-                json error;
-                error = {
-                    {"error", "Not Implemented"},
-                    {"message", "Mesh envelopes callback not configured"}
-                };
-                res.set_content(error.dump(), "application/json");
-                return;
-            }
-
-            if (!federation_mode_.load()) {
-                res.status = 200;
-                json response;
-                response = {
-                    {"status", "disabled"},
-                    {"message", "Federation mode is OFF"}
-                };
-                res.set_content(response.dump(), "application/json");
-                return;
-            }
-
-            res.set_content(mesh_envelopes_callback_(), "application/json");
-        });
-
         // Refresh All (just a convenience ping)
         server_->Post("/api/refresh/all", [this](const httplib::Request&, httplib::Response& res) {
             json response;
-                response = {
+            response = {
                 {"status", "ok"},
                 {"message", "Refresh requested"}
             };
@@ -661,31 +594,31 @@ anchor = {
                 if (!mempool_) {
                     res.status = 503;
                     json error;
-                error = {
+                    error = {
                         {"error", "Service Unavailable"},
                         {"message", "Mempool not initialized"}
                     };
                     res.set_content(error.dump(), "application/json");
                     return;
                 }
-                
+
                 json request_body = json::parse(req.body);
-                
+
                 // Validate required fields
-                if (!request_body.contains("from_address") || 
-                    !request_body.contains("to_address") || 
+                if (!request_body.contains("from_address") ||
+                    !request_body.contains("to_address") ||
                     !request_body.contains("amount") ||
                     !request_body.contains("tx_hash")) {
                     res.status = 400;
                     json error;
-                error = {
+                    error = {
                         {"error", "Invalid request"},
                         {"message", "from_address, to_address, amount, and tx_hash are required"}
                     };
                     res.set_content(error.dump(), "application/json");
                     return;
                 }
-                
+
                 // Create transaction
                 l2::Transaction tx;
                 tx.txHash = request_body["tx_hash"].get<std::string>();
@@ -697,39 +630,39 @@ anchor = {
                 tx.publicKey = request_body.value("public_key", tx.fromAddress);
                 tx.status = "pending";
                 tx.blockHeight = 0;
-                
+
                 // Get timestamp
                 auto now = std::chrono::system_clock::now();
                 auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(
                     now.time_since_epoch()).count();
                 tx.timestampMs = static_cast<std::uint64_t>(ms);
-                
+
                 // Add to mempool (returns false if duplicate)
                 if (!mempool_->addTransaction(tx)) {
                     res.status = 409;
                     json error;
-                error = {
+                    error = {
                         {"error", "Conflict"},
                         {"message", "Transaction with this hash already exists in mempool"}
                     };
                     res.set_content(error.dump(), "application/json");
                     return;
                 }
-                
-                std::cout << "[WebServer] Transaction added to mempool: " << tx.txHash.substr(0, 16) 
-                          << "... from " << tx.fromAddress << " to " << tx.toAddress 
+
+                std::cout << "[WebServer] Transaction added to mempool: " << tx.txHash.substr(0, 16)
+                          << "... from " << tx.fromAddress << " to " << tx.toAddress
                           << " amount " << tx.amount << std::endl;
-                
+
                 json response;
                 response = {
                     {"status", "accepted"},
                     {"tx_hash", tx.txHash},
                     {"message", "Transaction submitted to mempool"}
                 };
-                
+
                 res.status = 202;
                 res.set_content(response.dump(), "application/json");
-                
+
             } catch (const std::exception& e) {
                 res.status = 400;
                 json error;
@@ -741,23 +674,58 @@ anchor = {
             }
         });
 
-        // 404 handler
+        // 5. Mainnet broadcast endpoint
+        server_->Post("/api/broadcast/mainnet", [this](const httplib::Request& req, httplib::Response& res) {
+            json response;
+
+            try {
+                if (!block_producer_) {
+                    res.status = 503;
+                    response = {
+                        {"error", "Service Unavailable"},
+                        {"message", "BlockProducer not initialized"}
+                    };
+                    res.set_content(response.dump(), "application/json");
+                    return;
+                }
+
+                std::cout << "[WebServer] Mainnet broadcast requested" << std::endl;
+                block_producer_->broadcastLatestBlockToMainnet();
+
+                response = {
+                    {"status", "ok"},
+                    {"message", "Mainnet broadcast triggered"}
+                };
+                res.status = 200;
+                res.set_content(response.dump(), "application/json");
+
+            } catch (const std::exception& e) {
+                res.status = 500;
+                response = {
+                    {"error", "Internal Server Error"},
+                    {"message", e.what()}
+                };
+                res.set_content(response.dump(), "application/json");
+            }
+        });
+
+        // 6. 404 handler (must stay LAST)
         server_->set_error_handler([](const httplib::Request&, httplib::Response& res) {
             json error;
-                error = {
+            error = {
                 {"error", "Not Found"},
                 {"message", "The requested endpoint does not exist"},
                 {"status_code", res.status}
             };
             res.set_content(error.dump(), "application/json");
-        }
-    });
+        });
+    }
 
     WebServerConfig config_;
     std::unique_ptr<httplib::Server> server_;
     std::thread server_thread_;
     std::atomic<bool> running_{false};
-    
+
     std::function<NodeStatus()> status_callback_;
     Orchestrator* orchestrator_ = nullptr;
     Ledger* ledger_ = nullptr;
@@ -775,7 +743,7 @@ anchor = {
 };
 
 // Public API implementation
-AILEEWebServer::AILEEWebServer(const WebServerConfig& config) 
+AILEEWebServer::AILEEWebServer(const WebServerConfig& config)
     : pImpl(std::make_unique<Impl>(config)), config_(config) {
 }
 
