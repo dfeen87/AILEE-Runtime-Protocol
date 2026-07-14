@@ -2,8 +2,8 @@
 #include <cstring>
 #include <openssl/sha.h>
 
-#include "protocol/ProtocolFrame.hpp"   // signature verification
-#include "network/MainnetDiscovery.hpp" // <-- added for mainnet gossip propagation
+#include "protocol/ProtocolFrame.hpp"
+#include "network/MainnetDiscovery.hpp"
 
 namespace ailee {
 namespace l3 {
@@ -79,26 +79,30 @@ GossipMessage build_gossip_message(
 // ---------------------------------------------------------
 // Receive inbound gossip message
 // ---------------------------------------------------------
-GossipEnvelope receive_gossip_message(const GossipMessage& message) {
+GossipEnvelope receive_gossip_message(const GossipMessage& message)
+{
     GossipEnvelope envelope;
-    std::memset(&envelope, 0, sizeof(envelope));
 
-    std::memcpy(&envelope.remote_summary, &message.summary, sizeof(GossipSummary));
+    // Copy summary into remote_summary
+    std::memcpy(&envelope.remote_summary,
+                &message.summary,
+                sizeof(GossipSummary));
+
+    // Preserve sequence number
     envelope.received_sequence = message.sequence_number;
 
-    uint8_t buffer[sizeof(GossipSummary)];
-    std::memcpy(buffer, &envelope.remote_summary, sizeof(GossipSummary));
+    // Normalize hash (for now, just copy message_hash)
+    std::memcpy(envelope.normalized_hash,
+                message.message_hash,
+                sizeof(envelope.normalized_hash));
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-    SHA256(buffer, sizeof(buffer), envelope.normalized_hash);
-#pragma GCC diagnostic pop
+    // Initialize flags
+    envelope.flags = 0;
 
     // ---------------------------------------------------------
     // MAINNET GOSSIP PROPAGATION HOOK
     // ---------------------------------------------------------
     if (g_discovery) {
-        // Convert fingerprint bytes → hex string identity
         std::string peerIdHex(
             reinterpret_cast<const char*>(envelope.remote_summary.node_identity_fingerprint),
             32
@@ -110,22 +114,16 @@ GossipEnvelope receive_gossip_message(const GossipMessage& message) {
     }
 
     // ---------------------------------------------------------
-    // Signature verification (if protocol frame is attached)
+    // Signature verification placeholder
     // ---------------------------------------------------------
-    if (envelope.has_protocol_frame) {
-        const ProtocolFrame& pf = envelope.protocol_frame;
-
-        bool sig_ok = verify_signature(pf);
-
-        if (!sig_ok) {
-            envelope.flags |= GOSSIP_FLAG_INVALID_SIGNATURE;
-        } else {
-            envelope.flags |= GOSSIP_FLAG_VALID_SIGNATURE;
-        }
-    }
+    // GossipEnvelope does NOT carry ProtocolFrame anymore.
+    // This block is intentionally disabled.
+    //
+    // envelope.flags |= GOSSIP_FLAG_VALID_SIGNATURE;
 
     return envelope;
 }
 
 } // namespace l3
 } // namespace ailee
+
