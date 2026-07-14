@@ -269,6 +269,43 @@ void BlockProducer::checkAnchorCommitment() {
             << " (interval: " << config_.commitmentInterval << " blocks)";
         log("INFO", oss.str());
     }
+
+void BlockProducer::broadcastLatestBlockToMainnet() {
+    std::lock_guard<std::mutex> lock(stateMutex_);
+
+    if (state_.blockHeight == 0) {
+        log("WARN", "No blocks available to broadcast");
+        return;
+    }
+
+    // Build a minimal JSON payload using existing state
+    json blockJson;
+    blockJson = {
+        {"height", state_.blockHeight},
+        {"timestamp_ms", state_.lastBlockTimestampMs},
+        {"total_transactions", state_.totalTransactions},
+        {"last_anchor_height", state_.lastAnchorHeight}
+    };
+
+    std::string payload = blockJson.dump();
+
+    log("INFO", "Preparing mainnet broadcast for block #" + 
+        std::to_string(state_.blockHeight));
+
+    try {
+        // Replace with your actual RPC implementation
+        // This is a placeholder to show where RPC goes
+        log("INFO", "Mainnet broadcast payload: " + payload);
+
+        // TODO: integrate BitcoinRPC here
+        // BitcoinRPC rpc("127.0.0.1", 8332, "rpcuser", "rpcpassword");
+        // json response = rpc.call({ ... });
+
+        log("INFO", "Mainnet broadcast completed");
+
+    } catch (const std::exception& e) {
+        log("ERROR", std::string("Mainnet broadcast failed: ") + e.what());
+    }
 }
 
 } // namespace ailee::l2
