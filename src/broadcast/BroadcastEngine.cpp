@@ -1,53 +1,64 @@
 #include "BroadcastEngine.hpp"
-#include "NetworkBinding.hpp"
-#include "ProtocolFrame.hpp"
-#include <iostream>
-#include <ctime>
+#include "protocol/ProtocolFrame.hpp"
+#include "ProtocolFrame.hpp" // if separate header
+#include <openssl/sha.h>
 
-// Static network binding pointer
 NetworkBinding* BroadcastEngine::net = nullptr;
+MainnetDiscovery* BroadcastEngine::discovery = nullptr;
 
-// TODO: replace with your real frame_id generator
-static std::string generate_frame_id() {
-    return "frame-local-placeholder";
+static std::string sign_frame(const ProtocolFrame& pf)
+{
+    std::string data = pf.frame_id + pf.type + pf.version +
+                       pf.node_id + std::to_string(pf.timestamp) +
+                       pf.payload;
+
+    unsigned char hash[SHA256_DIGEST_LENGTH];
+    SHA256(reinterpret_cast<const unsigned char*>(data.data()),
+           data.size(), hash);
+
+    std::string hex;
+    hex.reserve(SHA256_DIGEST_LENGTH * 2);
+    static const char* digits = "0123456789abcdef";
+    for (int i = 0; i < SHA256_DIGEST_LENGTH; ++i) {
+        hex.push_back(digits[(hash[i] >> 4) & 0xF]);
+        hex.push_back(digits[hash[i] & 0xF]);
+    }
+    return hex;
 }
 
-void BroadcastEngine::bind(NetworkBinding* binding)
-{
+void BroadcastEngine::bind(NetworkBinding* binding) {
     net = binding;
-    std::cout << "[BroadcastEngine] Network binding attached" << std::endl;
+}
+
+void BroadcastEngine::bindDiscovery(MainnetDiscovery* d) {
+    discovery = d;
 }
 
 void BroadcastEngine::emit(const std::string& type,
                            const std::string& version,
                            const Json::Value& payload)
 {
-    if (!net) {
-        std::cout << "[BroadcastEngine] No network binding available" << std::endl;
-        std::cout << "  Type: " << type << std::endl;
-        std::cout << "  Version: " << version << std::endl;
-        std::cout << "  Payload: " << payload.toStyledString() << std::endl;
-        return;
-    }
-
-    Json::StreamWriterBuilder builder;
-    builder["indentation"] = "";
-    std::string serialized_payload = Json::writeString(builder, payload);
+    if (!net) return;
 
     ProtocolFrame pf;
-    pf.frame_id  = generate_frame_id();
+    pf.frame_id  = std::to_string(std::chrono::system_clock::now().time_since_epoch().count());
     pf.type      = type;
     pf.version   = version;
-    pf.node_id   = "local-node";
-    pf.timestamp = std::time(nullptr);
-    pf.payload   = serialized_payload;
-
-    // 🔐 sign the frame
+    pf.node_id   = net->localNodeId();
+    pf.timestamp = std::chrono::system_clock::now().time_since_epoch().count();
+    pf.payload   = Json::writeString(Json::StreamWriterBuilder{}, payload);
     pf.signature = sign_frame(pf);
 
-    // serialize full frame
     std::string serialized = serialize_frame(pf);
 
-    // send to network
+    // Local broadcast
     net->broadcast(serialized);
+
+    // Mainnet propagation: send to all verified peers
+    if (discovery) {
+        for (const auto& peer : discovery->getVerifiedPeers()) {
+            net->broadcastTo(peer.address, serialized);
+        }
+    }
 }
+
