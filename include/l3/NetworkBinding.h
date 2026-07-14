@@ -1,21 +1,29 @@
 #pragma once
 
-#include "l3/NetworkReflection.h"
-#include "ReflectionLayer.h"
-#include "SettlementIngestion.h"
-#include "MeshCoherence.h"
+#include <string>
+#include <vector>
 
-namespace ailee {
-namespace l3 {
+#include "protocol/ProtocolFrame.hpp"
 
-// Converts L3 NetworkBlockSnapshot to L2 ReflectionSnapshot
-reflection::ReflectionSnapshot bind_network_block(const NetworkBlockSnapshot& net_block);
+struct RemotePeerRoute {
+    std::string address;
+};
 
-// Converts L3 NetworkMempoolSnapshot to L1 SettlementIngestion (used in L2 engine)
-l1::SettlementIngestion bind_network_mempool(const NetworkMempoolSnapshot& net_mempool, const NetworkBlockSnapshot& net_block);
+class NetworkBinding {
+public:
+    // Local node identity
+    std::string localNodeId() const;
 
-// Converts L3 NetworkPeerSnapshot to MeshCoherenceResult
-mesh::MeshCoherenceResult bind_network_peer(const NetworkPeerSnapshot& net_peer);
+    // Serialize a ProtocolFrame for transport
+    std::string serializeFrame(const ProtocolFrame& pf) const;
 
-} // namespace l3
-} // namespace ailee
+    // Local broadcast (existing behavior)
+    void broadcast(const std::string& data);
+
+    // Mainnet broadcast to specific address
+    void broadcastTo(const std::string& address, const std::string& data);
+
+private:
+    std::string local_id_;
+    // In a fuller system, this would be a map<peerId, route>
+};
