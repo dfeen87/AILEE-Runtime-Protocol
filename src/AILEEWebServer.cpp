@@ -750,8 +750,8 @@ anchor = {
                 {"status_code", res.status}
             };
             res.set_content(error.dump(), "application/json");
-        });
-    }
+        }
+    });
 
     WebServerConfig config_;
     std::unique_ptr<httplib::Server> server_;
