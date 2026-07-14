@@ -285,10 +285,10 @@ void BlockProducer::broadcastLatestBlockToMainnet() {
     // Build a minimal JSON payload using existing state
     json blockJson;
     blockJson = {
-        {"height", state_.blockHeight},
-        {"timestamp_ms", state_.lastBlockTimestampMs},
-        {"total_transactions", state_.totalTransactions},
-        {"last_anchor_height", state_.lastAnchorHeight}
+        {"height", json::number_unsigned(state_.blockHeight)},
+        {"timestamp_ms", json::number_unsigned(state_.lastBlockTimestampMs)},
+        {"total_transactions", json::number_unsigned(state_.totalTransactions)},
+        {"last_anchor_height", json::number_unsigned(state_.lastAnchorHeight)}
     };
 
     std::string payload = blockJson.dump();
