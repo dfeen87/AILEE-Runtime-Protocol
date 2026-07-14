@@ -29,7 +29,7 @@ struct ProverIdentity {
     bool banned = false;
 
     nlohmann::json toJson() const {
-        nlohmann::json j = nlohmann::json();
+        nlohmann::json j;
         j["pubkey"] = pubkey;
         j["reputation"] = reputation;
         j["capacity"] = capacity;
@@ -58,13 +58,16 @@ struct ProverJob {
     std::uint32_t retry_count = 0;
 
     nlohmann::json toJson() const {
-        nlohmann::json j = nlohmann::json();
+        nlohmann::json j;
         j["job_id"] = job_id;
         j["payload"] = payload;
         j["assigned_prover"] = assigned_prover;
+
+        // macOS-safe, unambiguous JSON integer constructors
         j["assigned_at_ms"] = nlohmann::json::number_unsigned_t(assigned_at_ms);
         j["completed"] = completed;
-        j["retry_count"] = static_cast<double>(retry_count);
+        j["retry_count"] = nlohmann::json::number_unsigned_t(retry_count);
+
         return j;
     }
 
