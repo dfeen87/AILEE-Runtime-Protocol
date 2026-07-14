@@ -2,10 +2,17 @@
 
 #include <string>
 #include <vector>
-
 #include "protocol/ProtocolFrame.hpp"
 
-// Forward declarations for bind_network_* functions
+namespace ailee {
+namespace l3 {
+
+// Forward declarations for network snapshots
+struct NetworkBlockSnapshot;
+struct NetworkMempoolSnapshot;
+struct NetworkPeerSnapshot;
+
+// Forward declarations for bind_network_* result types
 namespace reflection {
     struct ReflectionSnapshot;
 }
@@ -17,11 +24,6 @@ namespace l1 {
 namespace mesh {
     struct MeshCoherenceResult;
 }
-
-// Forward declarations for network snapshots
-struct NetworkBlockSnapshot;
-struct NetworkMempoolSnapshot;
-struct NetworkPeerSnapshot;
 
 // ---------------------------------------------------------
 // RemotePeerRoute
@@ -47,6 +49,11 @@ public:
     // Mainnet broadcast to specific address
     void broadcastTo(const std::string& address, const std::string& data);
 
+    // Routing helpers
+    void registerPeerAddress(const std::string& peerId,
+                             const std::string& address);
+    std::string getPeerAddress(const std::string& peerId) const;
+
 private:
     std::string local_id_;
     // In a fuller system, this would be a map<peerId, route>
@@ -65,3 +72,6 @@ bind_network_mempool(const NetworkMempoolSnapshot& net_mempool,
 
 mesh::MeshCoherenceResult
 bind_network_peer(const NetworkPeerSnapshot& net_peer);
+
+} // namespace l3
+} // namespace ailee
