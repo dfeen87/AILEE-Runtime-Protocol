@@ -62,7 +62,7 @@ struct ProverJob {
         j["job_id"] = job_id;
         j["payload"] = payload;
         j["assigned_prover"] = assigned_prover;
-        j["assigned_at_ms"] = json(static_cast<std::uint64_t>(assigned_at_ms));
+        j["assigned_at_ms"] = nlohmann::json(static_cast<std::uint64_t>(assigned_at_ms));
         j["completed"] = completed;
         j["retry_count"] = static_cast<double>(retry_count);
         return j;
