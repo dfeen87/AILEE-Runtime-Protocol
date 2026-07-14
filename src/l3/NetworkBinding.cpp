@@ -1,6 +1,7 @@
 #include "l3/NetworkBinding.h"
 #include <cstring>
 #include <algorithm>
+#include <unordered_map>
 
 namespace ailee {
 namespace l3 {
@@ -8,7 +9,7 @@ namespace l3 {
 // ============================================================================
 // MAINNET PEER ROUTING SUPPORT (NEW)
 // ============================================================================
-// We maintain a minimal routing table mapping peerId → address.
+// Minimal routing table mapping peerId → address.
 // GossipLayer + PeerSync populate peer IDs; BroadcastEngine uses addresses.
 // ============================================================================
 static std::unordered_map<std::string, std::string> g_peer_routes;
@@ -34,7 +35,6 @@ void NetworkBinding::broadcastTo(const std::string& address,
 {
     // In a real system, this would be a QUIC/libp2p/TCP send.
     // For now, this is a stub that preserves architecture.
-    // TODO: integrate with your actual transport layer.
     (void)address;
     (void)data;
 }
