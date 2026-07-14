@@ -477,7 +477,23 @@ set(SWARM_SOURCES
 # Build Targets
 # ============================================================================
 
-# --- 1. The Main Node Executable ---
+add_executable(ailee_node ${CORE_SOURCES})
+add_dependencies(ailee_node generate_metadata_hpp)
+
+target_link_libraries(ailee_node
+    PRIVATE
+        ailee_adapters
+        ailee_l5_compression
+        OpenSSL::SSL
+        OpenSSL::Crypto
+        ${SECP256K1_LIB}
+        ${CURL_LIBRARIES}
+        jsoncpp_lib
+        ${ROCKSDB_LINK_LIBS}
+        Threads::Threads
+        $<IF:$<BOOL:${AILEE_USE_RUST_PROVER}>,ailee_rust_prover,ailee_rust_ffi_fallback>
+)
+
 # ============================================================================
 # Rust Prover Integration
 # ============================================================================
@@ -543,23 +559,6 @@ add_custom_target(verify_build ALL
             --service ${CMAKE_BINARY_DIR}/ailee_service
             --rust-prover ${CMAKE_BINARY_DIR}/libailee_rust_prover.a
     DEPENDS generate_metadata ailee_node ailee_service
-)
-
-add_executable(ailee_node ${CORE_SOURCES})
-add_dependencies(ailee_node generate_metadata_hpp)
-
-target_link_libraries(ailee_node
-    PRIVATE
-        ailee_adapters
-        ailee_l5_compression
-        OpenSSL::SSL
-        OpenSSL::Crypto
-        ${SECP256K1_LIB}
-        ${CURL_LIBRARIES}
-        jsoncpp_lib
-        ${ROCKSDB_LINK_LIBS}
-        Threads::Threads
-        $<IF:$<BOOL:${AILEE_USE_RUST_PROVER}>,ailee_rust_prover,ailee_rust_ffi_fallback>
 )
 
 # --- Layer-2 Service Executable ---
