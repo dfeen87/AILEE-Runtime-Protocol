@@ -255,7 +255,7 @@ public:
         j["weightOz"] = i.weightOz;
         j["location"] = i.location;
         j["available"] = i.available;
-        j["lastAuditTimestamp"] = static_cast<std::uint64_t>(i.lastAuditTimestamp);
+        j["lastAuditTimestamp"] = static_cast<double>(i.lastAuditTimestamp);
         return j;
     }
 
@@ -281,7 +281,7 @@ public:
         }
         j["items"] = items_arr;
         j["totalWeightOz"] = l.totalWeightOz;
-        j["lastRestockTimestamp"] = static_cast<std::uint64_t>(l.lastRestockTimestamp);
+        j["lastRestockTimestamp"] = static_cast<double>(l.lastRestockTimestamp);
         return j;
     }
 
@@ -533,7 +533,7 @@ public:
         j["denomination"] = static_cast<int>(t.denomination);
         j["backedBySerial"] = t.backedBySerial;
         j["custodianLocation"] = t.custodianLocation;
-        j["issuanceTimestamp"] = static_cast<std::uint64_t>(t.issuanceTimestamp);
+        j["issuanceTimestamp"] = static_cast<double>(t.issuanceTimestamp);
         j["redeemed"] = t.redeemed;
         return j;
     }
