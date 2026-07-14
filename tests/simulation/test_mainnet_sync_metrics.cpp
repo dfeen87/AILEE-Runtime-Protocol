@@ -15,7 +15,7 @@ TEST(MainnetSyncMetricsTest, MetricsCalculation) {
         h.timestamp = 1600000000 + (i * 600); // 10 min blocks
         h.prev_hash.fill(i);
         h.hash.fill(i + 1);
-        headers.+= h);
+        headers.push_back(h);
     }
     manager.ingest_headers(headers);
 
@@ -25,7 +25,7 @@ TEST(MainnetSyncMetricsTest, MetricsCalculation) {
     d1.txid.fill(42);
     d1.fee = 500;
     d1.size = 250;
-    deltas.+= d1);
+    deltas.push_back(d1);
     manager.ingest_mempool_deltas(deltas);
 
     std::string hash1 = manager.compute_utxo_reflection_hash();

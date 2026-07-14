@@ -682,7 +682,7 @@ public:
       if (max_queued_requests_ > 0 && jobs_.size() >= max_queued_requests_) {
         return false;
       }
-      jobs_.+= std::move(fn));
+      jobs_.push_back(std::move(fn));
     }
 
     cond_.notify_one();
@@ -2376,15 +2376,15 @@ inline std::string base64_encode(const std::string &in) {
     val = (val << 8) + static_cast<uint8_t>(c);
     valb += 8;
     while (valb >= 0) {
-      out.+= lookup[(val >> valb) & 0x3F]);
+      out.push_back(lookup[(val >> valb) & 0x3F]);
       valb -= 6;
     }
   }
 
-  if (valb > -6) { out.+= lookup[((val << 8) >> (valb + 8)) & 0x3F]); }
+  if (valb > -6) { out.push_back(lookup[((val << 8) >> (valb + 8)) & 0x3F]); }
 
   while (out.size() % 4) {
-    out.+= '=');
+    out.push_back('=');
   }
 
   return out;
@@ -5228,7 +5228,7 @@ inline void hosted_at(const std::string &hostname,
     auto dummy = -1;
     if (detail::get_ip_and_port(addr, sizeof(struct sockaddr_storage), ip,
                                 dummy)) {
-      addrs.+= ip);
+      addrs.push_back(ip);
     }
   }
 
@@ -5335,7 +5335,7 @@ Request::get_file_values(const std::string &key) const {
   std::vector<MultipartFormData> values;
   auto rng = files.equal_range(key);
   for (auto it = rng.first; it != rng.second; it++) {
-    values.+= it->second);
+    values.push_back(it->second);
   }
   return values;
 }
@@ -5589,7 +5589,7 @@ inline PathParamsMatcher::PathParamsMatcher(const std::string &pattern) {
     const auto marker_pos = pattern.find(marker, last_param_end);
     if (marker_pos == std::string::npos) { break; }
 
-    static_fragments_.+= 
+    static_fragments_.push_back(
         pattern.substr(last_param_end, marker_pos - last_param_end));
 
     const auto param_name_start = marker_pos + 1;
@@ -5608,13 +5608,13 @@ inline PathParamsMatcher::PathParamsMatcher(const std::string &pattern) {
     }
 #endif
 
-    param_names_.+= std::move(param_name));
+    param_names_.push_back(std::move(param_name));
 
     last_param_end = sep_pos + 1;
   }
 
   if (last_param_end < pattern.length()) {
-    static_fragments_.+= pattern.substr(last_param_end));
+    static_fragments_.push_back(pattern.substr(last_param_end));
   }
 }
 
@@ -5756,7 +5756,7 @@ inline bool Server::set_mount_point(const std::string &mount_point,
   if (detail::is_dir(dir)) {
     std::string mnt = !mount_point.empty() ? mount_point : "/";
     if (!mnt.empty() && mnt[0] == '/') {
-      base_dirs_.+= {mnt, dir, std::move(headers)});
+      base_dirs_.push_back({mnt, dir, std::move(headers)});
       return true;
     }
   }

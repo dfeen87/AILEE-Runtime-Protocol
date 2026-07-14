@@ -64,7 +64,7 @@ struct ProverJob {
         j["assigned_prover"] = assigned_prover;
         j["assigned_at_ms"] = static_cast<std::uint64_t>(assigned_at_ms);
         j["completed"] = completed;
-        j["retry_count"] = static_cast<std::uint32_t>(retry_count);
+        j["retry_count"] = static_cast<double>(retry_count);
         return j;
     }
 

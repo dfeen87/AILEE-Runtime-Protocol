@@ -30,8 +30,8 @@ public:
         sample2.inconsistent_state_root_nodes = 0;
         sample2.global_coherence_score = 100;
 
-        buffer.samples.+= sample1);
-        buffer.samples.+= sample2);
+        buffer.samples.push_back(sample1);
+        buffer.samples.push_back(sample2);
     }
 
     TelemetrySample sample1;

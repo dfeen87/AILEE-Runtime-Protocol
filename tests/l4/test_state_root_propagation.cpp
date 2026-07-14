@@ -19,7 +19,7 @@ TEST(StateRootPropagationTest, AllNodesConsistent) {
         for (int j = 0; j < 32; ++j) {
             node.last_envelope.context.state_root_hash[j] = 0xAA;
         }
-        view.nodes.+= node);
+        view.nodes.push_back(node);
     }
 
     MeshEpoch epoch = build_mesh_epoch(view);
@@ -65,7 +65,7 @@ TEST(StateRootPropagationTest, SingleDivergentNode) {
         } else {
             for (int j = 0; j < 32; ++j) node.last_envelope.context.state_root_hash[j] = 0xAA;
         }
-        view.nodes.+= node);
+        view.nodes.push_back(node);
     }
 
     MeshEpoch epoch = build_mesh_epoch(view);
@@ -106,7 +106,7 @@ TEST(StateRootPropagationTest, StaleEpoch) {
         for (int j = 0; j < 32; ++j) {
             node.last_envelope.context.state_root_hash[j] = 0xAA;
         }
-        view.nodes.+= node);
+        view.nodes.push_back(node);
     }
 
     MeshEpoch epoch = build_mesh_epoch(view);
@@ -132,7 +132,7 @@ TEST(StateRootPropagationTest, UnknownSource) {
     for (int j = 0; j < 32; ++j) {
         node.last_envelope.context.state_root_hash[j] = 0xAA;
     }
-    view.nodes.+= node);
+    view.nodes.push_back(node);
 
     MeshEpoch epoch = build_mesh_epoch(view);
     epoch.epoch_height = 10;

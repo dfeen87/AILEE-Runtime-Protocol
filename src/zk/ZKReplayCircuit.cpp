@@ -10,22 +10,22 @@ std::vector<uint8_t> ReplayProofArtifact::to_bytes() const {
 
     // epoch_id (uint64_t, little-endian)
     for (int i = 0; i < 8; ++i) {
-        bytes.+= static_cast<uint8_t>((epoch_id >> (8 * i)) & 0xFF));
+        bytes.push_back(static_cast<uint8_t>((epoch_id >> (8 * i)) & 0xFF));
     }
 
     // consensus_tick (uint64_t, little-endian)
     for (int i = 0; i < 8; ++i) {
-        bytes.+= static_cast<uint8_t>((consensus_tick >> (8 * i)) & 0xFF));
+        bytes.push_back(static_cast<uint8_t>((consensus_tick >> (8 * i)) & 0xFF));
     }
 
     // anchor_root (32 bytes)
     for (uint8_t byte : anchor_root) {
-        bytes.+= byte);
+        bytes.push_back(byte);
     }
 
     // packet_hash (32 bytes)
     for (uint8_t byte : packet_hash) {
-        bytes.+= byte);
+        bytes.push_back(byte);
     }
 
     // Note: proof_hash MUST NOT be included to avoid circular dependency

@@ -33,7 +33,7 @@ public:
         sync.sync_status = sync_status;
         sync.local_envelope.context.l1_height = local_epoch;
         sync.remote_envelope.remote_summary.epoch_height = remote_epoch;
-        node.peer_sync_states.+= sync);
+        node.peer_sync_states.push_back(sync);
 
         return node;
     }
@@ -55,8 +55,8 @@ TEST_F(RecoveryCoordinatorTest, BuildRequests_StateMismatch) {
     helper_sync.sync_status = SyncStatus::IN_SYNC;
     needy.peer_sync_states.insert(needy.peer_sync_states.begin(), helper_sync);
 
-    view.nodes.+= needy);
-    view.nodes.+= helper);
+    view.nodes.push_back(needy);
+    view.nodes.push_back(helper);
     view.total_nodes = 2;
 
     auto reqs = build_recovery_requests(view);
@@ -77,7 +77,7 @@ TEST_F(RecoveryCoordinatorTest, BuildRequests_Behind) {
     helper_sync.sync_status = SyncStatus::AHEAD; // Valid peer to ask
     behind.peer_sync_states.insert(behind.peer_sync_states.begin(), helper_sync);
 
-    view.nodes.+= behind);
+    view.nodes.push_back(behind);
 
     auto reqs = build_recovery_requests(view);
 
@@ -88,7 +88,7 @@ TEST_F(RecoveryCoordinatorTest, BuildRequests_Behind) {
     behind = create_node(10, SyncStatus::BEHIND, 100, 107);
     behind.peer_sync_states.insert(behind.peer_sync_states.begin(), helper_sync);
     view.nodes.clear();
-    view.nodes.+= behind);
+    view.nodes.push_back(behind);
 
     reqs = build_recovery_requests(view);
     EXPECT_EQ(reqs.size(), 0);
@@ -114,9 +114,9 @@ TEST_F(RecoveryCoordinatorTest, ProviderSelection_TieBreaking) {
     std::memset(p3.last_envelope.context.state_root_hash, 0x1, 32);
     std::memset(p2.last_envelope.context.state_root_hash, 0x2, 32);
 
-    view.nodes.+= p1);
-    view.nodes.+= p2);
-    view.nodes.+= p3);
+    view.nodes.push_back(p1);
+    view.nodes.push_back(p2);
+    view.nodes.push_back(p3);
 
     std::vector<RecoveryRequest> reqs = {req};
     auto resps = match_recovery_responses(view, reqs);
@@ -138,7 +138,7 @@ TEST_F(RecoveryCoordinatorTest, ApplyRecovery) {
     resp.full_recovery = true;
 
     // Setup a dummy peer sync state
-    node.peer_sync_states.+= PeerSyncState{});
+    node.peer_sync_states.push_back(PeerSyncState{});
 
     apply_recovery(node, resp);
 

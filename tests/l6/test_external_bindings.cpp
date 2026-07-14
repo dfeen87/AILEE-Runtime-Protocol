@@ -39,8 +39,8 @@ TEST(ExternalBindingsTest, JSONRoundTrip) {
     env2.timestamp = 200;
     env2.payload_hash = "hash2";
 
-    tick.cluster_view.envelopes.+= env1);
-    tick.cluster_view.envelopes.+= env2);
+    tick.cluster_view.envelopes.push_back(env1);
+    tick.cluster_view.envelopes.push_back(env2);
 
     std::string json = JsonBindings::to_json(tick);
 
@@ -88,8 +88,8 @@ TEST(ExternalBindingsTest, FederationExportCorrectness) {
     env2.source_node_id_hash = 10;
     env2.anchor.epoch.epoch_height = 200;
 
-    internal_view.mesh_envelopes.+= env1);
-    internal_view.mesh_envelopes.+= env2);
+    internal_view.mesh_envelopes.push_back(env1);
+    internal_view.mesh_envelopes.push_back(env2);
 
     FederationExport fed_export;
     ExternalClusterView ext_view = fed_export.export_view(internal_view);

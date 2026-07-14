@@ -17,17 +17,17 @@ protected:
 
 TEST_F(IslaModeEngineTest, CoherenceScoreCalculation) {
     EpochMetricsWindow window;
-    window.epochs.+= {0.0, 0, 100.0, 100.0}); // Perfect
-    window.epochs.+= {0.0, 0, 100.0, 100.0}); // Perfect
+    window.epochs.push_back({0.0, 0, 100.0, 100.0}); // Perfect
+    window.epochs.push_back({0.0, 0, 100.0, 100.0}); // Perfect
 
     double score = IslaModeEngine::computeCoherenceScore(window);
     EXPECT_DOUBLE_EQ(score, 1.0);
 
-    window.epochs.+= {0.5, 0, 100.0, 100.0}); // 1.0 - 0.25 = 0.75
+    window.epochs.push_back({0.5, 0, 100.0, 100.0}); // 1.0 - 0.25 = 0.75
     score = IslaModeEngine::computeCoherenceScore(window);
     EXPECT_DOUBLE_EQ(score, (1.0 + 1.0 + 0.75) / 3.0);
 
-    window.epochs.+= {0.0, 1, 100.0, 100.0}); // 1.0 - 0.2 = 0.8
+    window.epochs.push_back({0.0, 1, 100.0, 100.0}); // 1.0 - 0.2 = 0.8
     score = IslaModeEngine::computeCoherenceScore(window);
     EXPECT_DOUBLE_EQ(score, (1.0 + 1.0 + 0.75 + 0.8) / 4.0);
 }
@@ -47,10 +47,10 @@ TEST_F(IslaModeEngineTest, EmptyWindowsReturnNeutral) {
 
 TEST_F(IslaModeEngineTest, IncreaseBatchSizeOnHighCoherence) {
     EpochMetricsWindow ep_win;
-    ep_win.epochs.+= {0.0, 0, 10.0, 10.0}); // coherence = 1.0
+    ep_win.epochs.push_back({0.0, 0, 10.0, 10.0}); // coherence = 1.0
 
     PerformanceMetricsWindow pf_win;
-    pf_win.epochs.+= {100.0, 0.5, 1.0}); // performance = 1.0
+    pf_win.epochs.push_back({100.0, 0.5, 1.0}); // performance = 1.0
 
     EconomicMetricsWindow ec_win;
 
@@ -62,7 +62,7 @@ TEST_F(IslaModeEngineTest, IncreaseBatchSizeOnHighCoherence) {
 
 TEST_F(IslaModeEngineTest, DecreaseBatchSizeOnLowCoherence) {
     EpochMetricsWindow ep_win;
-    ep_win.epochs.+= {0.0, 3, 2000.0, 10.0}); // bad coherence (score = 1 - 0.6 - 0.1 = 0.3)
+    ep_win.epochs.push_back({0.0, 3, 2000.0, 10.0}); // bad coherence (score = 1 - 0.6 - 0.1 = 0.3)
 
     PerformanceMetricsWindow pf_win;
     EconomicMetricsWindow ec_win;
@@ -76,7 +76,7 @@ TEST_F(IslaModeEngineTest, DecreaseBatchSizeOnLowCoherence) {
 
 TEST_F(IslaModeEngineTest, ClampBatchSizeToMinOnHighDispute) {
     EpochMetricsWindow ep_win;
-    ep_win.epochs.+= {0.5, 0, 10.0, 10.0}); // High dispute rate
+    ep_win.epochs.push_back({0.5, 0, 10.0, 10.0}); // High dispute rate
 
     PerformanceMetricsWindow pf_win;
     EconomicMetricsWindow ec_win;
@@ -90,12 +90,12 @@ TEST_F(IslaModeEngineTest, ClampBatchSizeToMinOnHighDispute) {
 
 TEST_F(IslaModeEngineTest, AdjustProofInterval) {
     EpochMetricsWindow ep_win;
-    ep_win.epochs.+= {0.0, 0, 10.0, 10.0}); // anchor_time < 500
+    ep_win.epochs.push_back({0.0, 0, 10.0, 10.0}); // anchor_time < 500
 
     PerformanceMetricsWindow pf_win;
 
     EconomicMetricsWindow ec_win;
-    ec_win.epochs.+= {5.0, 0.1, 0.1}); // fee < 10
+    ec_win.epochs.push_back({5.0, 0.1, 0.1}); // fee < 10
 
     auto decision = engine.computeDecision(ep_win, pf_win, ec_win, base_decision);
 
@@ -113,7 +113,7 @@ TEST_F(IslaModeEngineTest, AdjustProofInterval) {
 TEST_F(IslaModeEngineTest, WorkerAllocationLimits) {
     EpochMetricsWindow ep_win;
     PerformanceMetricsWindow pf_win;
-    pf_win.epochs.+= {3000.0, 0.1, 1.0}); // high time, low util -> increase
+    pf_win.epochs.push_back({3000.0, 0.1, 1.0}); // high time, low util -> increase
     EconomicMetricsWindow ec_win;
 
     IslaTuningDecision d = base_decision;
@@ -126,13 +126,13 @@ TEST_F(IslaModeEngineTest, WorkerAllocationLimits) {
 
 TEST_F(IslaModeEngineTest, NoRandomnessDeterminismTest) {
     EpochMetricsWindow ep_win;
-    ep_win.epochs.+= {0.1, 1, 500.0, 1500.0});
+    ep_win.epochs.push_back({0.1, 1, 500.0, 1500.0});
 
     PerformanceMetricsWindow pf_win;
-    pf_win.epochs.+= {2000.0, 0.8, 0.9});
+    pf_win.epochs.push_back({2000.0, 0.8, 0.9});
 
     EconomicMetricsWindow ec_win;
-    ec_win.epochs.+= {25.0, 0.3, 0.5});
+    ec_win.epochs.push_back({25.0, 0.3, 0.5});
 
     auto decision1 = engine.computeDecision(ep_win, pf_win, ec_win, base_decision);
 

@@ -356,7 +356,7 @@ L2StateSnapshot captureSnapshot(const ailee::econ::ILedger& ledger,
         record.taskType = static_cast<int>(task.taskType);
         record.priority = static_cast<int>(task.priority);
         record.submitterId = task.submitterId;
-        record.submittedAtMs = static_cast<std::uint64_t>(
+        record.submittedAtMs = static_cast<double>(
             std::chrono::duration_cast<std::chrono::milliseconds>(
                 task.submittedAt.time_since_epoch())
                 .count());
@@ -405,12 +405,12 @@ nlohmann::json L2StateDiff::toJson() const {
     }
 
     nlohmann::json j = nlohmann::json();
-    j["height"] = static_cast<std::uint64_t>(height);
+    j["height"] = static_cast<double>(height);
     j["priorStateRoot"] = priorStateRoot;
     j["newStateRoot"] = newStateRoot;
     j["diffPayload"] = hexChanges;
     j["proofRefs"] = refs;
-    j["timestampMs"] = static_cast<std::uint64_t>(timestampMs);
+    j["timestampMs"] = static_cast<double>(timestampMs);
     return j;
 }
 

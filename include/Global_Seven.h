@@ -392,7 +392,7 @@ public:
         TxOut o;
         o.address = intent.params.count("targetAddress") ? intent.params.at("targetAddress") : "";
         o.amount  = intent.minReceiveTarget;
-        outs.+= o);
+        outs.push_back(o);
 
         std::unordered_map<std::string, std::string> opts = {
             {"settlementKind", std::to_string(static_cast<int>(intent.kind))},

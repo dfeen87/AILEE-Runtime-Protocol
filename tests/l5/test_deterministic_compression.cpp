@@ -17,8 +17,8 @@ TEST(DeterministicCompressionTest, ReplayTickSerializationRoundTrip) {
     node.step_counter = 10;
     ailee::l3::PeerSyncState sync;
     sync.coherence_delta = 12345;
-    node.peer_sync_states.+= sync);
-    original.view.nodes.+= node);
+    node.peer_sync_states.push_back(sync);
+    original.view.nodes.push_back(node);
 
     auto serialized = original.serialize();
     auto deserialized = ReplayTick::deserialize(serialized);

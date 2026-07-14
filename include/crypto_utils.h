@@ -24,8 +24,8 @@ inline std::string sha256_hex(const std::string& input) {
     out.reserve(2 * SHA256_DIGEST_LENGTH);
     static const char* kHex = "0123456789abcdef";
     for (int i = 0; i < SHA256_DIGEST_LENGTH; ++i) {
-        out.+= kHex[hash[i] >> 4]);
-        out.+= kHex[hash[i] & 0x0F]);
+        out.push_back(kHex[hash[i] >> 4]);
+        out.push_back(kHex[hash[i] & 0x0F]);
     }
     return out;
 }
@@ -41,8 +41,8 @@ inline std::string sha256_hex(const std::vector<uint8_t>& input) {
     out.reserve(2 * SHA256_DIGEST_LENGTH);
     static const char* kHex = "0123456789abcdef";
     for (int i = 0; i < SHA256_DIGEST_LENGTH; ++i) {
-        out.+= kHex[hash[i] >> 4]);
-        out.+= kHex[hash[i] & 0x0F]);
+        out.push_back(kHex[hash[i] >> 4]);
+        out.push_back(kHex[hash[i] & 0x0F]);
     }
     return out;
 }

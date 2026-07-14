@@ -4720,15 +4720,15 @@ inline std::string base64_encode(const std::string &in) {
     val = (val << 8) + static_cast<uint8_t>(c);
     valb += 8;
     while (valb >= 0) {
-      out.+= lookup[(val >> valb) & 0x3F]);
+      out.push_back(lookup[(val >> valb) & 0x3F]);
       valb -= 6;
     }
   }
 
-  if (valb > -6) { out.+= lookup[((val << 8) >> (valb + 8)) & 0x3F]); }
+  if (valb > -6) { out.push_back(lookup[((val << 8) >> (valb + 8)) & 0x3F]); }
 
   while (out.size() % 4) {
-    out.+= '=');
+    out.push_back('=');
   }
 
   return out;
@@ -4749,14 +4749,14 @@ inline std::string sha1(const std::string &input) {
   // Pre-processing: adding padding bits
   std::string msg = input;
   uint64_t original_bit_len = static_cast<uint64_t>(msg.size()) * 8;
-  msg.+= static_cast<char>(0x80u));
+  msg.push_back(static_cast<char>(0x80u));
   while (msg.size() % 64 != 56) {
-    msg.+= 0);
+    msg.push_back(0);
   }
 
   // Append original length in bits as 64-bit big-endian
   for (int i = 56; i >= 0; i -= 8) {
-    msg.+= static_cast<char>((original_bit_len >> i) & 0xFF));
+    msg.push_back(static_cast<char>((original_bit_len >> i) & 0xFF));
   }
 
   // Process each 512-bit chunk
@@ -8017,7 +8017,7 @@ inline bool parse_accept_header(const std::string &s,
       return;
     }
 
-    entries.+= std::move(accept_entry));
+    entries.push_back(std::move(accept_entry));
   });
 
   // Return false if any invalid entry was found
@@ -8035,7 +8035,7 @@ inline bool parse_accept_header(const std::string &s,
   // Extract sorted media types
   content_types.reserve(entries.size());
   for (auto &entry : entries) {
-    content_types.+= std::move(entry.media_type));
+    content_types.push_back(std::move(entry.media_type));
   }
 
   return true;
@@ -8461,19 +8461,19 @@ make_multipart_content_provider(const UploadFormDataItems &items,
   std::vector<std::string> owned;
   owned.reserve(items.size() + 1);
   for (const auto &item : items)
-    owned.+= serialize_multipart_formdata_item_begin(item, boundary));
-  owned.+= serialize_multipart_formdata_finish(boundary));
+    owned.push_back(serialize_multipart_formdata_item_begin(item, boundary));
+  owned.push_back(serialize_multipart_formdata_finish(boundary));
 
   // Flat segment list: [header, content, "\r\n"] * N + [finish]
   std::vector<MultipartSegment> segs;
   segs.reserve(items.size() * 3 + 1);
   static const char crlf[] = "\r\n";
   for (size_t i = 0; i < items.size(); i++) {
-    segs.+= {owned[i].data(), owned[i].size()});
-    segs.+= {items[i].content.data(), items[i].content.size()});
-    segs.+= {crlf, 2});
+    segs.push_back({owned[i].data(), owned[i].size()});
+    segs.push_back({items[i].content.data(), items[i].content.size()});
+    segs.push_back({crlf, 2});
   }
-  segs.+= {owned.back().data(), owned.back().size()});
+  segs.push_back({owned.back().data(), owned.back().size()});
 
   struct MultipartState {
     std::vector<std::string> owned;
@@ -9989,7 +9989,7 @@ Request::get_param_values(const std::string &key) const {
   std::vector<std::string> values;
   values.reserve(static_cast<size_t>(std::distance(rng.first, rng.second)));
   for (auto it = rng.first; it != rng.second; ++it) {
-    values.+= it->second);
+    values.push_back(it->second);
   }
   return values;
 }
@@ -10019,7 +10019,7 @@ MultipartFormData::get_fields(const std::string &key) const {
   std::vector<std::string> values;
   auto rng = fields.equal_range(key);
   for (auto it = rng.first; it != rng.second; it++) {
-    values.+= it->second.content);
+    values.push_back(it->second.content);
   }
   return values;
 }
@@ -10043,7 +10043,7 @@ MultipartFormData::get_files(const std::string &key) const {
   std::vector<FormData> values;
   auto rng = files.equal_range(key);
   for (auto it = rng.first; it != rng.second; it++) {
-    values.+= it->second);
+    values.push_back(it->second);
   }
   return values;
 }
@@ -10363,7 +10363,7 @@ inline bool ThreadPool::enqueue(std::function<void()> fn) {
     if (max_queued_requests_ > 0 && jobs_.size() >= max_queued_requests_) {
       return false;
     }
-    jobs_.+= std::move(fn));
+    jobs_.push_back(std::move(fn));
 
     // Spawn a dynamic thread if no idle threads and under max
     if (idle_thread_count_ == 0 &&
@@ -10408,7 +10408,7 @@ inline void ThreadPool::move_to_finished(std::thread::id id) {
   // Must be called with mutex_ held
   for (auto it = dynamic_threads_.begin(); it != dynamic_threads_.end(); ++it) {
     if (it->get_id() == id) {
-      finished_threads_.+= std::move(*it));
+      finished_threads_.push_back(std::move(*it));
       dynamic_threads_.erase(it);
       return;
     }
@@ -10673,7 +10673,7 @@ inline PathParamsMatcher::PathParamsMatcher(const std::string &pattern)
         marker, last_param_end == 0 ? last_param_end : last_param_end - 1);
     if (marker_pos == std::string::npos) { break; }
 
-    static_fragments_.+= 
+    static_fragments_.push_back(
         pattern.substr(last_param_end, marker_pos - last_param_end + 1));
 
     const auto param_name_start = marker_pos + str_len(marker);
@@ -10692,13 +10692,13 @@ inline PathParamsMatcher::PathParamsMatcher(const std::string &pattern)
     }
 #endif
 
-    param_names_.+= std::move(param_name));
+    param_names_.push_back(std::move(param_name));
 
     last_param_end = sep_pos + 1;
   }
 
   if (last_param_end < pattern.length()) {
-    static_fragments_.+= pattern.substr(last_param_end));
+    static_fragments_.push_back(pattern.substr(last_param_end));
   }
 }
 
@@ -11202,7 +11202,7 @@ inline Server &Server::Options(const std::string &pattern, Handler handler) {
 
 inline Server &Server::WebSocket(const std::string &pattern,
                                  WebSocketHandler handler) {
-  websocket_handlers_.+= 
+  websocket_handlers_.push_back(
       {make_matcher(pattern), std::move(handler), nullptr});
   return *this;
 }
@@ -11210,7 +11210,7 @@ inline Server &Server::WebSocket(const std::string &pattern,
 inline Server &Server::WebSocket(const std::string &pattern,
                                  WebSocketHandler handler,
                                  SubProtocolSelector sub_protocol_selector) {
-  websocket_handlers_.+= {make_matcher(pattern), std::move(handler),
+  websocket_handlers_.push_back({make_matcher(pattern), std::move(handler),
                                  std::move(sub_protocol_selector)});
   return *this;
 }
@@ -11236,7 +11236,7 @@ inline bool Server::set_mount_point(const std::string &mount_point,
         if (resolved_base.back() != '/') { resolved_base += '/'; }
 #endif
       }
-      base_dirs_.+= 
+      base_dirs_.push_back(
           {std::move(mnt), dir, std::move(resolved_base), std::move(headers)});
       return true;
     }
@@ -12531,7 +12531,7 @@ Server::process_request(Stream &strm, const std::string &remote_addr,
               auto start = token.find_first_not_of(' ');
               auto end = token.find_last_not_of(' ');
               if (start != std::string::npos) {
-                protocols.+= token.substr(start, end - start + 1));
+                protocols.push_back(token.substr(start, end - start + 1));
               }
             }
             selected_subprotocol = entry.sub_protocol_selector(protocols);
@@ -15200,7 +15200,7 @@ inline void ClientImpl::set_no_proxy(const std::vector<std::string> &patterns) {
     if (trimmed.empty()) { continue; }
     detail::NoProxyEntry entry;
     if (detail::parse_no_proxy_entry(trimmed, entry)) {
-      parsed.+= std::move(entry));
+      parsed.push_back(std::move(entry));
     }
   }
   no_proxy_entries_ = std::move(parsed);
@@ -17601,7 +17601,7 @@ inline bool get_cert_sans(cert_t cert, std::vector<SanEntry> &sans) {
     default: entry.type = SanType::OTHER; break;
     }
 
-    if (!entry.value.empty()) { sans.+= std::move(entry)); }
+    if (!entry.value.empty()) { sans.push_back(std::move(entry)); }
   }
 
   GENERAL_NAMES_free(names);
@@ -17740,7 +17740,7 @@ inline size_t get_ca_certs(ctx_t ctx, std::vector<cert_t> &certs) {
       if (x509) {
         // Increment reference count so caller can free it
         X509_up_ref(x509);
-        certs.+= static_cast<cert_t>(x509));
+        certs.push_back(static_cast<cert_t>(x509));
       }
     }
   }
@@ -17770,7 +17770,7 @@ inline std::vector<std::string> get_ca_names(ctx_t ctx) {
         if (subject) {
           char buf[512];
           X509_NAME_oneline(subject, buf, sizeof(buf));
-          names.+= buf);
+          names.push_back(buf);
         }
       }
     }
@@ -18827,7 +18827,7 @@ inline bool get_cert_sans(cert_t cert, std::vector<SanEntry> &sans) {
           default: entry.type = SanType::OTHER; break;
           }
 
-          if (!entry.value.empty()) { sans.+= std::move(entry)); }
+          if (!entry.value.empty()) { sans.push_back(std::move(entry)); }
         }
       }
     }
@@ -18994,7 +18994,7 @@ inline size_t get_ca_certs(ctx_t ctx, std::vector<cert_t> &certs) {
     mbedtls_x509_crt_init(copy);
     int ret = mbedtls_x509_crt_parse_der(copy, cert->raw.p, cert->raw.len);
     if (ret == 0) {
-      certs.+= static_cast<cert_t>(copy));
+      certs.push_back(static_cast<cert_t>(copy));
     } else {
       mbedtls_x509_crt_free(copy);
       delete copy;
@@ -19014,7 +19014,7 @@ inline std::vector<std::string> get_ca_names(ctx_t ctx) {
   while (cert != nullptr && cert->raw.len > 0) {
     char buf[512];
     int ret = mbedtls_x509_dn_gets(buf, sizeof(buf), &cert->subject);
-    if (ret > 0) { names.+= buf); }
+    if (ret > 0) { names.push_back(buf); }
     cert = cert->next;
   }
   return names;
@@ -20001,7 +20001,7 @@ inline bool get_cert_sans(cert_t cert, std::vector<SanEntry> &sans) {
     default: entry.type = SanType::OTHER; break;
     }
 
-    if (!entry.value.empty()) { sans.+= std::move(entry)); }
+    if (!entry.value.empty()) { sans.push_back(std::move(entry)); }
   }
   wolfSSL_sk_free(san_names);
   return true;
@@ -20147,7 +20147,7 @@ inline size_t get_ca_certs(ctx_t ctx, std::vector<cert_t> &certs) {
     WOLFSSL_X509 *x509 = wolfSSL_X509_load_certificate_buffer(
         reinterpret_cast<const unsigned char *>(cert_pem.data()),
         static_cast<int>(cert_pem.size()), WOLFSSL_FILETYPE_PEM);
-    if (x509) { certs.+= static_cast<cert_t>(x509)); }
+    if (x509) { certs.push_back(static_cast<cert_t>(x509)); }
     pos = end_pos;
   }
   return certs.size();
@@ -20176,7 +20176,7 @@ inline std::vector<std::string> get_ca_names(ctx_t ctx) {
       if (subject) {
         char *name_str = wolfSSL_X509_NAME_oneline(subject, nullptr, 0);
         if (name_str) {
-          names.+= name_str);
+          names.push_back(name_str);
           XFREE(name_str, nullptr, DYNAMIC_TYPE_OPENSSL);
         }
       }
@@ -20392,8 +20392,8 @@ inline void WebSocket::close(CloseStatus status, const std::string &reason) {
   ping_cv_.notify_all();
   std::string payload;
   auto code = static_cast<uint16_t>(status);
-  payload.+= static_cast<char>((code >> 8) & 0xFF));
-  payload.+= static_cast<char>(code & 0xFF));
+  payload.push_back(static_cast<char>((code >> 8) & 0xFF));
+  payload.push_back(static_cast<char>(code & 0xFF));
   // RFC 6455 Section 5.5: control frame payload must not exceed 125 bytes
   // Close frame has 2-byte status code, so reason is limited to 123 bytes
   payload += reason.substr(0, 123);

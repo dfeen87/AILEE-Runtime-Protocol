@@ -13,7 +13,7 @@ std::vector<TestInfo>& Registry() {
 } // namespace
 
 void RegisterTest(const std::string& suite, const std::string& name, void (*func)()) {
-    Registry().+= TestInfo{suite, name, func});
+    Registry().push_back(TestInfo{suite, name, func});
 }
 
 namespace detail {

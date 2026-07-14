@@ -47,7 +47,7 @@ static std::optional<Config> parse_yaml(const std::string& text) {
         s.name = sig["name"].as<std::string>();
         s.source = sig["source"].as<std::string>();
         s.window_ms = sig["window_ms"].as<size_t>();
-        cfg.signals.+= s);
+        cfg.signals.push_back(s);
       }
     }
 
@@ -63,12 +63,12 @@ static std::optional<Config> parse_yaml(const std::string& text) {
         m.type = met["type"] ? met["type"].as<std::string>() : "";
         if (met["signals"]) {
           for (const auto& sig : met["signals"]) {
-            m.signals.+= sig.as<std::string>());
+            m.signals.push_back(sig.as<std::string>());
           }
         }
         m.window_ms = met["window_ms"].as<size_t>();
         m.stride_ms = met["stride_ms"].as<size_t>();
-        cfg.metrics.+= m);
+        cfg.metrics.push_back(m);
       }
     }
 
@@ -93,10 +93,10 @@ static std::optional<Config> parse_yaml(const std::string& text) {
                 a.args[arg.first.as<std::string>()] = arg.second.as<std::string>();
               }
             }
-            p.actions.+= a);
+            p.actions.push_back(a);
           }
         }
-        cfg.policies.+= p);
+        cfg.policies.push_back(p);
       }
     }
 
@@ -109,7 +109,7 @@ static std::optional<Config> parse_yaml(const std::string& text) {
         if (!pipe["enabled"]) { std::cerr << "YAML: pipelines[" << idx << "] missing 'enabled'\n"; return std::nullopt; }
         ps.name = pipe["name"].as<std::string>();
         ps.enabled = pipe["enabled"].as<bool>();
-        cfg.pipelines.+= ps);
+        cfg.pipelines.push_back(ps);
       }
     }
 
@@ -124,10 +124,10 @@ static std::optional<Config> parse_yaml(const std::string& text) {
         o.path = out["path"].as<std::string>();
         if (out["fields"]) {
           for (const auto& field : out["fields"]) {
-            o.fields.+= field.as<std::string>());
+            o.fields.push_back(field.as<std::string>());
           }
         }
-        cfg.outputs.+= o);
+        cfg.outputs.push_back(o);
       }
     }
 
@@ -160,7 +160,7 @@ static std::optional<Config> parse_json(const std::string& text) {
         if (sig.contains("window_ms")) {
           s.window_ms = sig["window_ms"].get<size_t>();
         }
-        cfg.signals.+= std::move(s));
+        cfg.signals.push_back(std::move(s));
       }
     }
 
@@ -171,7 +171,7 @@ static std::optional<Config> parse_json(const std::string& text) {
         m.type = met.value("type", "");
         if (met.contains("signals")) {
           for (const auto& sig : met["signals"]) {
-            m.signals.+= sig.get<std::string>());
+            m.signals.push_back(sig.get<std::string>());
           }
         }
         if (met.contains("window_ms")) {
@@ -180,7 +180,7 @@ static std::optional<Config> parse_json(const std::string& text) {
         if (met.contains("stride_ms")) {
           m.stride_ms = met["stride_ms"].get<size_t>();
         }
-        cfg.metrics.+= std::move(m));
+        cfg.metrics.push_back(std::move(m));
       }
     }
 
@@ -202,10 +202,10 @@ static std::optional<Config> parse_json(const std::string& text) {
                 }
               }
             }
-            p.actions.+= std::move(a));
+            p.actions.push_back(std::move(a));
           }
         }
-        cfg.policies.+= std::move(p));
+        cfg.policies.push_back(std::move(p));
       }
     }
 
@@ -214,7 +214,7 @@ static std::optional<Config> parse_json(const std::string& text) {
         PipelineSpec ps;
         ps.name = pipe.value("name", "");
         ps.enabled = pipe.value("enabled", false);
-        cfg.pipelines.+= std::move(ps));
+        cfg.pipelines.push_back(std::move(ps));
       }
     }
 
@@ -225,10 +225,10 @@ static std::optional<Config> parse_json(const std::string& text) {
         o.path = out.value("path", "");
         if (out.contains("fields")) {
           for (const auto& field : out["fields"]) {
-            o.fields.+= field.get<std::string>());
+            o.fields.push_back(field.get<std::string>());
           }
         }
-        cfg.outputs.+= std::move(o));
+        cfg.outputs.push_back(std::move(o));
       }
     }
 
@@ -264,7 +264,7 @@ static std::optional<Config> parse_toml(const std::string& text) {
         if (auto v = sig->get_as<std::string>("name")) s.name = v->get();
         if (auto v = sig->get_as<std::string>("source")) s.source = v->get();
         if (auto v = sig->get_as<int64_t>("window_ms")) s.window_ms = static_cast<size_t>(v->get());
-        cfg.signals.+= std::move(s));
+        cfg.signals.push_back(std::move(s));
       }
     }
 
@@ -281,12 +281,12 @@ static std::optional<Config> parse_toml(const std::string& text) {
           if (auto arr = sigs->as_array()) {
             for (const auto& sig : *arr) {
               if (auto v = sig.value<std::string>()) {
-                m.signals.+= *v);
+                m.signals.push_back(*v);
               }
             }
           }
         }
-        cfg.metrics.+= std::move(m));
+        cfg.metrics.push_back(std::move(m));
       }
     }
 
@@ -316,12 +316,12 @@ static std::optional<Config> parse_toml(const std::string& text) {
                   }
                 }
               }
-              p.actions.+= std::move(a));
+              p.actions.push_back(std::move(a));
             }
           }
         }
 
-        cfg.policies.+= std::move(p));
+        cfg.policies.push_back(std::move(p));
       }
     }
 
@@ -332,7 +332,7 @@ static std::optional<Config> parse_toml(const std::string& text) {
         PipelineSpec ps;
         if (auto v = pipe->get_as<std::string>("name")) ps.name = v->get();
         if (auto v = pipe->get_as<bool>("enabled")) ps.enabled = v->get();
-        cfg.pipelines.+= std::move(ps));
+        cfg.pipelines.push_back(std::move(ps));
       }
     }
 
@@ -347,12 +347,12 @@ static std::optional<Config> parse_toml(const std::string& text) {
           if (auto fields = fieldsNode->as_array()) {
             for (const auto& field : *fields) {
               if (auto v = field.value<std::string>()) {
-                o.fields.+= *v);
+                o.fields.push_back(*v);
               }
             }
           }
         }
-        cfg.outputs.+= std::move(o));
+        cfg.outputs.push_back(std::move(o));
       }
     }
 
@@ -371,7 +371,7 @@ ConfigResult load_config(const std::string& file, ConfigFormat fmt) {
   ConfigResult r;
   auto text = slurp(file);
   if (text.empty()) {
-    r.errors.+= {"Config file not found or empty", file});
+    r.errors.push_back({"Config file not found or empty", file});
     return r;
   }
   r.raw_text = text;
@@ -382,7 +382,7 @@ ConfigResult load_config(const std::string& file, ConfigFormat fmt) {
     case ConfigFormat::TOML: parsed = parse_toml(text); break;
   }
   if (!parsed) {
-    r.errors.+= {"Parse failed", file});
+    r.errors.push_back({"Parse failed", file});
     return r;
   }
   std::vector<ConfigError> errs;
@@ -395,7 +395,7 @@ ConfigResult load_config(const std::string& file, ConfigFormat fmt) {
 }
 
 bool validate(const Config& cfg, std::vector<ConfigError>& e) {
-  auto add = [&](const std::string& m, const std::string& p) { e.+= {m,p}); };
+  auto add = [&](const std::string& m, const std::string& p) { e.push_back({m,p}); };
   if (cfg.mode != "simulation" && cfg.mode != "live") add("mode must be 'simulation' or 'live'", "mode");
   if (cfg.step_ms < 5 || cfg.step_ms > 1000) add("step_ms out of bounds [5..1000]", "step_ms");
   if (cfg.horizon_s < 10 || cfg.horizon_s > 86400) add("horizon_s out of bounds [10..86400]", "horizon_s");

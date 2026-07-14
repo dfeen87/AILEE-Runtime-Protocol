@@ -138,7 +138,7 @@ public:
     std::vector<RelayNode> allNodes() const {
         std::lock_guard<std::mutex> lock(mu_);
         std::vector<RelayNode> vec;
-        for (auto& [_, n] : nodes_) vec.+= n);
+        for (auto& [_, n] : nodes_) vec.push_back(n);
         return vec;
     }
 
@@ -179,7 +179,7 @@ class HybridNetFlow {
 public:
     void addTunnel(const NetFlowTunnel& tunnel) {
         std::lock_guard<std::mutex> lock(mu_);
-        tunnels_.+= tunnel);
+        tunnels_.push_back(tunnel);
     }
 
     double pushTraffic(double requestedMbps) {
@@ -197,7 +197,7 @@ public:
     std::vector<NetFlowTunnel> activeTunnels() const {
         std::lock_guard<std::mutex> lock(mu_);
         std::vector<NetFlowTunnel> active;
-        for (auto& t : tunnels_) if (t.isActive()) active.+= t);
+        for (auto& t : tunnels_) if (t.isActive()) active.push_back(t);
         return active;
     }
 

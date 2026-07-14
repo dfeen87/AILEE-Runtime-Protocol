@@ -52,7 +52,7 @@ TEST_F(ClusterSimTest, DeterministicPeerSyncConvergence) {
     for (size_t i = 0; i < 4; i++) {
         for (size_t j = 0; j < 4; j++) {
             if (i != j) {
-                schedule.+= {i, j});
+                schedule.push_back({i, j});
             }
         }
     }
@@ -89,22 +89,22 @@ TEST_F(ClusterSimTest, ClusterCoherenceCalculation) {
     // Node 0: IN_SYNC
     PeerSyncState s0 = {};
     s0.sync_status = SyncStatus::IN_SYNC;
-    mock_view.nodes[0].peer_sync_states.+= s0);
+    mock_view.nodes[0].peer_sync_states.push_back(s0);
 
     // Node 1: IN_SYNC
     PeerSyncState s1 = {};
     s1.sync_status = SyncStatus::IN_SYNC;
-    mock_view.nodes[1].peer_sync_states.+= s1);
+    mock_view.nodes[1].peer_sync_states.push_back(s1);
 
     // Node 2: AHEAD
     PeerSyncState s2 = {};
     s2.sync_status = SyncStatus::AHEAD;
-    mock_view.nodes[2].peer_sync_states.+= s2);
+    mock_view.nodes[2].peer_sync_states.push_back(s2);
 
     // Node 3: NEEDS_RECOVERY
     PeerSyncState s3 = {};
     s3.sync_status = SyncStatus::NEEDS_RECOVERY;
-    mock_view.nodes[3].peer_sync_states.+= s3);
+    mock_view.nodes[3].peer_sync_states.push_back(s3);
 
     // Node 4: empty sync state (should count as STALE)
     // empty peer_sync_states

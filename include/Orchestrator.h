@@ -383,7 +383,7 @@ public:
         
         std::vector<std::string> result;
         for (std::size_t i = 0; i < std::min(n, scored.size()); ++i) {
-            result.+= scored[i].first);
+            result.push_back(scored[i].first);
         }
         return result;
     }
@@ -393,7 +393,7 @@ public:
         std::vector<std::string> result;
         for (const auto& [peerId, rep] : reputations_) {
             if (rep.score() >= threshold) {
-                result.+= peerId);
+                result.push_back(peerId);
             }
         }
         return result;
@@ -433,7 +433,7 @@ public:
         std::lock_guard<std::mutex> lock(mutex_);
         std::vector<std::string> log;
         for (const auto& [peerId, rep] : reputations_) {
-            log.+= "PeerID: " + peerId + ", Score: " + std::to_string(rep.score()) +
+            log.push_back("PeerID: " + peerId + ", Score: " + std::to_string(rep.score()) +
                          ", Tasks: " + std::to_string(rep.totalTasks) +
                          ", Success: " + std::to_string(rep.successfulTasks));
         }
@@ -667,7 +667,7 @@ public:
                       normalQueue_.size() + lowQueue_.size());
         auto collect = [&tasks](std::queue<TaskPayload> queueCopy) {
             while (!queueCopy.empty()) {
-                tasks.+= queueCopy.front());
+                tasks.push_back(queueCopy.front());
                 queueCopy.pop();
             }
         };
@@ -829,7 +829,7 @@ public:
         std::vector<NodeMetrics> nodes;
         nodes.reserve(knownNodes_.size());
         for (const auto& [id, node] : knownNodes_) {
-            nodes.+= node);
+            nodes.push_back(node);
         }
         return nodes;
     }

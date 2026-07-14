@@ -122,7 +122,7 @@ public:
     void recordActivity(const std::string& event, uint64_t currentTimestampMs) {
         std::lock_guard<std::mutex> lock(mu_);
         state_.lastActivityMs = currentTimestampMs;
-        state_.activityLog.+= event);
+        state_.activityLog.push_back(event);
         if (state_.activityLog.size() > kMaxLogEntries) {
             state_.activityLog.erase(state_.activityLog.begin());
         }
@@ -149,7 +149,7 @@ public:
         state_.sessionToken++;
         state_.lastActivityMs = currentTimestampMs;
         if (!state_.connected) {
-            state_.activityLog.+= "[offline-keepalive] session maintained");
+            state_.activityLog.push_back("[offline-keepalive] session maintained");
             if (state_.activityLog.size() > kMaxLogEntries) {
                 state_.activityLog.erase(state_.activityLog.begin());
             }
@@ -358,7 +358,7 @@ public:
 
     void registerNode(AmbientNode* node) {
         std::lock_guard<std::mutex> lock(mu_);
-        nodes_.+= node);
+        nodes_.push_back(node);
     }
 
     AmbientNode* selectNodeForTask(bool requireValidProof = true) {

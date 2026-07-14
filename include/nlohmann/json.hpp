@@ -501,6 +501,21 @@ private:
         return null_value;
     }
 
+public:
+    void push_back(const json& j) {
+        if (!is_array()) {
+            data_ = array_t{};
+        }
+        std::get<array_t>(data_).push_back(j);
+    }
+
+    void push_back(json&& j) {
+        if (!is_array()) {
+            data_ = array_t{};
+        }
+        std::get<array_t>(data_).push_back(std::move(j));
+    }
+private:
     std::variant<std::nullptr_t, bool, double, std::string, array_t, object_t> data_;
 };
 

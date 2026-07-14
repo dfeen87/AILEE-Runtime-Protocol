@@ -22,9 +22,9 @@ Hash256 AmbientL2Merkleizer::computeMerkleRoot(const std::vector<Hash256>& leave
                 combined.insert(combined.end(), current_level[i+1].begin(), current_level[i+1].end());
                 Hash256 result;
                 SHA256(combined.data(), combined.size(), result.data());
-                next_level.+= result);
+                next_level.push_back(result);
             } else {
-                next_level.+= current_level[i]);
+                next_level.push_back(current_level[i]);
             }
         }
         current_level = next_level;

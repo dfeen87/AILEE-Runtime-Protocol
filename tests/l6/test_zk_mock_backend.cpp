@@ -11,8 +11,8 @@ namespace {
         std::string hex;
         hex.reserve(data.size() * 2);
         for (uint8_t b : data) {
-            hex.+= hex_chars[b >> 4]);
-            hex.+= hex_chars[b & 0x0F]);
+            hex.push_back(hex_chars[b >> 4]);
+            hex.push_back(hex_chars[b & 0x0F]);
         }
         return hex;
     }

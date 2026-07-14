@@ -31,7 +31,7 @@ TEST(V27SimulationStress, MultiNodeDeterministicReplay) {
         ZKBackendConfig mock_config{ZKBackendType::MOCK, "stress_circuit", "", "", ""};
         node->attach_backend(mock_config);
         node->attach_scheduler(std::make_unique<DeterministicSchedulerStub>());
-        nodes.+= std::move(node));
+        nodes.push_back(std::move(node));
     }
 
     ZKConstraintSet constraints{"mock_constraints", 100};
@@ -94,14 +94,14 @@ TEST(V27SimulationStress, HighFrequencyPassiveSyncAndHICE) {
         h.timestamp = 1600000000 + (i * 60); // Simulated 1 min blocks for high frequency
         h.prev_hash.fill(i % 255);
         h.hash.fill((i + 1) % 255);
-        headers.+= h);
+        headers.push_back(h);
 
         MempoolDelta d;
         d.is_add = true;
         d.txid.fill(i % 255);
         d.fee = 100 + i;
         d.size = 250;
-        deltas.+= d);
+        deltas.push_back(d);
     }
 
     sync_manager.ingest_headers(headers);
