@@ -127,28 +127,81 @@ public:
 
 private:
     void setupRoutes() {
-        // Combined pre-routing handler: CORS headers first, then API key auth.
-        // Both are applied in one handler because httplib only keeps the last
-        // set_pre_routing_handler registration; registering two handlers would
-        // silently discard the first (CORS), leaving the browser unable to
-        // reach the API when authentication is also enabled.
+
+        // 1. Pre-routing handler (CORS + API key)
         server_->set_pre_routing_handler([this](const httplib::Request& req, httplib::Response& res) {
-            // Apply CORS headers on every response when CORS is enabled.
-            if (config_.enable_cors) {
-                // SECURITY NOTE: Access-Control-Allow-Origin is set to "*" (wildcard).
-                // In production, restrict this to specific trusted origins by setting
-                // cors_origins in the WebServerConfig.
-                res.set_header("Access-Control-Allow-Origin", "*");
-                res.set_header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-                res.set_header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-API-Key");
+            ...
+        });
 
-                if (req.method == "OPTIONS") {
-                    res.status = 200;
-                    return httplib::Server::HandlerResponse::Handled;
+        // 2. Dashboard route
+        server_->Get("/", ...);
+
+        // 3. All your GET /api/... endpoints
+        server_->Get("/api/health", ...);
+        server_->Get("/api/status", ...);
+        server_->Get("/api/metrics", ...);
+        server_->Get("/api/l2/state", ...);
+        server_->Get("/api/orchestration/tasks", ...);
+        server_->Get("/api/anchors/latest", ...);
+        server_->Get(R"(/api/replay/tick/(\d+))", ...);
+        server_->Get("/api/federation/view", ...);
+        server_->Get("/api/sync/events", ...);
+        server_->Get("/api/sync/clock", ...);
+        server_->Get("/api/replay/tick", ...);
+        server_->Get("/api/heartbeat", ...);
+        server_->Get("/api/mesh/envelopes", ...);
+
+        // 4. All your POST /api/... endpoints
+        server_->Post("/api/orchestration/submit", ...);
+        server_->Post("/api/eject", ...);
+        server_->Post("/api/reject", ...);
+        server_->Post("/api/federation/mode", ...);
+        server_->Post("/api/replay/mode", ...);
+        server_->Post("/api/refresh/all", ...);
+        server_->Post("/api/transactions/submit", ...);
+
+        // ⭐ 5. Your new broadcast endpoint — THIS IS THE CORRECT PLACE
+        server_->Post("/api/broadcast/mainnet", [this](const httplib::Request& req, httplib::Response& res) {
+            json response;
+
+            try {
+                if (!block_producer_) {
+                    res.status = 503;
+                    response = {
+                        {"error", "Service Unavailable"},
+                        {"message", "BlockProducer not initialized"}
+                    };
+                    res.set_content(response.dump(), "application/json");
+                    return;
                 }
-            }
 
-            // Enforce API key on /api/* routes when a key is configured.
+                std::cout << "[WebServer] Mainnet broadcast requested" << std::endl;
+                block_producer_->broadcastLatestBlockToMainnet();
+
+                response = {
+                    {"status", "ok"},
+                    {"message", "Mainnet broadcast triggered"}
+                };
+                res.status = 200;
+                res.set_content(response.dump(), "application/json");
+
+            } catch (const std::exception& e) {
+                res.status = 500;
+                response = {
+                    {"error", "Internal Server Error"},
+                    {"message", e.what()}
+                };
+                res.set_content(response.dump(), "application/json");
+            }
+        });
+
+        // 6. 404 handler (must stay LAST)
+        server_->set_error_handler([](const httplib::Request&, httplib::Response& res) {
+            ...
+        });
+    }
+
+        // Enforce API key on /api/* routes when a key is configured.
             if (!config_.api_key.empty() && req.path.find("/api/") == 0) {
                 auto api_key = req.get_header_value("X-API-Key");
                 if (api_key != config_.api_key) {
