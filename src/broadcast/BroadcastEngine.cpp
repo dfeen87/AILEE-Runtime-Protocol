@@ -10,4 +10,3 @@ void BroadcastEngine::emit(const std::string& type,
     std::cout << "  Version: " << version << std::endl;
     std::cout << "  Payload: " << payload.toStyledString() << std::endl;
 }
-
