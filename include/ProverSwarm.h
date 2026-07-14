@@ -63,13 +63,13 @@ struct ProverJob {
         j["payload"] = payload;
         j["assigned_prover"] = assigned_prover;
 
-        // Use emplace() rather than operator[]= for the integer fields: on this
-        // toolchain operator= resolves ambiguously between overloaded implicit
-        // conversions for uint64_t/uint32_t, whereas emplace() perfect-forwards
-        // directly into basic_json's constructor and avoids the ambiguity.
-        j.emplace("assigned_at_ms", assigned_at_ms);
+        // The json type in this build only has unambiguous operator= overloads
+        // for signed integers and double, so an unsigned value (uint64_t/uint32_t)
+        // matches more than one of them equally well. Casting to a signed
+        // integer type first resolves to a single, unambiguous overload.
+        j["assigned_at_ms"] = static_cast<std::int64_t>(assigned_at_ms);
         j["completed"] = completed;
-        j.emplace("retry_count", retry_count);
+        j["retry_count"] = static_cast<std::int64_t>(retry_count);
 
         return j;
     }
@@ -87,13 +87,13 @@ struct ProverJob {
             job.assigned_prover = j["assigned_prover"].get<std::string>();
 
         if (j.contains("assigned_at_ms"))
-            job.assigned_at_ms = j["assigned_at_ms"].get<std::uint64_t>();
+            job.assigned_at_ms = static_cast<std::uint64_t>(j["assigned_at_ms"].get<std::int64_t>());
 
         if (j.contains("completed"))
             job.completed = j["completed"].get<bool>();
 
         if (j.contains("retry_count"))
-            job.retry_count = j["retry_count"].get<std::uint32_t>();
+            job.retry_count = static_cast<std::uint32_t>(j["retry_count"].get<std::int64_t>());
 
         return job;
     }
