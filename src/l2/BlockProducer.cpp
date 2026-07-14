@@ -7,6 +7,9 @@
 #include <iostream>
 #include <vector>
 #include <secp256k1.h>
+#include "nlohmann/json.hpp"
+
+using json = nlohmann::json;
 
 // Simple logging function - logs to stdout
 static void log(const std::string& level, const std::string& msg) {
@@ -269,6 +272,7 @@ void BlockProducer::checkAnchorCommitment() {
             << " (interval: " << config_.commitmentInterval << " blocks)";
         log("INFO", oss.str());
     }
+}
 
 void BlockProducer::broadcastLatestBlockToMainnet() {
     std::lock_guard<std::mutex> lock(stateMutex_);
