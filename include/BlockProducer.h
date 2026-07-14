@@ -62,6 +62,8 @@ public:
     // Called by other systems to report transactions (deprecated - use mempool directly)
     void recordTransaction();
 
+    void broadcastLatestBlockToMainnet();
+
 private:
     void blockProductionLoop();
     void produceBlock();
