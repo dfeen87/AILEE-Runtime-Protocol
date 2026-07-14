@@ -63,13 +63,16 @@ struct ProverJob {
         j["payload"] = payload;
         j["assigned_prover"] = assigned_prover;
 
-        // The json type in this build only has unambiguous operator= overloads
-        // for signed integers and double, so an unsigned value (uint64_t/uint32_t)
-        // matches more than one of them equally well. Casting to a signed
-        // integer type first resolves to a single, unambiguous overload.
-        j["assigned_at_ms"] = static_cast<std::int64_t>(assigned_at_ms);
+        // This json type's operator= is only overloaded for bool, double, and
+        // std::string — no integer overload exists. Any integer argument is
+        // therefore equally convertible to bool or double, which is what makes
+        // *every* integer type ambiguous here, regardless of signedness/width.
+        // Assigning as double is an exact match (no conversion tie), which is
+        // why the double fields elsewhere in this file (reputation, capacity,
+        // latency_ms) never hit this problem.
+        j["assigned_at_ms"] = static_cast<double>(assigned_at_ms);
         j["completed"] = completed;
-        j["retry_count"] = static_cast<std::int64_t>(retry_count);
+        j["retry_count"] = static_cast<double>(retry_count);
 
         return j;
     }
@@ -87,13 +90,13 @@ struct ProverJob {
             job.assigned_prover = j["assigned_prover"].get<std::string>();
 
         if (j.contains("assigned_at_ms"))
-            job.assigned_at_ms = static_cast<std::uint64_t>(j["assigned_at_ms"].get<std::int64_t>());
+            job.assigned_at_ms = static_cast<std::uint64_t>(j["assigned_at_ms"].get<double>());
 
         if (j.contains("completed"))
             job.completed = j["completed"].get<bool>();
 
         if (j.contains("retry_count"))
-            job.retry_count = static_cast<std::uint32_t>(j["retry_count"].get<std::int64_t>());
+            job.retry_count = static_cast<std::uint32_t>(j["retry_count"].get<double>());
 
         return job;
     }
