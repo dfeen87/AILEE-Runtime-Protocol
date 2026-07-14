@@ -1,4 +1,9 @@
 #include "l3/NetworkBinding.h"
+#include "l3/NetworkDriver.h"        // for Network*Snapshot definitions
+#include "SettlementIngestion.h"     // for l1::SettlementIngestion
+#include "mesh/MeshCoherence.h"      // for mesh::MeshCoherenceResult
+#include "reflection/Reflection.h"   // for reflection::ReflectionSnapshot
+
 #include <cstring>
 #include <algorithm>
 #include <unordered_map>
