@@ -67,7 +67,12 @@ void trigger_activation() {
     Json::Value payload;
     payload["timestamp"] = (Json::UInt64) std::time(nullptr);
     payload["node_id"] = "local-node";
-    BroadcastEngine::emit("activation", "v33.2.1", payload);
+    payload["swarm_state"] = "ready";
+    payload["orchestrator_state"] = "ready";
+    payload["zk_pipeline"] = "mock";
+
+    // Emit activation broadcast through the network layer
+    BroadcastEngine::emit("activation", "v33.2.2", payload);
 }
 
 // ---------------------------------------------------------
