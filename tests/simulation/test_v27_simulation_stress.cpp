@@ -13,7 +13,7 @@ using namespace ailee::simulation::validation;
 
 class DeterministicSchedulerStub : public EpochScheduler {
 public:
-    SchedulerDecision get_decision(uint64_t epoch_id) const override {
+    SchedulerDecision get_decision(uint64_t /*epoch_id*/) const override {
         return {AnchorDecision::ANCHOR, ProofDecision::ATTACH_PROOF};
     }
 };

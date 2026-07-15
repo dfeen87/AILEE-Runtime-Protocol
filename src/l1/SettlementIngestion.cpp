@@ -159,7 +159,7 @@ std::vector<CacheAlignedAnchor> SettlementIngestionEngine::ingestReorgInvalidati
     return invalidated;
 }
 
-bool SettlementIngestionEngine::writeAnchorZeroCopy(const CacheAlignedAnchor& anchor, std::string* err) {
+bool SettlementIngestionEngine::writeAnchorZeroCopy(const CacheAlignedAnchor& anchor, std::string* /*err*/) {
     constexpr size_t PREFIX_LEN = 9; // "c_anchor:"
     char keyBuffer[256];
     std::memcpy(keyBuffer, "c_anchor:", PREFIX_LEN);

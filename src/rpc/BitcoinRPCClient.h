@@ -143,6 +143,7 @@ public:
                             timeReceived = 0; // Coercion
                         } else {
                             timeReceived = j["result"]["time_received"].get<long>();
+                        (void)timeReceived;
                         }
                     }
 

@@ -115,7 +115,7 @@ struct DisputeEvidence {
         secp256k1_ecdsa_signature sig_parsed;
 
         unsigned char hash[32] = {0}; // Pseudo-hash for demonstration, should be replaced with true SHA256
-        for(int i=0; i<32 && i<signedMessage.size(); i++) hash[i] = signedMessage[i];
+        for(size_t i=0; i<32 && i<signedMessage.size(); i++) hash[i] = signedMessage[i];
 
         if (secp256k1_ec_pubkey_parse(ctx, &pubkey_parsed, ownerPublicKey.data(), ownerPublicKey.size()) == 1) {
             if (secp256k1_ecdsa_signature_parse_der(ctx, &sig_parsed, ownerSignature.data(), ownerSignature.size()) == 1) {

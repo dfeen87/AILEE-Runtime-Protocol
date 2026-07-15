@@ -6,10 +6,10 @@
 using namespace ailee::l6;
 
 TEST(ZKBackendAbstractionTest, BackendConfigDeterminism) {
-    ZKBackendConfig config1{ZKBackendType::MOCK, "mock_circuit_v23"};
-    ZKBackendConfig config2{ZKBackendType::MOCK, "mock_circuit_v23"};
-    ZKBackendConfig config3{ZKBackendType::HALO2_NATIVE, "mock_circuit_v23"};
-    ZKBackendConfig config4{ZKBackendType::MOCK, "another_circuit"};
+    ZKBackendConfig config1{ZKBackendType::MOCK, "mock_circuit_v23", "", "", ""};
+    ZKBackendConfig config2{ZKBackendType::MOCK, "mock_circuit_v23", "", "", ""};
+    ZKBackendConfig config3{ZKBackendType::HALO2_NATIVE, "mock_circuit_v23", "", "", ""};
+    ZKBackendConfig config4{ZKBackendType::MOCK, "another_circuit", "", "", ""};
 
     EXPECT_EQ(config1.type, config2.type);
     EXPECT_EQ(config1.circuit_id, config2.circuit_id);
@@ -20,7 +20,7 @@ TEST(ZKBackendAbstractionTest, BackendConfigDeterminism) {
 
 TEST(ZKBackendAbstractionTest, ArtifactStructureCorrectness) {
     ZKMockBackend backend;
-    ZKBackendConfig config{ZKBackendType::MOCK, "mock_circuit_v23"};
+    ZKBackendConfig config{ZKBackendType::MOCK, "mock_circuit_v23", "", "", ""};
     ZKConstraintSet constraints{"constraint_1", 100};
     ZKTranscript transcript{"transcript_1", 10};
 
@@ -37,7 +37,7 @@ TEST(ZKBackendAbstractionTest, BackendInterfaceCompliance) {
     // This test ensures that ZKMockBackend can be used purely through its IZKProvingBackend interface
     std::unique_ptr<IZKProvingBackend> backend = std::make_unique<ZKMockBackend>();
 
-    ZKBackendConfig config{ZKBackendType::MOCK, "mock_circuit_v23"};
+    ZKBackendConfig config{ZKBackendType::MOCK, "mock_circuit_v23", "", "", ""};
     ZKConstraintSet constraints{"constraint_1", 100};
     ZKTranscript transcript{"transcript_1", 10};
 

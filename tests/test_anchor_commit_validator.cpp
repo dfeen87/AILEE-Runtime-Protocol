@@ -32,9 +32,11 @@ public:
         // Derive internal key from privkey
         secp256k1_context* ctx = secp256k1_context_create(SECP256K1_CONTEXT_SIGN);
         secp256k1_keypair keypair;
-        secp256k1_keypair_create(ctx, &keypair, privkey.data());
+        int res1 = secp256k1_keypair_create(ctx, &keypair, privkey.data());
+        (void)res1;
         secp256k1_xonly_pubkey xonly;
-        secp256k1_keypair_xonly_pub(ctx, &xonly, nullptr, &keypair);
+        int res2 = secp256k1_keypair_xonly_pub(ctx, &xonly, nullptr, &keypair);
+        (void)res2;
         secp256k1_xonly_pubkey_serialize(ctx, internal_key.data(), &xonly);
         secp256k1_context_destroy(ctx);
     }
