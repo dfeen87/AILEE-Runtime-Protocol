@@ -13,31 +13,23 @@
 
 ---
 
-## 📖 Table of Contents
-
-- [Overview](#-overview)
-- [Key Features](#-key-features)
-- [Testing & Validation](#-testing--validation)
-- [Quick Start](#-quick-start)
-- [Architecture](#-architecture)
-- [Security Model](#-security-model)
-- [Technology Stack](#-technology-stack)
-- [Documentation](#-documentation)
-- [Contributing](#-contributing)
-- [License](#-license)
+Current Version number: 33.4
 
 ---
 
 ## 🎯 Overview
 
-**AILEE‑Core** is a Bitcoin Layer‑2 orchestration and verification framework that provides deterministic off‑chain computation, state‑integrity validation, and federated learning coordination. It extends Bitcoin’s capabilities through a recovery‑first design and **ambient intelligence** that remains strictly advisory, ensuring temporal insight without altering Bitcoin’s consensus rules.  
-AILEE‑Core operates as a governed execution environment: the **Governor** establishes deterministic heartbeat, the **Auditor** enforces temporal coherence, the **Energy Resilience Layer** stabilizes runtime behavior, and **IAO** provides forward‑looking orchestration while preserving strict determinism.
+**AILEE. Sometimes referred to as AILEE Core** is a Bitcoin Layer‑2 orchestration and verification framework that provides deterministic off‑chain computation, state‑integrity validation, and federated learning coordination. It extends Bitcoin’s capabilities through a recovery‑first design and **ambient intelligence** that remains strictly advisory, ensuring temporal insight without altering Bitcoin’s consensus rules.
 
----
+> AILEE‑Core operates as a governed execution environment: the **Governor** establishes deterministic heartbeat, the **Auditor** enforces temporal coherence, the **Energy Resilience Layer** stabilizes runtime behavior, and **IAO** provides forward‑looking orchestration while preserving strict determinism.
 
 ## ⚠️ Protocol Status & Safety Notice
 
-AILEE‑Core has evolved into a **deterministic, reproducible Bitcoin Layer‑2 protocol** with verified execution paths, canonical state roots, and Wave Native Network integration.  
+The **AILEE‑Runtime‑Protocol** (formerly AILEE‑Core) has evolved into a **deterministic, reproducible internet protocol that synchronizes with and can touch the Bitcoin Main Network by communications**, functioning as a **Layer‑2 temporal alignment system** for unified clock speeds, reproducible execution, and deterministic state propagation.  
+
+The software verifies execution paths, canonical state roots, and integrates with the Wave Native Network for temporal resonance and epoch‑level synchronization.
+
+
 Version 12 introduces:
 
 - deterministic execution  
@@ -45,34 +37,415 @@ Version 12 introduces:
 - frozen genesis  
 - canonical build + receipt hashes  
 - verified epoch roots (0–4)  
-- full re‑execution path  
+- full deterministic re‑execution path  
 - automated verification script  
+- unified clock synchronization through Bitcoin  
+- reproducible temporal ordering  
+- deterministic broadcast + webserver hooks (user‑implemented)  
 
-These guarantees establish AILEE‑Core as a **verifiable protocol**, not a prototype.
+These guarantees establish the AILEE‑Runtime‑Protocol as a **verifiable protocol**, not a prototype.
 
-All core components in this repository are **real implementations** — no stubs, mocks, or placeholder cryptographic primitives. The deterministic runtime, reproducibility package, and Wave Native Network integration operate as fully functional, verifiable subsystems.
+All core components in this repository are **real implementations** — no stubs, mocks, placeholder cryptographic primitives, or simulated networking. The deterministic runtime, reproducibility package, and Wave Native Network integration operate as fully functional, verifiable subsystems.
 
-However, before mainnet fund custody, several production‑grade hardening steps remain:
+However, before mainnet fund custody or production‑grade deployment, several hardening steps remain:
 
 - ZK proof system must be upgraded to audited circuits (Halo2, PLONK, Groth16)  
 - Signature verification requires formal review  
 - Networking layers must undergo security auditing  
+- External broadcast modules must be implemented by the adopting entity  
+- External WebServer modules must be implemented by the adopting entity  
+- Mainnet‑touching RPC logic must be customized per organization  
 - Third‑party audits are required for any production deployment  
 
-AILEE‑Core V12 is a **protocol‑grade deterministic release**, but **not yet a mainnet‑ready financial system**.
+The AILEE‑Runtime‑Protocol V12 is a **protocol‑grade deterministic release**, but **not yet a mainnet‑ready financial system**.
 
-> “AILEE-CORE is not a prototype anymore — but we’re not a custodial mainnet system.”
-
-### Why AILEE?
-
-1.  **Reorg Awareness**: Built-in reorg detection logs L1 reorganizations to protect L2 state.
-2.  **Orchestration Framework**: Ambient AI optimizes task distribution across a decentralized mesh.
-3.  **Verifiable (in progress)**: Zero-Knowledge (ZK) proof scaffolding and deterministic state commitments allow for trust-minimized verification once real circuits are integrated.
-4.  **Bitcoin-Native**: Respects Bitcoin as the ultimate settlement layer.
+> “AILEE‑Runtime‑Protocol is not a prototype anymore — but it is not a custodial mainnet system.”
 
 ---
 
-## Version 12 — Deterministic Release & Wave Native Network Integration
+# **Building the AILEE‑Runtime‑Protocol (Full Terminal Guide + External Module Requirements)**
+
+The **AILEE‑Runtime‑Protocol** is designed as a **deterministic execution substrate** that can be integrated into corporate systems, independent research environments, or distributed infrastructures requiring reproducible runtime behavior. This repository provides the **core deterministic runtime**, but intentionally **does not** ship production‑grade broadcast modules or webserver implementations. These components must be designed by the entity adopting the protocol.
+
+This section explains:
+
+- how to build the runtime from a terminal  
+- how to integrate your own broadcast + webserver modules  
+- which files act as placeholders  
+- which files must be created for real‑time external communication  
+- how unified clock synchronization works  
+- how Bitcoin’s internal timing influences order‑of‑operations  
+- how to extend the protocol for mainnet‑touching systems  
+
+---
+
+## **1. Building the Runtime From Terminal**
+
+The AILEE‑Runtime‑Protocol uses a standard CMake‑based build pipeline.  
+To build the runtime:
+
+### **Step 1 — Clone the repository**
+```
+git clone https://github.com/dfeen87/AILEE-Runtime-Protocol.git
+cd AILEE-Runtime-Protocol
+```
+
+### **Step 2 — Create a build directory**
+```
+mkdir build
+cd build
+```
+
+### **Step 3 — Configure the project**
+```
+cmake ..
+```
+
+This step resolves:
+
+- deterministic runtime includes  
+- internal protocol modules  
+- placeholder broadcast + webserver references  
+- unified clock sync subsystem  
+- reproducible build flags  
+
+### **Step 4 — Build the runtime**
+```
+cmake --build .
+```
+
+This produces the core executable for the deterministic runtime.
+
+### **Step 5 — Run the runtime**
+
+Tip: Make sure your in the build folder, then proceed to prompt.
+
+```
+./runtime
+```
+
+This launches the deterministic execution engine.  
+
+**Note:** Without custom broadcast + webserver modules, the runtime will operate in placeholder mode.
+
+---
+
+## **Executable Name & System Entrypoint**
+
+The AILEE‑Runtime‑Protocol ships with a single system entrypoint — the executable that launches the entire deterministic protocol environment. While many runtimes use a generic name like `./runtime`, this protocol is **multi‑module**, **deterministic**, and **system‑level**, meaning the executable represents more than a simple runtime loop.
+
+Cloners may rename the executable to match their infrastructure, but the recommended name is:
+
+### **`./protocol-node`**
+
+This name reflects the true role of the entrypoint:
+
+- it initializes the deterministic runtime  
+- it activates unified clock synchronization  
+- it loads reproducible state transitions  
+- it prepares Wave Native Network hooks  
+- it connects to user‑implemented broadcast modules  
+- it connects to user‑implemented webserver modules  
+- it anchors temporal ordering to Bitcoin  
+- it executes the protocol as a full node in a deterministic system  
+
+In other words, the executable is **not** just a runtime — it is the **system launcher** for the entire protocol.
+
+Entities may rename the executable to suit their environment:
+
+- **`./node`** — minimal, distributed‑systems style  
+- **`./engine`** — emphasizes deterministic execution  
+- **`./protocol`** — emphasizes the system identity  
+- **`./daemon`** — for long‑running background processes  
+- **`./deterministic-node`** — highlights reproducibility  
+- **`./multi-runtime`** — highlights multi‑use architecture  
+
+Regardless of the chosen name, the executable represents the **full protocol boot sequence**, not a single subsystem. Cloners should select a name that matches their operational model, infrastructure, and deployment environment.
+
+---
+
+## **Understanding Placeholder Modules**
+
+The repository intentionally includes **placeholder references** for:
+
+- broadcast subsystem  
+- webserver routing  
+- external RPC communication  
+- mainnet‑touching operations  
+- unified clock sync endpoints  
+
+These placeholders exist so that:
+
+- corporations  
+- independent developers  
+- research institutions  
+- protocol engineers  
+
+can design their own modules tailored to their infrastructure.
+
+The runtime is **multi‑use**, meaning it can be embedded into:
+
+- financial systems  
+- distributed compute environments  
+- temporal synchronization frameworks  
+- deterministic replay engines  
+- blockchain‑anchored applications  
+
+But **your organization must implement the external communication layer**.
+
+---
+
+## **Required External Modules (You Must Build These)**
+
+Below is the list of modules **not provided** by the repo, because they must be customized by each entity.
+
+### **Required External Files / Modules**
+- **BroadcastHandler.cpp** — your logic for sending raw transactions  
+- **BroadcastRouter.cpp** — your routing rules for broadcast endpoints  
+- **BroadcastRPC.cpp** — your RPC interface to Bitcoin Core  
+- **WebServer.cpp** — your HTTP server implementation  
+- **WebRoutes.cpp** — your custom API endpoints  
+- **ExternalConfig.json** — your environment‑specific configuration  
+- **TemporalSyncAdapter.cpp** — your integration with Bitcoin timestamps  
+- **MainnetAdapter.cpp** — your mainnet‑touching logic  
+- **UnifiedClockClient.cpp** — your clock sync client for distributed nodes  
+
+These files are **not** included because:
+
+- every corporate environment has different RPC credentials  
+- every independent developer uses different infrastructure  
+- every institution has different security requirements  
+- every mainnet‑touching system must be audited internally  
+
+The runtime provides the **deterministic substrate**, not the external communication layer.
+
+---
+
+## **Designing Your Broadcast Subsystem**
+
+Your broadcast subsystem must:
+
+- accept raw transaction hex  
+- validate payload structure  
+- communicate with Bitcoin Core  
+- return txid or error  
+- log deterministic results  
+- integrate with your webserver  
+
+Example responsibilities:
+
+- `sendrawtransaction` RPC  
+- mempool inspection  
+- error propagation  
+- deterministic logging  
+- temporal alignment with Bitcoin blocks  
+
+The repo provides **placeholder references**, but **you must implement the logic**.
+
+---
+
+## **Designing Your WebServer Subsystem**
+
+Your webserver must:
+
+- expose your custom API endpoints  
+- route broadcast requests  
+- expose health checks  
+- expose temporal sync endpoints  
+- integrate with your internal systems  
+
+The runtime will call into your webserver, but does not ship one.
+
+This ensures:
+
+- corporate systems can use their own HTTP stack  
+- independent developers can use lightweight servers  
+- institutions can use hardened infrastructure  
+
+---
+
+## **Unified Clock Synchronization Through Bitcoin**
+
+The runtime includes a subsystem that aligns execution with **Bitcoin’s internal timing**, using:
+
+- block timestamps  
+- mempool propagation timing  
+- ZMQ notifications  
+- RPC block headers  
+- consensus‑verified temporal signals  
+
+This creates a **global unified clock** that:
+
+- eliminates OS timer drift  
+- synchronizes distributed nodes  
+- anchors execution to Bitcoin’s order‑of‑operations  
+- ensures deterministic replay across machines  
+
+Your external modules must integrate with this subsystem.
+
+---
+
+## **Order‑of‑Operations in the Runtime**
+
+The deterministic runtime follows a strict sequence:
+
+1. Load configuration  
+2. Initialize unified clock sync  
+3. Initialize deterministic executor  
+4. Load placeholder broadcast + webserver references  
+5. Wait for external module integration  
+6. Execute deterministic tasks  
+7. Anchor temporal events to Bitcoin  
+8. Replay or broadcast based on your custom modules  
+
+This order ensures reproducibility across:
+
+- machines  
+- architectures  
+- environments  
+- distributed systems  
+
+---
+
+## **Why External Modules Are Not Included**
+
+The protocol is designed for **multi‑use environments**, meaning:
+
+- corporations  
+- independent developers  
+- research labs  
+- distributed compute networks  
+
+all have different requirements for:
+
+- security  
+- RPC credentials  
+- infrastructure  
+- mainnet access  
+- temporal sync  
+- API design  
+
+Therefore, the repo ships **only the deterministic runtime**, not the external communication layer.
+
+This is intentional.
+
+---
+
+## **Summary**
+
+The **AILEE‑Runtime‑Protocol** provides:
+
+- deterministic execution  
+- unified clock sync  
+- reproducible builds  
+- multi‑use architecture  
+
+You must provide:
+
+- broadcast subsystem  
+- webserver subsystem  
+- external RPC logic  
+- mainnet‑touching modules  
+- temporal sync adapters  
+- unified clock clients
+
+When both your files and this repos MIT Licensed files, cloners can communicate freely with hardware and internet technologies, your entities will be able to do a variety of things.
+
+---
+
+## **Capabilities for Cloners and Integrators**
+
+The **AILEE‑Runtime‑Protocol** provides a deterministic execution substrate that organizations, independent developers, and research teams can extend with their own broadcast, webserver, and external communication modules. While this repository does not ship production‑ready external interfaces, the runtime enables a wide range of advanced capabilities once those modules are implemented.
+
+Below is a comprehensive list of what cloners can achieve by integrating their own systems with the runtime:
+
+- **Convert Gold to Bitcoin** —  
+  Entities can design custom financial modules that anchor commodity conversion logic to Bitcoin’s deterministic timing. The runtime ensures reproducible execution for conversion algorithms, audit trails, and temporal verification.
+
+- **Save energy and output more TPS** —  
+  By using deterministic execution and unified clock synchronization, systems can reduce wasted cycles, eliminate drift, and optimize throughput. This results in lower energy consumption and higher transaction processing speeds when integrated with custom broadcast layers.
+
+- **Participate in Wave Native Network** —  
+  The runtime can be extended to join temporal‑synchronization networks such as Wave Native Network. This allows nodes to align phase‑identity, resonance timing, and deterministic epochs across distributed systems.
+
+- **Run curl commands for latency testing** —  
+  Developers can integrate custom webserver modules that expose endpoints for latency measurement, clock verification, and deterministic logging. Using curl, entities can test:
+  - request/response timing  
+  - unified clock drift  
+  - broadcast latency  
+  - temporal alignment with Bitcoin  
+
+- **Unified Clock Synchronization** —  
+  Systems can anchor their internal clocks to Bitcoin’s consensus‑verified timestamps. This eliminates OS drift and ensures reproducible execution across machines, architectures, and environments.
+
+- **Deterministic Replay** —  
+  The runtime guarantees identical results across nodes, enabling deterministic replay for:
+  - audits  
+  - simulations  
+  - distributed compute  
+  - financial operations  
+
+- **Custom Broadcast Subsystems** —  
+  Entities can design their own broadcast logic to:
+  - send raw transactions  
+  - integrate with Bitcoin Core  
+  - propagate mempool events  
+  - log deterministic broadcast outcomes  
+
+- **Custom WebServer Implementations** —  
+  Organizations can build their own HTTP servers to:
+  - expose API endpoints  
+  - route broadcast requests  
+  - expose temporal sync endpoints  
+  - integrate with internal systems  
+
+- **Mainnet‑Touching Operations** —  
+  Once external modules are implemented, the runtime can:
+  - anchor events to Bitcoin  
+  - read block headers  
+  - verify timestamps  
+  - propagate transactions  
+  - synchronize distributed nodes  
+
+- **Distributed System Coordination** —  
+  The deterministic runtime can serve as a coordination layer for:
+  - multi‑node compute  
+  - temporal alignment  
+  - reproducible workflows  
+  - cross‑infrastructure synchronization  
+
+- **Corporate, Institutional, or Independent Customization** —  
+  Because the repo ships placeholder modules, each entity can design:
+  - their own RPC credentials  
+  - their own broadcast logic  
+  - their own webserver stack  
+  - their own security model  
+  - their own temporal sync adapters  
+
+This ensures the protocol can be adopted across industries without forcing a single architecture.
+
+---
+
+## **Files Required for Real‑Time External Communication**
+
+Cloners must implement the following files to enable real‑time communication, mainnet interaction, and unified clock synchronization:
+
+- **BroadcastHandler.cpp** — raw transaction handling  
+- **BroadcastRouter.cpp** — routing logic  
+- **BroadcastRPC.cpp** — Bitcoin Core RPC integration  
+- **WebServer.cpp** — HTTP server implementation  
+- **WebRoutes.cpp** — API endpoint definitions  
+- **TemporalSyncAdapter.cpp** — Bitcoin timestamp integration  
+- **UnifiedClockClient.cpp** — distributed clock sync  
+- **MainnetAdapter.cpp** — mainnet‑touching logic  
+- **ExternalConfig.json** — environment‑specific configuration  
+
+These files are intentionally **not** included in the repository.  
+They must be designed by the entity adopting the protocol.
+
+---
+
+## Deterministic Release & Wave Native Network Integration
 
 V12 marks a pivotal evolution in the AILEE Protocol Core, introducing strict determinism across the entire system. By decoupling the protocol from local machine dependencies, wall-clock timing, and non-deterministic execution environments, V12 ensures that every state transition is 100% reproducible. This release seamlessly integrates the **Wave Native Network (WNN)**, a foundational architecture for phase-coherent distributed coordination.
 
@@ -120,7 +493,7 @@ V12 and WNN together forge an unbreakable chain of deterministic execution. In d
 
 ---
 
-## ✨ Key Features
+## ✨ Some other Key Features
 
 ### 🛡️ Reorg Detection
 - **RocksDB-Backed Persistence**: Tracks Bitcoin block history and reorg events with high performance.
@@ -149,58 +522,44 @@ V12 and WNN together forge an unbreakable chain of deterministic execution. In d
 
 ## 🧪 Testing & Validation
 
-**Confidence requires verification.** While AILEE-Core is built with powerful and secure primitives, the responsibility of operating financial infrastructure demands rigorous and continuous testing.
+**Confidence requires verification.**  
+The AILEE‑Runtime‑Protocol is engineered for deterministic, reproducible execution, but any system that *touches Bitcoin Mainnet* or participates in temporal synchronization networks must undergo rigorous, continuous validation. Determinism is only meaningful when it is **proven under stress**, **proven under adversarial conditions**, and **proven across machines**.
 
-We stress the importance of the following validation steps before any mainnet deployment:
+Before any real‑world deployment—especially in environments involving financial operations, commodity conversion, or temporal coordination—we strongly recommend the following validation steps:
 
-1.  **Unit & Integration Testing**: Run the full test suite (`ctest`) to verify all components, including the new Reorg Detector and Adapter Registry.
-2.  **Adversarial Simulation**: Use the `PerformanceSimulator` to stress-test the network under high load and simulated attacks.
-3.  **Reorg Simulation**: Test the node's behavior against a simulated Bitcoin regtest network where you intentionally invalidate blocks to trigger the Reorg Detector.
-4.  **Audit**: While the architecture is sound, third-party cryptographic audits are recommended for the federation multisig setup.
+1. **Unit & Integration Testing** —  
+   Execute the full CMake/CTest suite (`ctest`) to validate deterministic behavior across all internal modules. This includes the Deterministic Executor, Unified Clock Sync subsystem, Reorg Detector, Adapter Registry, and reproducible state‑transition logic.
 
-> **"Trust, but verify."** - The core philosophy of Bitcoin and AILEE.
+2. **Adversarial Simulation** —  
+   Use the `PerformanceSimulator` to stress‑test the protocol under extreme load, malformed inputs, rapid temporal shifts, and simulated adversarial conditions. This ensures the runtime maintains deterministic guarantees even when external modules behave unpredictably.
 
----
+3. **Reorg Simulation** —  
+   Connect the protocol to a Bitcoin regtest environment and intentionally invalidate blocks to trigger the Reorg Detector. This validates:
+   - temporal rollback handling  
+   - deterministic replay  
+   - state‑root consistency  
+   - unified clock realignment  
 
-## 🚀 Quick Start
+4. **Latency & Clock Drift Testing** —  
+   Once a cloner implements their own WebServer module, use curl to measure:
+   - request/response latency  
+   - unified clock drift  
+   - temporal propagation delays  
+   - deterministic logging accuracy  
 
-### Prerequisites
+5. **Broadcast Path Validation** —  
+   After implementing custom broadcast modules, test raw transaction propagation, RPC timing, mempool behavior, and deterministic broadcast logging. This ensures your external modules behave consistently with the runtime’s deterministic expectations.
 
-```bash
-# Ubuntu/Debian
-sudo apt-get update
-sudo apt-get install -y build-essential cmake libssl-dev libcurl4-openssl-dev \
-    libzmq3-dev libcppzmq-dev libjsoncpp-dev libyaml-cpp-dev librocksdb-dev
+6. **Third‑Party Audit** —  
+   While the deterministic architecture is sound, any system interacting with Bitcoin Mainnet or handling financial operations should undergo independent review. This includes:
+   - cryptographic audits  
+   - RPC security audits  
+   - networking audits  
+   - temporal‑sync verification  
+   - broadcast‑path hardening  
 
-# macOS
-brew install cmake openssl curl zeromq cppzmq jsoncpp yaml-cpp rocksdb
-```
-
-### Option 1: Build C++ Core Node
-
-```bash
-# Clone the repository
-git clone https://github.com/dfeen87/AILEE-Protocol-Core-For-Bitcoin.git
-cd AILEE-Protocol-Core-For-Bitcoin
-
-# Build the project
-mkdir build && cd build
-cmake .. -DBUILD_TESTS=ON
-make -j$(nproc)
-
-# Run the main node
-./ailee_node
-
-# Check logs to verify Reorg Detector initialization
-tail -f logs/ailee.log
-```
-
-### Option 2: Run Tests
-
-```bash
-cd build
-ctest --verbose
-```
+> **“Trust, but verify.”**  
+> The core philosophy of Bitcoin—and the core philosophy of the AILEE‑Runtime‑Protocol.
 
 ---
 
@@ -209,39 +568,44 @@ ctest --verbose
 <div align="center">
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                      AILEE LAYER-2 NODE                         │
-├─────────────────────────────────────────────────────────────────┤
-│  ┌──────────────┐  ┌──────────────┐  ┌────────────────────┐  │
-│  │ Orchestration│  │  Reorg       │  │  Federated         │  │
-│  │ & Scheduling │  │  Detector    │  │  Learning          │  │
-│  └──────────────┘  └──────────────┘  └────────────────────┘  │
-│                                                                 │
-│  ┌──────────────────────────────────────────────────────────┐  │
-│  │            Ambient AI Telemetry & Byzantine Detection    │  │
-│  └──────────────────────────────────────────────────────────┘  │
-│                                                                 │
-│  ┌──────────────────────────────────────────────────────────┐  │
-│  │              L2 State & Ledger Management                │  │
-│  │        (Deterministic Snapshots + Verification)          │  │
-│  └──────────────────────────────────────────────────────────┘  │
-│                                                                 │
-│  ┌──────────────────────────────────────────────────────────┐  │
-│  │           Bitcoin Anchoring & Bridge Logic               │  │
-│  │  • SPV Peg-In  • Federated Peg-Out  • Commitments       │  │
-│  └──────────────────────────────────────────────────────────┘  │
-│                                                                 │
-│  ┌──────────────────────────────────────────────────────────┐  │
-│  │        Multi-Chain Adapters (Bitcoin, ETH, SOL...)      │  │
-│  └──────────────────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────────────┘
-                              ↕
-          ┌───────────────────────────────────────┐
-          │     BITCOIN MAINNET (L1)              │
-          │  • Anchor Commitments                 │
-          │  • Peg-In Verification (SPV)          │
-          │  • Peg-Out Settlement (Multisig)      │
-          └───────────────────────────────────────┘
+
+┌────────────────────────────────────────────────────────────────────┐
+│                     AILEE-RUNTIME-PROTOCOL NODE                    │
+├────────────────────────────────────────────────────────────────────┤
+│  ┌──────────────────────────┐  ┌───────────────────────────────┐  │
+│  │ Deterministic Runtime    │  │ Unified Clock Synchronization │  │
+│  │ Engine                   │  │ • Bitcoin Timestamp Anchoring │  │
+│  └──────────────────────────┘  │ • Drift Elimination            │  │
+│                                └───────────────────────────────┘  │
+│                                                                    │
+│  ┌──────────────────────────────────────────────────────────────┐  │
+│  │ Deterministic Replay & Epoch Verification                    │  │
+│  │ • Frozen Genesis                                             │  │
+│  │ • Canonical Build Hashes                                     │  │
+│  │ • Receipt Hash Verification                                  │  │
+│  └──────────────────────────────────────────────────────────────┘  │
+│                                                                    │
+│  ┌──────────────────────────────────────────────────────────────┐  │
+│  │ Wave Native Network Integration                              │  │
+│  │ • Temporal Resonance                                         │  │
+│  │ • Phase Alignment                                            │  │
+│  └──────────────────────────────────────────────────────────────┘  │
+│                                                                    │
+│  ┌──────────────────────────────────────────────────────────────┐  │
+│  │ External Modules (Implemented by Cloner)                     │  │
+│  │ • Broadcast Subsystem                                        │  │
+│  │ • WebServer / API Layer                                      │  │
+│  │ • RPC Adapters                                               │  │
+│  └──────────────────────────────────────────────────────────────┘  │
+└────────────────────────────────────────────────────────────────────┘
+                                ↕
+           ┌───────────────────────────────────────────────┐
+           │              BITCOIN MAINNET (L1)             │
+           │        • Block Headers / Timestamps           │
+           │        • ZMQ Notifications (Optional)         │
+           │        • Mempool Timing (Optional)            │
+           └───────────────────────────────────────────────┘
+
 ```
 
 </div>
@@ -286,6 +650,8 @@ The complete temporal architecture of AILEE‑Core functions as a cohesive pipel
 - **Automated Detection**: The `ReorgDetector` monitors L1 block headers.
 - **Safety Halt**: Block production pauses if a deep reorg is detected.
 - **State Recovery**: L2 state can be rolled back to the last finalized anchor.
+
+The AILEE‑Runtime‑Protocol is secure to clone and implement because its core architecture is fully deterministic, reproducible, and self‑contained, with no hidden networking, no embedded private keys, and no custodial logic. All critical components—deterministic execution, unified clock synchronization, reproducible state transitions, canonical build hashing, epoch verification, and Wave Native Network integration—operate entirely within the local runtime and do not expose financial pathways or mainnet‑touching operations by default. External communication layers such as broadcast modules, RPC adapters, and WebServer endpoints are intentionally not included, ensuring that each entity (corporate, institutional, or independent) implements its own hardened interfaces, credentials, and security models. This separation makes the protocol safe to clone, audit, extend, and integrate, while preserving strict control over any mainnet‑related functionality. In short, the runtime is secure because it provides deterministic guarantees without assuming custody, leaving all sensitive operations to the cloner’s own infrastructure.
 
 ---
 
@@ -343,7 +709,7 @@ If you use or build upon this work in academic research, please cite:
 
 This project was developed with a combination of original ideas, hands‑on coding, and support from advanced AI systems. I would like to acknowledge **Microsoft Copilot** (Trustworthy Assistant, strengthened focus and motivation), **Google Jules** (Code Scaffolding and Code Synthesis Assistance), **Anthropic Claude** (Markdown File formatting assistance), and **OpenAI ChatGPT** (Input on the Original AILEE AI Design Framework) for their meaningful assistance in refining concepts, improving clarity, and strengthening the overall quality of this work. Thank you to Yuji Hirose for the httplib.h MIT sourcecode.
 
-I want to extend sincere appreciation to Marcel Krüger, Independent Theoretical Physics Researcher, for his friendship, his sharp theoretical insight, and his role in shaping the Wave Native Network alongside me. While AILEE CORE is a software architecture built from the ground up within this repository, the conceptual clarity and physics‑driven intuition Marcel brought to our discussions helped refine the final form of WNN and strengthen the direction of this project. His willingness to offer support, review ideas, and stand with me throughout this journey means more than a simple credit line can express. Thank you, Marcel, for being part of the path that led here.
+I want to extend sincere appreciation to Marcel Krüger, Independent Theoretical Physics Researcher, for his friendship, his H.L.V. (Helix Light Vortex) theoretical insight, and his role in in shaping the Wave Native Network alongside me, his work in WNN was crucial for a refrence and innovation to include in this Repository. The conceptual clarity and physics‑driven intuition Marcel brought to our discussions helped refine the final form of WNN with better math and strengthen the direction of this project. His willingness to offer support, review ideas, and stand with me throughout this journey means more than a simple credit line can express. Thank you, Marcel, for being part of the path that led here.
 
 ---
 
@@ -420,7 +786,7 @@ This is a protocol‑level guarantee built on Bitcoin’s immutability.
 
 ---
 
-# **AILEE Core — V33 Protocol Upgrade (3‑in‑1 Feature Set)**
+# **AILEE Core — V33 Protocol Upgrade**
 
 AILEE Core V33 introduces a trilogy of deterministic protocol advancements that elevate the system from a high‑performance L2 into a continuous, Bitcoin‑anchored, self‑optimizing execution environment. These three features operate together as a unified architectural layer.
 
@@ -482,6 +848,12 @@ V33 is the first release where AILEE behaves like a single, coherent organism �
 
 ---
 
+For questions please ask. Your input or curiosity to ask for clarity, will keep this repo running at full capacity. Issues or Discussions will be greatly be appreciated.
+
+Welcome to email me at Dfeen87@Outlook.com
+
+---
+
 ## 📄 License
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
@@ -500,3 +872,8 @@ This project has been a long, disciplined journey — thousand of commits, count
 Building AILEE‑Core has been more than engineering — it has been a reminder that perseverance, faith, and purpose can carry a person through complexity into understanding. Soli Deo gloria.
 
 In God We Trust.
+
+Thank you for your time in this repository. I hope my work will help others.
+
+Best and kind regards,
+Don Michael Feeney Jr.
