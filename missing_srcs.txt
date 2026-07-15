@@ -1,0 +1,16 @@
+src/AmbientAI-Core.cpp
+src/ailee_rpc_client.cpp
+src/AILEE_NetFlow.cpp
+src/core/Ledger.cpp
+src/security/HashProofSystem.cpp
+src/json/JsonLoader.cpp
+src/runtime/ambient_ai_runtime_anchoring_pipeline.cpp
+src/runtime/ambient_ai_global_coordination.cpp
+src/runtime/ambient_ai_runtime_model.cpp
+src/runtime/ambient_ai_subsystem_integration.cpp
+src/runtime/ambient_ai_runtime_state_machine.cpp
+src/runtime/WasmEdgeEngine.cpp
+src/runtime/ambient_ai_runtime_phases.cpp
+src/runtime/interpreter.cpp
+src/orchestration/mesh_optimizer.cpp
+src/tools/ambient_vcp_cli.cpp
