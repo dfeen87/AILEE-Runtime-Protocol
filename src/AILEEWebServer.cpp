@@ -149,7 +149,7 @@ private:
         });
 
         // 2. Dashboard route
-        server_->Get("/", [](const httplib::Request&, httplib::Response& res) {
+        server_->Get("/", [](const httplib::Request& /*req*/, httplib::Response& res) {
             std::ifstream file("web/index.html");
             if (file) {
                 std::stringstream buffer;
@@ -180,7 +180,7 @@ private:
         // 3. GET /api/... endpoints
 
         // Health check endpoint
-        server_->Get("/api/health", [](const httplib::Request&, httplib::Response& res) {
+        server_->Get("/api/health", [](const httplib::Request& /*req*/, httplib::Response& res) {
             auto now = std::chrono::system_clock::now();
             auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
             json response;
@@ -192,7 +192,7 @@ private:
         });
 
         // Node status endpoint
-        server_->Get("/api/status", [this](const httplib::Request&, httplib::Response& res) {
+        server_->Get("/api/status", [this](const httplib::Request& /*req*/, httplib::Response& res) {
             if (status_callback_) {
                 try {
                     NodeStatus status = status_callback_();
@@ -228,7 +228,7 @@ private:
         });
 
         // Metrics endpoint
-        server_->Get("/api/metrics", [this](const httplib::Request&, httplib::Response& res) {
+        server_->Get("/api/metrics", [this](const httplib::Request& /*req*/, httplib::Response& res) {
             auto now = std::chrono::system_clock::now();
             auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
             json metrics;
@@ -256,7 +256,7 @@ private:
         });
 
         // Layer-2 state endpoint - now with real block data
-        server_->Get("/api/l2/state", [this](const httplib::Request&, httplib::Response& res) {
+        server_->Get("/api/l2/state", [this](const httplib::Request& /*req*/, httplib::Response& res) {
             json state;
             state = {
                 {"layer", "Layer-2"},
@@ -288,7 +288,7 @@ private:
         });
 
         // Orchestration tasks endpoint
-        server_->Get("/api/orchestration/tasks", [this](const httplib::Request&, httplib::Response& res) {
+        server_->Get("/api/orchestration/tasks", [this](const httplib::Request& /*req*/, httplib::Response& res) {
             json tasks;
             tasks = {
                 {"tasks", json::array({})},
@@ -305,7 +305,7 @@ private:
         });
 
         // Latest anchor endpoint
-        server_->Get("/api/anchors/latest", [this](const httplib::Request&, httplib::Response& res) {
+        server_->Get("/api/anchors/latest", [this](const httplib::Request& /*req*/, httplib::Response& res) {
             json anchor;
             anchor = {
                 {"message", "Bitcoin anchoring is active"}
@@ -362,7 +362,7 @@ private:
         });
 
         // Deterministic Federation View endpoint
-        server_->Get("/api/federation/view", [this](const httplib::Request&, httplib::Response& res) {
+        server_->Get("/api/federation/view", [this](const httplib::Request& /*req*/, httplib::Response& res) {
             if (!federation_view_callback_) {
                 res.status = 501;
                 json error;
@@ -391,7 +391,7 @@ private:
 
         // V17 Telemetry Endpoints
 
-        server_->Get("/api/sync/events", [this](const httplib::Request&, httplib::Response& res) {
+        server_->Get("/api/sync/events", [this](const httplib::Request& /*req*/, httplib::Response& res) {
             if (!sync_events_callback_) {
                 res.status = 501;
                 json error;
@@ -405,7 +405,7 @@ private:
             res.set_content(sync_events_callback_(), "application/json");
         });
 
-        server_->Get("/api/sync/clock", [this](const httplib::Request&, httplib::Response& res) {
+        server_->Get("/api/sync/clock", [this](const httplib::Request& /*req*/, httplib::Response& res) {
             if (!sync_clock_callback_) {
                 res.status = 501;
                 json error;
@@ -419,7 +419,7 @@ private:
             res.set_content(sync_clock_callback_(), "application/json");
         });
 
-        server_->Get("/api/replay/tick", [this](const httplib::Request&, httplib::Response& res) {
+        server_->Get("/api/replay/tick", [this](const httplib::Request& /*req*/, httplib::Response& res) {
             if (!latest_replay_tick_callback_) {
                 res.status = 501;
                 json error;
@@ -434,7 +434,7 @@ private:
         });
 
         // Heartbeat (simple liveness flag)
-        server_->Get("/api/heartbeat", [this](const httplib::Request&, httplib::Response& res) {
+        server_->Get("/api/heartbeat", [this](const httplib::Request& /*req*/, httplib::Response& res) {
             json response;
             response = {
                 {"status", heartbeat_ok_ ? "ok" : "degraded"}
@@ -443,7 +443,7 @@ private:
         });
 
         // Mesh envelopes for Deterministic Mesh panel
-        server_->Get("/api/mesh/envelopes", [this](const httplib::Request&, httplib::Response& res) {
+        server_->Get("/api/mesh/envelopes", [this](const httplib::Request& /*req*/, httplib::Response& res) {
             if (!mesh_envelopes_callback_) {
                 res.status = 501;
                 json error;
@@ -517,7 +517,7 @@ private:
         });
 
         // Eject (no-op placeholder)
-        server_->Post("/api/eject", [this](const httplib::Request&, httplib::Response& res) {
+        server_->Post("/api/eject", [this](const httplib::Request& /*req*/, httplib::Response& res) {
             json response;
             response = {
                 {"status", "accepted"},
@@ -528,7 +528,7 @@ private:
         });
 
         // Reject (no-op placeholder)
-        server_->Post("/api/reject", [this](const httplib::Request&, httplib::Response& res) {
+        server_->Post("/api/reject", [this](const httplib::Request& /*req*/, httplib::Response& res) {
             json response;
             response = {
                 {"status", "accepted"},
@@ -579,7 +579,7 @@ private:
         });
 
         // Refresh All (just a convenience ping)
-        server_->Post("/api/refresh/all", [this](const httplib::Request&, httplib::Response& res) {
+        server_->Post("/api/refresh/all", [this](const httplib::Request& /*req*/, httplib::Response& res) {
             json response;
             response = {
                 {"status", "ok"},
@@ -713,7 +713,7 @@ server_->Post("/api/broadcast/mainnet",
 
 
         // 6. 404 handler (must stay LAST)
-        server_->set_error_handler([](const httplib::Request&, httplib::Response& res) {
+        server_->set_error_handler([](const httplib::Request& /*req*/, httplib::Response& res) {
             json error;
             error = {
                 {"error", "Not Found"},
