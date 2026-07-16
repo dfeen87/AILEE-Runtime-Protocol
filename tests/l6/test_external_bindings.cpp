@@ -17,8 +17,8 @@ TEST(ExternalBindingsTest, DeterministicJsonOrdering) {
 
     std::string json = JsonBindings::to_json(env);
 
-    // Keys should be id, payload_hash, timestamp in that order
-    EXPECT_EQ(json, "{\"id\":42,\"payload_hash\":\"abcdef\",\"timestamp\":1000}");
+    // Keys should be lexicographically sorted in V35 (id, payload_hash, status, timestamp, type)
+    EXPECT_EQ(json, "{\"id\":42,\"payload_hash\":\"abcdef\",\"status\":\"\",\"timestamp\":1000,\"type\":\"\"}");
 }
 
 TEST(ExternalBindingsTest, JSONRoundTrip) {

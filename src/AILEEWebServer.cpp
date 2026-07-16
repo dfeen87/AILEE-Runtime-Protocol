@@ -9,6 +9,11 @@
 #include "Mempool.h"
 #include "third_party/httplib.h"
 #include "nlohmann/json.hpp"
+#include "webserver/RouteRegistry.h"
+#include "runtime/StateProjection.h"
+#include "kernel/Hooks.h"
+#include "l6/JsonBindings.h"
+#include "l6/ExternalSchema.h"
 
 #include <thread>
 #include <iostream>
@@ -43,8 +48,6 @@ public:
 
             if (config_.enable_ssl && !config_.ssl_cert_path.empty()
                 && !config_.ssl_key_path.empty()) {
-                // ERROR: SSL was requested but is not fully implemented.
-                // Refusing to silently downgrade to plain HTTP — fail-closed.
                 std::cerr << "[WebServer] ERROR: SSL/TLS is configured but not fully implemented. "
                              "Refusing to start in plain HTTP mode. "
                              "Disable enable_ssl or provide a complete SSL implementation." << std::endl;
@@ -126,8 +129,17 @@ public:
     }
 
 private:
-    void setupRoutes() {
+    void registerRoute(const std::string& path, HttpMethod method, std::function<void(const httplib::Request&, httplib::Response&)> handler, const std::string& signature, bool kernel_aware = false) {
+        Route r;
+        r.path = path;
+        r.method = method;
+        r.handler = handler;
+        r.signature_metadata = signature;
+        r.kernel_aware = kernel_aware;
+        RouteRegistry::getInstance().registerRoute(r);
+    }
 
+    void setupRoutes() {
         // 1. Pre-routing handler (CORS + API key)
         server_->set_pre_routing_handler([this](const httplib::Request& req, httplib::Response& res) {
             // Enforce API key on /api/* routes when a key is configured.
@@ -148,8 +160,10 @@ private:
             return httplib::Server::HandlerResponse::Unhandled;
         });
 
-        // 2. Dashboard route
-        server_->Get("/", [](const httplib::Request& /*req*/, httplib::Response& res) {
+        // 2. Register all routes statically in modular RouteRegistry
+
+        // Dashboard route
+        registerRoute("/", HttpMethod::GET, [](const httplib::Request& /*req*/, httplib::Response& res) {
             std::ifstream file("web/index.html");
             if (file) {
                 std::stringstream buffer;
@@ -169,18 +183,18 @@ private:
                         {"/api/anchors/latest", "Get latest Bitcoin anchor"},
                         {"/api/health", "Health check endpoint"},
                         {"/api/replay/tick/:index", "Get deterministic replay tick by index"},
-                        {"/api/federation/view", "Get deterministic federation view"}
+                        {"/api/federation/view", "Get deterministic federation view"},
+                        {"/api/state/snapshot", "Get deterministic state snapshot (V35)"},
+                        {"/api/replay/audit", "Get structured replay audit trail (V35)"}
                     }},
                     {"documentation", "https://github.com/dfeen87/AILEE-Protocol-Core-For-Bitcoin"}
                 };
                 res.set_content(response.dump(), "application/json");
             }
-        });
+        }, "dashboard_route");
 
-        // 3. GET /api/... endpoints
-
-        // Health check endpoint
-        server_->Get("/api/health", [](const httplib::Request& /*req*/, httplib::Response& res) {
+        // Health check
+        registerRoute("/api/health", HttpMethod::GET, [](const httplib::Request& /*req*/, httplib::Response& res) {
             auto now = std::chrono::system_clock::now();
             auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
             json response;
@@ -189,10 +203,10 @@ private:
                 {"timestamp", static_cast<double>(ms)}
             };
             res.set_content(response.dump(), "application/json");
-        });
+        }, "get_health");
 
-        // Node status endpoint
-        server_->Get("/api/status", [this](const httplib::Request& /*req*/, httplib::Response& res) {
+        // Node status
+        registerRoute("/api/status", HttpMethod::GET, [this](const httplib::Request& /*req*/, httplib::Response& res) {
             if (status_callback_) {
                 try {
                     NodeStatus status = status_callback_();
@@ -225,10 +239,10 @@ private:
                 };
                 res.set_content(response.dump(), "application/json");
             }
-        });
+        }, "get_status");
 
-        // Metrics endpoint
-        server_->Get("/api/metrics", [this](const httplib::Request& /*req*/, httplib::Response& res) {
+        // Metrics
+        registerRoute("/api/metrics", HttpMethod::GET, [this](const httplib::Request& /*req*/, httplib::Response& res) {
             auto now = std::chrono::system_clock::now();
             auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
             json metrics;
@@ -253,10 +267,10 @@ private:
             }
 
             res.set_content(metrics.dump(), "application/json");
-        });
+        }, "get_metrics");
 
-        // Layer-2 state endpoint - now with real block data
-        server_->Get("/api/l2/state", [this](const httplib::Request& /*req*/, httplib::Response& res) {
+        // Layer-2 state
+        registerRoute("/api/l2/state", HttpMethod::GET, [this](const httplib::Request& /*req*/, httplib::Response& res) {
             json state;
             state = {
                 {"layer", "Layer-2"},
@@ -271,24 +285,22 @@ private:
                 };
             }
 
-            // Add block producer state if available
             if (block_producer_) {
                 auto blockState = block_producer_->getState();
                 state["block_height"] = json::number_unsigned(blockState.blockHeight);
                 state["total_transactions"] = json::number_unsigned(blockState.totalTransactions);
                 state["last_anchor_height"] = json::number_unsigned(blockState.lastAnchorHeight);
             } else {
-                // Fallback if block producer not initialized yet
                 state["block_height"] = 0;
                 state["total_transactions"] = 0;
                 state["last_anchor_height"] = 0;
             }
 
             res.set_content(state.dump(), "application/json");
-        });
+        }, "get_l2_state");
 
-        // Orchestration tasks endpoint
-        server_->Get("/api/orchestration/tasks", [this](const httplib::Request& /*req*/, httplib::Response& res) {
+        // Orchestration tasks
+        registerRoute("/api/orchestration/tasks", HttpMethod::GET, [this](const httplib::Request& /*req*/, httplib::Response& res) {
             json tasks;
             tasks = {
                 {"tasks", json::array({})},
@@ -302,10 +314,10 @@ private:
             }
 
             res.set_content(tasks.dump(), "application/json");
-        });
+        }, "get_orchestration_tasks");
 
-        // Latest anchor endpoint
-        server_->Get("/api/anchors/latest", [this](const httplib::Request& /*req*/, httplib::Response& res) {
+        // Latest anchor
+        registerRoute("/api/anchors/latest", HttpMethod::GET, [this](const httplib::Request& /*req*/, httplib::Response& res) {
             json anchor;
             anchor = {
                 {"message", "Bitcoin anchoring is active"}
@@ -321,10 +333,10 @@ private:
             }
 
             res.set_content(anchor.dump(), "application/json");
-        });
+        }, "get_anchors_latest");
 
-        // Deterministic Replay Tick endpoint
-        server_->Get(R"(/api/replay/tick/(\d+))", [this](const httplib::Request& req, httplib::Response& res) {
+        // Replay tick by index
+        registerRoute(R"(/api/replay/tick/(\d+))", HttpMethod::GET, [this](const httplib::Request& req, httplib::Response& res) {
             if (!replay_tick_callback_) {
                 res.status = 501;
                 json error;
@@ -359,10 +371,10 @@ private:
                 };
                 res.set_content(error.dump(), "application/json");
             }
-        });
+        }, "get_replay_tick_by_index", true);
 
-        // Deterministic Federation View endpoint
-        server_->Get("/api/federation/view", [this](const httplib::Request& /*req*/, httplib::Response& res) {
+        // Federation View
+        registerRoute("/api/federation/view", HttpMethod::GET, [this](const httplib::Request& /*req*/, httplib::Response& res) {
             if (!federation_view_callback_) {
                 res.status = 501;
                 json error;
@@ -387,11 +399,10 @@ private:
 
             std::string view_json = federation_view_callback_();
             res.set_content(view_json, "application/json");
-        });
+        }, "get_federation_view");
 
-        // V17 Telemetry Endpoints
-
-        server_->Get("/api/sync/events", [this](const httplib::Request& /*req*/, httplib::Response& res) {
+        // Sync events
+        registerRoute("/api/sync/events", HttpMethod::GET, [this](const httplib::Request& /*req*/, httplib::Response& res) {
             if (!sync_events_callback_) {
                 res.status = 501;
                 json error;
@@ -403,9 +414,10 @@ private:
                 return;
             }
             res.set_content(sync_events_callback_(), "application/json");
-        });
+        }, "get_sync_events");
 
-        server_->Get("/api/sync/clock", [this](const httplib::Request& /*req*/, httplib::Response& res) {
+        // Sync clock
+        registerRoute("/api/sync/clock", HttpMethod::GET, [this](const httplib::Request& /*req*/, httplib::Response& res) {
             if (!sync_clock_callback_) {
                 res.status = 501;
                 json error;
@@ -417,9 +429,10 @@ private:
                 return;
             }
             res.set_content(sync_clock_callback_(), "application/json");
-        });
+        }, "get_sync_clock");
 
-        server_->Get("/api/replay/tick", [this](const httplib::Request& /*req*/, httplib::Response& res) {
+        // Latest replay tick
+        registerRoute("/api/replay/tick", HttpMethod::GET, [this](const httplib::Request& /*req*/, httplib::Response& res) {
             if (!latest_replay_tick_callback_) {
                 res.status = 501;
                 json error;
@@ -431,19 +444,19 @@ private:
                 return;
             }
             res.set_content(latest_replay_tick_callback_(), "application/json");
-        });
+        }, "get_latest_replay_tick", true);
 
-        // Heartbeat (simple liveness flag)
-        server_->Get("/api/heartbeat", [this](const httplib::Request& /*req*/, httplib::Response& res) {
+        // Heartbeat
+        registerRoute("/api/heartbeat", HttpMethod::GET, [this](const httplib::Request& /*req*/, httplib::Response& res) {
             json response;
             response = {
                 {"status", heartbeat_ok_ ? "ok" : "degraded"}
             };
             res.set_content(response.dump(), "application/json");
-        });
+        }, "get_heartbeat");
 
-        // Mesh envelopes for Deterministic Mesh panel
-        server_->Get("/api/mesh/envelopes", [this](const httplib::Request& /*req*/, httplib::Response& res) {
+        // Mesh envelopes
+        registerRoute("/api/mesh/envelopes", HttpMethod::GET, [this](const httplib::Request& /*req*/, httplib::Response& res) {
             if (!mesh_envelopes_callback_) {
                 res.status = 501;
                 json error;
@@ -467,12 +480,10 @@ private:
             }
 
             res.set_content(mesh_envelopes_callback_(), "application/json");
-        });
+        }, "get_mesh_envelopes");
 
-        // 4. POST /api/... endpoints
-
-        // Submit task endpoint (POST)
-        server_->Post("/api/orchestration/submit", [this](const httplib::Request& req, httplib::Response& res) {
+        // Submit task
+        registerRoute("/api/orchestration/submit", HttpMethod::POST, [this](const httplib::Request& req, httplib::Response& res) {
             try {
                 json request_body = json::parse(req.body);
 
@@ -514,10 +525,10 @@ private:
                 };
                 res.set_content(error.dump(), "application/json");
             }
-        });
+        }, "post_orchestration_submit");
 
-        // Eject (no-op placeholder)
-        server_->Post("/api/eject", [this](const httplib::Request& /*req*/, httplib::Response& res) {
+        // Eject
+        registerRoute("/api/eject", HttpMethod::POST, [this](const httplib::Request& /*req*/, httplib::Response& res) {
             json response;
             response = {
                 {"status", "accepted"},
@@ -525,10 +536,10 @@ private:
             };
             res.status = 202;
             res.set_content(response.dump(), "application/json");
-        });
+        }, "post_eject");
 
-        // Reject (no-op placeholder)
-        server_->Post("/api/reject", [this](const httplib::Request& /*req*/, httplib::Response& res) {
+        // Reject
+        registerRoute("/api/reject", HttpMethod::POST, [this](const httplib::Request& /*req*/, httplib::Response& res) {
             json response;
             response = {
                 {"status", "accepted"},
@@ -536,10 +547,10 @@ private:
             };
             res.status = 202;
             res.set_content(response.dump(), "application/json");
-        });
+        }, "post_reject");
 
         // Federation mode toggle
-        server_->Post("/api/federation/mode", [this](const httplib::Request& req, httplib::Response& res) {
+        registerRoute("/api/federation/mode", HttpMethod::POST, [this](const httplib::Request& req, httplib::Response& res) {
             try {
                 json body = json::parse(req.body);
                 bool enable = body.value("enable", false);
@@ -556,10 +567,10 @@ private:
                 error = {{"error", "Invalid request"}};
                 res.set_content(error.dump(), "application/json");
             }
-        });
+        }, "post_federation_mode");
 
         // Replay mode toggle
-        server_->Post("/api/replay/mode", [this](const httplib::Request& req, httplib::Response& res) {
+        registerRoute("/api/replay/mode", HttpMethod::POST, [this](const httplib::Request& req, httplib::Response& res) {
             try {
                 json body = json::parse(req.body);
                 bool enable = body.value("enable", false);
@@ -576,20 +587,20 @@ private:
                 error = {{"error", "Invalid request"}};
                 res.set_content(error.dump(), "application/json");
             }
-        });
+        }, "post_replay_mode", true);
 
-        // Refresh All (just a convenience ping)
-        server_->Post("/api/refresh/all", [this](const httplib::Request& /*req*/, httplib::Response& res) {
+        // Refresh All
+        registerRoute("/api/refresh/all", HttpMethod::POST, [this](const httplib::Request& /*req*/, httplib::Response& res) {
             json response;
             response = {
                 {"status", "ok"},
                 {"message", "Refresh requested"}
             };
             res.set_content(response.dump(), "application/json");
-        });
+        }, "post_refresh_all");
 
-        // Transaction submission endpoint (POST)
-        server_->Post("/api/transactions/submit", [this](const httplib::Request& req, httplib::Response& res) {
+        // Transaction submission
+        registerRoute("/api/transactions/submit", HttpMethod::POST, [this](const httplib::Request& req, httplib::Response& res) {
             try {
                 if (!mempool_) {
                     res.status = 503;
@@ -604,7 +615,6 @@ private:
 
                 json request_body = json::parse(req.body);
 
-                // Validate required fields
                 if (!request_body.contains("from_address") ||
                     !request_body.contains("to_address") ||
                     !request_body.contains("amount") ||
@@ -619,7 +629,6 @@ private:
                     return;
                 }
 
-                // Create transaction
                 l2::Transaction tx;
                 tx.txHash = request_body["tx_hash"].get<std::string>();
                 tx.fromAddress = request_body["from_address"].get<std::string>();
@@ -631,13 +640,11 @@ private:
                 tx.status = "pending";
                 tx.blockHeight = 0;
 
-                // Get timestamp
                 auto now = std::chrono::system_clock::now();
                 auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(
                     now.time_since_epoch()).count();
                 tx.timestampMs = static_cast<std::uint64_t>(ms);
 
-                // Add to mempool (returns false if duplicate)
                 if (!mempool_->addTransaction(tx)) {
                     res.status = 409;
                     json error;
@@ -672,47 +679,74 @@ private:
                 };
                 res.set_content(error.dump(), "application/json");
             }
-        });
+        }, "post_transactions_submit");
 
-        /// 5. Mainnet broadcast endpoint
-server_->Post("/api/broadcast/mainnet",
-    [this](const httplib::Request& /*req*/, httplib::Response& res) {
-        json response;
+        // Mainnet broadcast
+        registerRoute("/api/broadcast/mainnet", HttpMethod::POST, [this](const httplib::Request& /*req*/, httplib::Response& res) {
+            json response;
 
-        try {
-            if (!block_producer_) {
-                res.status = 503;
+            try {
+                if (!block_producer_) {
+                    res.status = 503;
+                    response = {
+                        {"error", "Service Unavailable"},
+                        {"message", "BlockProducer not initialized"}
+                    };
+                    res.set_content(response.dump(), "application/json");
+                    return;
+                }
+
+                std::cout << "[WebServer] Mainnet broadcast requested" << std::endl;
+                block_producer_->broadcastLatestBlockToMainnet();
+
                 response = {
-                    {"error", "Service Unavailable"},
-                    {"message", "BlockProducer not initialized"}
+                    {"status", "ok"},
+                    {"message", "Mainnet broadcast triggered"}
+                };
+                res.status = 200;
+                res.set_content(response.dump(), "application/json");
+
+            } catch (const std::exception& e) {
+                res.status = 500;
+                response = {
+                    {"error", "Internal Server Error"},
+                    {"message", e.what()}
                 };
                 res.set_content(response.dump(), "application/json");
-                return;
             }
+        }, "post_broadcast_mainnet");
 
-            std::cout << "[WebServer] Mainnet broadcast requested" << std::endl;
-            block_producer_->broadcastLatestBlockToMainnet();
+        // V35: State Snapshot Route
+        registerRoute("/api/state/snapshot", HttpMethod::GET, [](const httplib::Request& /*req*/, httplib::Response& res) {
+            auto snapshot = runtime::StateProjection::generateSnapshot();
+            std::string json_str = l6::JsonBindings::to_json(snapshot);
+            res.set_content(json_str, "application/json");
+        }, "get_state_snapshot", true);
 
-            response = {
-                {"status", "ok"},
-                {"message", "Mainnet broadcast triggered"}
-            };
-            res.status = 200;
-            res.set_content(response.dump(), "application/json");
+        // V35: Replay Audit Trail Route
+        registerRoute("/api/replay/audit", HttpMethod::GET, [](const httplib::Request& /*req*/, httplib::Response& res) {
+            std::ifstream audit_file("logs/audit_trail.json");
+            std::string content;
+            if (audit_file) {
+                std::stringstream buffer;
+                buffer << audit_file.rdbuf();
+                content = buffer.str();
+            } else {
+                content = "[]";
+            }
+            res.set_content(content, "application/json");
+        }, "get_replay_audit", true);
 
-        } catch (const std::exception& e) {
-            res.status = 500;
-            response = {
-                {"error", "Internal Server Error"},
-                {"message", e.what()}
-            };
-            res.set_content(response.dump(), "application/json");
+        // 3. Register and mount all RouteRegistry routes onto httplib::Server
+        for (const auto& r : RouteRegistry::getInstance().getRoutes()) {
+            if (r.method == HttpMethod::GET) {
+                server_->Get(r.path.c_str(), r.handler);
+            } else if (r.method == HttpMethod::POST) {
+                server_->Post(r.path.c_str(), r.handler);
+            }
         }
-    }
-);
 
-
-        // 6. 404 handler (must stay LAST)
+        // 4. Fallback 404 handler (must stay LAST)
         server_->set_error_handler([](const httplib::Request& /*req*/, httplib::Response& res) {
             json error;
             error = {

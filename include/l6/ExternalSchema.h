@@ -12,6 +12,8 @@ struct ExternalEnvelope {
     uint64_t id;
     uint64_t timestamp;
     std::string payload_hash;
+    std::string type = "";   // V35 extension
+    std::string status = ""; // V35 extension
 };
 
 struct ExternalBitcoinClockState {
@@ -40,6 +42,29 @@ struct ExternalReplayTick {
     ExternalClusterView cluster_view;
     std::string scheduler_state_hash;
     std::string telemetry_json;
+    std::string replay_phase = "";      // V35 extension
+    std::string replay_mode_state = ""; // V35 extension
+};
+
+// V35 State-Projection Structs
+struct ExternalActiveSession {
+    std::string session_id;
+    std::string status;
+};
+
+struct ExternalBroadcastQueue {
+    uint64_t pending_count;
+    std::string queue_id;
+};
+
+struct ExternalStateSnapshot {
+    std::vector<ExternalActiveSession> active_sessions;
+    std::vector<ExternalBroadcastQueue> broadcast_queues;
+    uint64_t current_tick_index;
+    uint64_t global_tick_count;
+    bool replay_active;
+    uint64_t subsystem_tick_count;
+    uint64_t total_ticks;
 };
 
 } // namespace l6

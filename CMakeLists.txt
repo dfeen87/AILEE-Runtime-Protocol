@@ -447,12 +447,6 @@ set(CORE_SOURCES
     src/l3/PeerSync.cpp
     src/l3/NetworkDriver.cpp
     src/l1/AnchorCommitment.cpp
-    src/l1/ReorgDetector.cpp
-    src/l1/SettlementIngestion.cpp
-    src/l2/L2State.cpp
-    src/l2/BlockProducer.cpp
-    src/l2/Mempool.cpp
-    src/AILEEWebServer.cpp
     src/broadcast/BroadcastEngine.cpp
     ${ADAPTER_SOURCES}
     ${AMBIENT_NODE_SOURCES}
@@ -702,6 +696,15 @@ endif()
 # --- 2. Adapter Library (Static) ---
 # Useful for testing adapters without running the full node
 add_library(ailee_adapters STATIC 
+    src/webserver/RouteRegistry.cpp
+    src/kernel/Hooks.cpp
+    src/runtime/StateProjection.cpp
+    src/AILEEWebServer.cpp
+    src/l2/L2State.cpp
+    src/l2/BlockProducer.cpp
+    src/l2/Mempool.cpp
+    src/l1/ReorgDetector.cpp
+    src/l1/SettlementIngestion.cpp
     src/l1_sync/mainnet_sync.cpp
     src/simulation/validation/hice_contracts.cpp
     src/l1_sync/reorg_detector.cpp
@@ -933,6 +936,7 @@ if(BUILD_TESTS)
         tests/test_anchor_commit_txbuilder.cpp
         tests/test_anchor_commit_signing.cpp
         tests/test_anchor_commit_validator.cpp
+        tests/test_v35_capabilities.cpp
     )
 
     add_executable(anchor_metadata_tests

@@ -12,15 +12,6 @@ namespace {
 // We strictly use integer math and strings to avoid std::to_string floating-point issues,
 // since Phase 16 specifies "no floating-point nondeterminism".
 std::string format_double_stable(double val) {
-    // Determine precision: we format as X.YY
-    // Convert to uint64_t scaling by 100
-    // The instructions say "coherence rounding" happens in FederationExport.
-    // So we assume the double is already rounded to 2 decimal places logically,
-    // but just to be safe, we round and convert here deterministically.
-
-    // We treat coherence usually as a percentage or fraction.
-    // Scale by 100 and round to nearest int, then format manually.
-    // (e.g. 99.5 -> "99.50")
     int64_t scaled = static_cast<int64_t>(val * 100.0 + (val >= 0 ? 0.5 : -0.5));
     bool neg = scaled < 0;
     if (neg) scaled = -scaled;
@@ -140,11 +131,13 @@ std::string parse_key(const std::string& json, size_t& pos) {
 } // anonymous namespace
 
 std::string JsonBindings::to_json(const ExternalEnvelope& env) {
-    // Keys must be lexicographically sorted: "id", "payload_hash", "timestamp"
+    // Keys must be lexicographically sorted: "id", "payload_hash", "status", "timestamp", "type"
     std::string out = "{";
     out += "\"id\":" + std::to_string(env.id) + ",";
     out += "\"payload_hash\":\"" + escape_string(env.payload_hash) + "\",";
-    out += "\"timestamp\":" + std::to_string(env.timestamp);
+    out += "\"status\":\"" + escape_string(env.status) + "\",";
+    out += "\"timestamp\":" + std::to_string(env.timestamp) + ",";
+    out += "\"type\":\"" + escape_string(env.type) + "\"";
     out += "}";
     return out;
 }
@@ -202,13 +195,58 @@ std::string JsonBindings::to_json(const ExternalClusterView& view) {
 }
 
 std::string JsonBindings::to_json(const ExternalReplayTick& tick) {
-    // Keys sorted: "cluster_view", "scheduler_state_hash", "telemetry_json", "tick_index"
+    // Keys sorted: "cluster_view", "replay_mode_state", "replay_phase", "scheduler_state_hash", "telemetry_json", "tick_index"
     std::string out = "{";
     out += "\"cluster_view\":" + to_json(tick.cluster_view) + ",";
+    out += "\"replay_mode_state\":\"" + escape_string(tick.replay_mode_state) + "\",";
+    out += "\"replay_phase\":\"" + escape_string(tick.replay_phase) + "\",";
     out += "\"scheduler_state_hash\":\"" + escape_string(tick.scheduler_state_hash) + "\",";
-    // telemetry_json is a string containing json or a plain string
     out += "\"telemetry_json\":\"" + escape_string(tick.telemetry_json) + "\",";
     out += "\"tick_index\":" + std::to_string(tick.tick_index);
+    out += "}";
+    return out;
+}
+
+std::string JsonBindings::to_json(const ExternalActiveSession& session) {
+    // Keys sorted: "session_id", "status"
+    std::string out = "{";
+    out += "\"session_id\":\"" + escape_string(session.session_id) + "\",";
+    out += "\"status\":\"" + escape_string(session.status) + "\"";
+    out += "}";
+    return out;
+}
+
+std::string JsonBindings::to_json(const ExternalBroadcastQueue& queue) {
+    // Keys sorted: "pending_count", "queue_id"
+    std::string out = "{";
+    out += "\"pending_count\":" + std::to_string(queue.pending_count) + ",";
+    out += "\"queue_id\":\"" + escape_string(queue.queue_id) + "\"";
+    out += "}";
+    return out;
+}
+
+std::string JsonBindings::to_json(const ExternalStateSnapshot& snapshot) {
+    // Keys sorted: "active_sessions", "broadcast_queues", "current_tick_index", "global_tick_count", "replay_active", "subsystem_tick_count", "total_ticks"
+    std::string out = "{";
+    out += "\"active_sessions\":[";
+    for (size_t i = 0; i < snapshot.active_sessions.size(); ++i) {
+        out += to_json(snapshot.active_sessions[i]);
+        if (i < snapshot.active_sessions.size() - 1) out += ",";
+    }
+    out += "],";
+
+    out += "\"broadcast_queues\":[";
+    for (size_t i = 0; i < snapshot.broadcast_queues.size(); ++i) {
+        out += to_json(snapshot.broadcast_queues[i]);
+        if (i < snapshot.broadcast_queues.size() - 1) out += ",";
+    }
+    out += "],";
+
+    out += "\"current_tick_index\":" + std::to_string(snapshot.current_tick_index) + ",";
+    out += "\"global_tick_count\":" + std::to_string(snapshot.global_tick_count) + ",";
+    out += "\"replay_active\":" + std::string(snapshot.replay_active ? "true" : "false") + ",";
+    out += "\"subsystem_tick_count\":" + std::to_string(snapshot.subsystem_tick_count) + ",";
+    out += "\"total_ticks\":" + std::to_string(snapshot.total_ticks);
     out += "}";
     return out;
 }
@@ -228,8 +266,12 @@ ExternalEnvelope JsonBindings::from_json_envelope(const std::string& json) {
             env.id = parse_uint(json, pos);
         } else if (key == "payload_hash") {
             env.payload_hash = parse_string(json, pos);
+        } else if (key == "status") {
+            env.status = parse_string(json, pos);
         } else if (key == "timestamp") {
             env.timestamp = parse_uint(json, pos);
+        } else if (key == "type") {
+            env.type = parse_string(json, pos);
         } else {
             throw std::runtime_error("Unknown key in envelope: " + key);
         }
@@ -420,6 +462,10 @@ ExternalReplayTick JsonBindings::from_json_tick(const std::string& json) {
             tick.scheduler_state_hash = parse_string(json, pos);
         } else if (key == "telemetry_json") {
             tick.telemetry_json = parse_string(json, pos);
+        } else if (key == "replay_phase") {
+            tick.replay_phase = parse_string(json, pos);
+        } else if (key == "replay_mode_state") {
+            tick.replay_mode_state = parse_string(json, pos);
         } else if (key == "cluster_view") {
             skip_whitespace(json, pos);
             size_t start_obj = pos;
@@ -444,6 +490,162 @@ ExternalReplayTick JsonBindings::from_json_tick(const std::string& json) {
         }
     }
     return tick;
+}
+
+ExternalActiveSession JsonBindings::from_json_active_session(const std::string& json) {
+    ExternalActiveSession session;
+    size_t pos = 0;
+    expect_char(json, pos, '{');
+    while (pos < json.size()) {
+        skip_whitespace(json, pos);
+        if (json[pos] == '}') {
+            pos++;
+            break;
+        }
+        std::string key = parse_key(json, pos);
+        if (key == "session_id") {
+            session.session_id = parse_string(json, pos);
+        } else if (key == "status") {
+            session.status = parse_string(json, pos);
+        } else {
+            throw std::runtime_error("Unknown key in active session: " + key);
+        }
+
+        skip_whitespace(json, pos);
+        if (json[pos] == ',') {
+            pos++;
+        } else if (json[pos] != '}') {
+            throw std::runtime_error("Expected ',' or '}'");
+        }
+    }
+    return session;
+}
+
+ExternalBroadcastQueue JsonBindings::from_json_broadcast_queue(const std::string& json) {
+    ExternalBroadcastQueue queue;
+    size_t pos = 0;
+    expect_char(json, pos, '{');
+    while (pos < json.size()) {
+        skip_whitespace(json, pos);
+        if (json[pos] == '}') {
+            pos++;
+            break;
+        }
+        std::string key = parse_key(json, pos);
+        if (key == "pending_count") {
+            queue.pending_count = parse_uint(json, pos);
+        } else if (key == "queue_id") {
+            queue.queue_id = parse_string(json, pos);
+        } else {
+            throw std::runtime_error("Unknown key in broadcast queue: " + key);
+        }
+
+        skip_whitespace(json, pos);
+        if (json[pos] == ',') {
+            pos++;
+        } else if (json[pos] != '}') {
+            throw std::runtime_error("Expected ',' or '}'");
+        }
+    }
+    return queue;
+}
+
+ExternalStateSnapshot JsonBindings::from_json_state_snapshot(const std::string& json) {
+    ExternalStateSnapshot snapshot;
+    size_t pos = 0;
+    expect_char(json, pos, '{');
+    while (pos < json.size()) {
+        skip_whitespace(json, pos);
+        if (json[pos] == '}') {
+            pos++;
+            break;
+        }
+        std::string key = parse_key(json, pos);
+        if (key == "current_tick_index") {
+            snapshot.current_tick_index = parse_uint(json, pos);
+        } else if (key == "global_tick_count") {
+            snapshot.global_tick_count = parse_uint(json, pos);
+        } else if (key == "subsystem_tick_count") {
+            snapshot.subsystem_tick_count = parse_uint(json, pos);
+        } else if (key == "total_ticks") {
+            snapshot.total_ticks = parse_uint(json, pos);
+        } else if (key == "replay_active") {
+            skip_whitespace(json, pos);
+            if (json.substr(pos, 4) == "true") {
+                snapshot.replay_active = true;
+                pos += 4;
+            } else if (json.substr(pos, 5) == "false") {
+                snapshot.replay_active = false;
+                pos += 5;
+            } else {
+                throw std::runtime_error("Expected boolean");
+            }
+        } else if (key == "active_sessions") {
+            expect_char(json, pos, '[');
+            while (pos < json.size()) {
+                skip_whitespace(json, pos);
+                if (json[pos] == ']') {
+                    pos++;
+                    break;
+                }
+
+                size_t start_obj = pos;
+                int depth = 0;
+                while (pos < json.size()) {
+                    if (json[pos] == '{') depth++;
+                    else if (json[pos] == '}') depth--;
+                    pos++;
+                    if (depth == 0) break;
+                }
+                std::string obj_json = json.substr(start_obj, pos - start_obj);
+                snapshot.active_sessions.push_back(from_json_active_session(obj_json));
+
+                skip_whitespace(json, pos);
+                if (json[pos] == ',') {
+                    pos++;
+                } else if (json[pos] != ']') {
+                    throw std::runtime_error("Expected ',' or ']' in active_sessions");
+                }
+            }
+        } else if (key == "broadcast_queues") {
+            expect_char(json, pos, '[');
+            while (pos < json.size()) {
+                skip_whitespace(json, pos);
+                if (json[pos] == ']') {
+                    pos++;
+                    break;
+                }
+
+                size_t start_obj = pos;
+                int depth = 0;
+                while (pos < json.size()) {
+                    if (json[pos] == '{') depth++;
+                    else if (json[pos] == '}') depth--;
+                    pos++;
+                    if (depth == 0) break;
+                }
+                std::string obj_json = json.substr(start_obj, pos - start_obj);
+                snapshot.broadcast_queues.push_back(from_json_broadcast_queue(obj_json));
+
+                skip_whitespace(json, pos);
+                if (json[pos] == ',') {
+                    pos++;
+                } else if (json[pos] != ']') {
+                    throw std::runtime_error("Expected ',' or ']' in broadcast_queues");
+                }
+            }
+        } else {
+            throw std::runtime_error("Unknown key in state snapshot: " + key);
+        }
+
+        skip_whitespace(json, pos);
+        if (json[pos] == ',') {
+            pos++;
+        } else if (json[pos] != '}') {
+            throw std::runtime_error("Expected ',' or '}'");
+        }
+    }
+    return snapshot;
 }
 
 } // namespace l6
