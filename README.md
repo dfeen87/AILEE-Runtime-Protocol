@@ -5,7 +5,6 @@
 [![C++ Standard](https://img.shields.io/badge/C%2B%2B-17-blue.svg)](https://isocpp.org/)
 [![CMake](https://img.shields.io/badge/CMake-3.10+-blue.svg)](https://cmake.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-Python-green.svg)](https://fastapi.tiangolo.com/)
-[![Bitcoin](https://img.shields.io/badge/Bitcoin-Layer--2-orange.svg)](https://bitcoin.org/)
 [![CI](https://github.com/dfeen87/AILEE-Protocol-Core-For-Bitcoin/actions/workflows/ci.yml/badge.svg)](https://github.com/dfeen87/AILEE-Protocol-Core-For-Bitcoin/actions/workflows/ci.yml)
 
 
