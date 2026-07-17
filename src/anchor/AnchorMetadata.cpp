@@ -4,16 +4,16 @@ namespace ailee {
 namespace anchor {
 
 AnchorMetadata::AnchorMetadata(
-    uint64_t epoch_number,
-    uint32_t version,
-    uint32_t replay_window,
-    uint32_t anchor_type,
-    uint32_t flags
-) : epoch_number(epoch_number),
-    version(version),
-    replay_window(replay_window),
-    anchor_type(anchor_type),
-    flags(flags) {}
+    uint64_t epoch_number_val,
+    uint32_t version_val,
+    uint32_t replay_window_val,
+    uint32_t anchor_type_val,
+    uint32_t flags_val
+) : epoch_number(epoch_number_val),
+    version(version_val),
+    replay_window(replay_window_val),
+    anchor_type(anchor_type_val),
+    flags(flags_val) {}
 
 std::vector<uint8_t> AnchorMetadata::to_bytes() const {
     std::vector<uint8_t> bytes;

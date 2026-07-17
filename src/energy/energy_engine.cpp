@@ -1,8 +1,10 @@
 #include "ailee/energy/energy_engine.hpp"
+#include "core/Logging.h"
 #include <stdexcept>
 #include <iostream>
 #include <algorithm>
 #include <cmath>
+#include <cassert>
 
 namespace ailee {
 namespace energy {
@@ -40,6 +42,25 @@ BatteryAdvisory EnergyEngine::update(float voltage, float current, float tempera
         throw std::runtime_error("EnergyEngine not initialized");
     }
 
+    auto logger = ailee::log::getLogger("EnergyEngine");
+
+    // Developer Assertions
+    assert(std::isfinite(voltage) && "voltage must be finite");
+    assert(std::isfinite(current) && "current must be finite");
+    assert(std::isfinite(temperature) && "temperature must be finite");
+    assert(std::isfinite(soc) && "soc must be finite");
+    assert(std::isfinite(dt) && "dt must be finite");
+
+    // Runtimeguards / checks for invalid or non-finite inputs
+    if (!std::isfinite(voltage) || !std::isfinite(current) || !std::isfinite(temperature) ||
+        !std::isfinite(soc) || !std::isfinite(dt) || dt <= 0.0f) {
+        LOG_WARN(logger, "Non-finite or invalid input detected in EnergyEngine::update. Triggering baseline fallback.");
+        BatteryAdvisory fallback_adv = config_.get_fallback_advisory();
+        fallback_adv.confidence = 0.0f; // Low/invalid confidence
+        fallback_adv.risk_score = 1.0f; // Pre-fault indicator
+        return fallback_adv;
+    }
+
     // Skip update if interval is below tau_min (bit-erasure threshold)
     if (dt < config_.tau_min) {
         // Return current advisory equivalent with zeroed increments
@@ -48,16 +69,25 @@ BatteryAdvisory EnergyEngine::update(float voltage, float current, float tempera
         return adv;
     }
 
-    // Clamping physical inputs to safety boundaries (just like in HLVEnhancement)
+    // Boundary validations and clamps
     bool input_clamped = false;
+    if (soc < 0.0f || soc > 1.0f) {
+        LOG_WARN(logger, "State of Charge out of [0, 1] range. Clamping.");
+        soc = std::clamp(soc, 0.0f, 1.0f);
+        input_clamped = true;
+    }
+
     if (std::abs(current) > config_.max_current_a) {
+        LOG_WARN(logger, "Current exceeds max physical boundary. Clamping.");
         current = std::copysign(config_.max_current_a, current);
         input_clamped = true;
     }
     if (temperature > config_.max_temperature_c) {
+        LOG_WARN(logger, "Temperature exceeds max safe boundary. Clamping.");
         temperature = config_.max_temperature_c;
         input_clamped = true;
     } else if (temperature < config_.min_temperature_c) {
+        LOG_WARN(logger, "Temperature below min safe boundary. Clamping.");
         temperature = config_.min_temperature_c;
         input_clamped = true;
     }
@@ -94,7 +124,7 @@ BatteryAdvisory EnergyEngine::update(float voltage, float current, float tempera
 
     // Metric stability factor
     double metric_deviation = std::abs(state_.g_eff.trace() - 2.0);
-    float metric_factor = 1.0f / (1.0f + static_cast<float>(metric_deviation));
+    float metric_factor = safe_div_f(1.0f, 1.0f + static_cast<float>(metric_deviation));
 
     // Torque scaling and regen capacity loops
     adv.torque_scale = compute_hlv_torque_scale(state_, config_.max_temperature_c);
@@ -111,7 +141,7 @@ BatteryAdvisory EnergyEngine::update(float voltage, float current, float tempera
 
     // Estimated Charge Time
     float remaining_capacity_ah = (1.0f - static_cast<float>(state_.state_of_charge)) * config_.nominal_capacity_ah;
-    adv.recommended_charge_time_minutes = 60.0f * remaining_capacity_ah / std::max(adv.recommended_charge_current_a, 1.0f);
+    adv.recommended_charge_time_minutes = safe_div_f(60.0f * remaining_capacity_ah, std::max(adv.recommended_charge_current_a, 1.0f));
 
     // Recommended continuous discharge C-rate
     adv.recommended_discharge_rate_c = 2.0f * metric_factor * (1.0f - static_cast<float>(state_.degradation));
@@ -145,7 +175,7 @@ BatteryAdvisory EnergyEngine::compute_blended_advisory(const BatteryAdvisory& ra
 
     // Case 2 — grace band (c_grace <= c < c_min)
     if (confidence >= c_grace) {
-        float alpha = (confidence - c_grace) / (c_min - c_grace);
+        float alpha = safe_div_f(confidence - c_grace, c_min - c_grace);
         return BatteryAdvisory::blend(raw_advisory, fallback_baseline, alpha, s_fallback);
     }
 

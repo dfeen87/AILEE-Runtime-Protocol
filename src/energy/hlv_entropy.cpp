@@ -15,10 +15,10 @@ void EnergyEngine::update_phi(float dt) {
     state_.entropy = std::min(state_.entropy, 1.0);
 
     // Coulomb counting for cycle tracking
-    double charge_delta = std::abs(state_.current) * dt / 3600.0; // Ah
+    double charge_delta = safe_div(std::abs(state_.current) * dt, 3600.0); // Ah
     state_.charge_throughput_ah += charge_delta;
     double prev_cycle_count = state_.cycle_count;
-    state_.cycle_count = state_.charge_throughput_ah / (2.0 * config_.nominal_capacity_ah);
+    state_.cycle_count = safe_div(state_.charge_throughput_ah, 2.0 * config_.nominal_capacity_ah);
 
     // Degradation update
     double cycle_delta = state_.cycle_count - prev_cycle_count;

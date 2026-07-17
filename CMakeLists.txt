@@ -43,7 +43,7 @@ endif()
 if(MSVC)
     add_compile_options(/W4 /permissive-)
 else()
-    add_compile_options(-Wall -Wextra -Wpedantic)
+    add_compile_options(-Wall -Wextra -Wpedantic -Wconversion -Wshadow -Wnon-virtual-dtor)
     set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -DDEBUG")
     set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG -march=native") # Optimize for local CPU
 endif()

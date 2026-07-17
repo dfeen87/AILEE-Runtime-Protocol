@@ -97,6 +97,31 @@ struct HLVState {
     }
 };
 
+// Safe Math Guards for HLV Physics / Energy Engine
+inline double safe_div(double numerator, double denominator) {
+    if (std::abs(denominator) < 1e-8) {
+        return (denominator >= 0.0) ? (numerator / 1e-8) : (numerator / -1e-8);
+    }
+    return numerator / denominator;
+}
+
+inline float safe_div_f(float numerator, float denominator) {
+    if (std::abs(denominator) < 1e-8f) {
+        return (denominator >= 0.0f) ? (numerator / 1e-8f) : (numerator / -1e-8f);
+    }
+    return numerator / denominator;
+}
+
+inline double safe_exp(double val) {
+    double clamped = std::clamp(val, -50.0, 50.0);
+    return std::exp(clamped);
+}
+
+inline float safe_exp_f(float val) {
+    float clamped = std::clamp(val, -50.0f, 50.0f);
+    return std::exp(clamped);
+}
+
 } // namespace energy
 } // namespace ailee
 

@@ -43,16 +43,28 @@ class TestEnergySimulation(unittest.TestCase):
         self.assertIn("best_fitness", res)
         self.assertTrue(10 <= res["best_current"] <= 150)
 
+        # Assert optimization never violates safety bounds
+        self.assertLessEqual(res["details"]["recommended_current_limit"], self.enhancer.config["max_current_a"])
+        self.assertLessEqual(res["details"]["recommended_voltage_limit"], 500.0)
+
     def test_dynamic_optimization(self):
         res = dynamic_optimization(self.enhancer, self.mock_profile, dt=5.0)
         self.assertGreater(res["final_degradation"], 0.0)
         self.assertEqual(res["history_length"], 20)
+
+        # Assert dynamic optimization never violates safety bounds
+        self.assertLessEqual(self.enhancer.degradation, 1.0)
+        self.assertGreaterEqual(self.enhancer.degradation, 0.0)
 
     def test_grid_search(self):
         best_params, best_score = grid_search(self.capacity_ah, self.nominal_voltage_v, self.mock_profile)
         self.assertIn("lambda", best_params)
         self.assertIn("entropy_weight", best_params)
         self.assertGreater(best_score, 0.0)
+
+        # Assert grid search converges to stable recommendations where score doesn't swing wildly
+        self.assertGreaterEqual(best_score, 99.0)
+        self.assertLessEqual(best_score, 100.0)
 
     def test_out_of_sample_validation(self):
         train_set = [self.mock_profile, self.mock_profile]
@@ -69,6 +81,12 @@ class TestEnergySimulation(unittest.TestCase):
         self.assertEqual(len(res["individual_seed_capacities"]), 3)
         self.assertIn("standard_deviation", res)
         self.assertGreater(res["robustness_score"], 0.0)
+
+        # Assert multi-seed runs produce bounded variance (standard deviation < 5% of mean)
+        mean = res["mean_remaining_capacity"]
+        std_dev = res["standard_deviation"]
+        rel_std_dev = std_dev / mean if mean > 0 else 0.0
+        self.assertLess(rel_std_dev, 0.05)
 
 if __name__ == "__main__":
     unittest.main()

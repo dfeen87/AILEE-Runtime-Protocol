@@ -22,10 +22,7 @@ void EnergyEngine::compute_phi_gradients() {
     state_.grad_phi[1] = state_.entropy * (1.0 - state_.state_of_charge);
 
     // Temperature gradient
-    double temp_factor = 0.0;
-    if (config_.max_temperature_c != 0.0f) {
-        temp_factor = state_.temperature / config_.max_temperature_c;
-    }
+    double temp_factor = safe_div(state_.temperature, config_.max_temperature_c);
     state_.grad_phi[2] = temp_factor * state_.degradation;
 
     // Cycle count gradient (history coupling)

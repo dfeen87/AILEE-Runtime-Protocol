@@ -130,3 +130,75 @@ TEST(EnergyRuntimeTest, HighLevelRuntimeRunnerCycle) {
     EXPECT_GE(advisory.confidence, 0.8f);
     EXPECT_GT(advisory.torque_scale, 0.8f);
 }
+
+TEST(EnergyRuntimeTest, EdgeCaseConfidenceBlending) {
+    EnergyConfig config;
+    EnergyEngine engine(config);
+
+    BatteryAdvisory raw;
+    raw.torque_scale = 0.9f;
+    raw.recommended_charge_current_a = 80.0f;
+    raw.recommended_voltage_v = 420.0f;
+    raw.max_safe_temperature_c = 60.0f;
+    raw.recommended_charge_time_minutes = 30.0f;
+    raw.recommended_discharge_rate_c = 3.0f;
+    raw.risk_score = 0.1f;
+    raw.confidence = 0.8f;
+    raw.allow_fast_charge = true;
+    raw.require_derating = false;
+
+    BatteryAdvisory fallback = config.get_fallback_advisory();
+
+    // Edge case 1: confidence exactly 0.20f (min_confidence_threshold)
+    // alpha = (0.20f - 0.10f) / (0.20f - 0.10f) = 1.0f -> Full raw
+    {
+        BatteryAdvisory blended = engine.compute_blended_advisory(raw, 0.20f);
+        EXPECT_FLOAT_EQ(blended.torque_scale, raw.torque_scale);
+        EXPECT_FLOAT_EQ(blended.recommended_charge_current_a, raw.recommended_charge_current_a);
+        EXPECT_FLOAT_EQ(blended.recommended_voltage_v, raw.recommended_voltage_v);
+    }
+
+    // Edge case 2: confidence exactly 0.10f (grace_confidence_threshold)
+    // alpha = (0.10f - 0.10f) / (0.20f - 0.10f) = 0.0f -> Full fallback with fallback scaling
+    {
+        BatteryAdvisory blended = engine.compute_blended_advisory(raw, 0.10f);
+        EXPECT_FLOAT_EQ(blended.torque_scale, fallback.torque_scale * config.fallback_position_scale);
+        EXPECT_FLOAT_EQ(blended.recommended_charge_current_a, fallback.recommended_charge_current_a * config.fallback_position_scale);
+        EXPECT_FLOAT_EQ(blended.recommended_voltage_v, fallback.recommended_voltage_v * config.fallback_position_scale);
+    }
+
+    // Edge case 3: confidence exactly 0.0f
+    // alpha = 0.0f -> Full fallback with fallback scaling
+    {
+        BatteryAdvisory blended = engine.compute_blended_advisory(raw, 0.0f);
+        EXPECT_FLOAT_EQ(blended.torque_scale, fallback.torque_scale * config.fallback_position_scale);
+        EXPECT_FLOAT_EQ(blended.recommended_charge_current_a, fallback.recommended_charge_current_a * config.fallback_position_scale);
+        EXPECT_FLOAT_EQ(blended.recommended_voltage_v, fallback.recommended_voltage_v * config.fallback_position_scale);
+    }
+}
+
+TEST(EnergyRuntimeTest, InvalidAndNaNInputsHandling) {
+    AILEEEnergyRuntime runtime;
+
+    // Extreme/impossible input inputs should be clamped and logged
+    BatteryAdvisory adv_extreme = runtime.run_cycle(1500.0f, -800.0f, 180.0f, 1.5f, 0.1f);
+    // Should be a valid fallback/clamped advisory, but with require_derating set to true because it got clamped
+    EXPECT_TRUE(adv_extreme.require_derating);
+
+    // Check that we get a valid state even after clamps
+    BatteryState state_extreme = runtime.get_state();
+    EXPECT_TRUE(state_extreme.is_valid());
+    EXPECT_LE(state_extreme.soc, 1.0f);
+    EXPECT_LE(state_extreme.temperature_c, runtime.get_config().max_temperature_c);
+
+    // Negative dt or 0.0f dt should trigger fallback directly
+    BatteryAdvisory adv_neg_dt = runtime.run_cycle(400.0f, 10.0f, 25.0f, 0.9f, -0.1f);
+    EXPECT_TRUE(adv_neg_dt.require_derating);
+    EXPECT_FLOAT_EQ(adv_neg_dt.torque_scale, runtime.get_config().fallback_torque_scale * runtime.get_config().fallback_position_scale);
+
+    // NaN input check: NaN SoC
+    BatteryAdvisory adv_nan = runtime.run_cycle(400.0f, 10.0f, 25.0f, std::nanf(""), 0.1f);
+    // Should gracefully transition to fallback
+    EXPECT_TRUE(adv_nan.require_derating);
+    EXPECT_FLOAT_EQ(adv_nan.torque_scale, runtime.get_config().fallback_torque_scale * runtime.get_config().fallback_position_scale);
+}

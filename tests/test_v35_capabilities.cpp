@@ -7,6 +7,8 @@
 #include "l6/ExternalSchema.h"
 #include <fstream>
 #include <sstream>
+#include <thread>
+#include <chrono>
 
 using namespace ailee;
 using namespace ailee::l6;
@@ -142,13 +144,21 @@ TEST(V35CapabilitiesTest, KernelHookAttachmentIntegrity) {
     // Trigger onReplayTick manually which appends to logs/audit_trail.json
     Hooks::onReplayTick(ctx, tick);
 
-    // Verify it is written correctly to logs/audit_trail.json
-    std::ifstream infile("logs/audit_trail.json");
-    ASSERT_TRUE(infile.is_open());
-    std::stringstream buffer;
-    buffer << infile.rdbuf();
-    std::string content = buffer.str();
-    infile.close();
+    // Wait for the background worker to finish writing the audit trail file (up to 2.0 seconds)
+    std::string content;
+    for (int i = 0; i < 200; ++i) {
+        std::ifstream infile("logs/audit_trail.json");
+        if (infile.is_open()) {
+            std::stringstream buffer;
+            buffer << infile.rdbuf();
+            content = buffer.str();
+            infile.close();
+            if (content.find("\"tick_index\":101") != std::string::npos) {
+                break;
+            }
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
 
     EXPECT_NE(content.find("\"tick_index\":101"), std::string::npos);
     EXPECT_NE(content.find("\"replay_phase\":\"verification\""), std::string::npos);

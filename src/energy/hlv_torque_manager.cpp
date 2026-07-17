@@ -51,7 +51,7 @@ float compute_hlv_regen_capacity(const HLVState& state, float max_temperature_c)
 
     // Metric stability factor
     double metric_deviation = std::abs(state.g_eff.trace() - 2.0);
-    float metric_factor = 1.0f / (1.0f + static_cast<float>(metric_deviation));
+    float metric_factor = safe_div_f(1.0f, 1.0f + static_cast<float>(metric_deviation));
 
     float combined_regen = soc_factor * temp_factor * metric_factor;
     return std::clamp(combined_regen, 0.0f, 1.0f);
