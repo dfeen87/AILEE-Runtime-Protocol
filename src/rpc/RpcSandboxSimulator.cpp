@@ -31,7 +31,7 @@ long RpcSandboxSimulator::execute(const std::string& method, const std::string& 
     response["error"] = nullptr;
 
     if (method == "getblockcount") {
-        response["result"] = nlohmann::json{ static_cast<uint64_t>(currentBlockCount_) };
+        response["result"].emplace(static_cast<uint64_t>(currentBlockCount_));
     } else if (method == "sendrawtransaction") {
         // Mock a successful txid
         response["result"] = "mock_txid_a1b2c3d4e5f6";
