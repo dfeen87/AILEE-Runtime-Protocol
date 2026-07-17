@@ -13,8 +13,8 @@ TEST(MainnetSyncMetricsTest, MetricsCalculation) {
         h.version = 1;
         h.height = 1000 + i;
         h.timestamp = 1600000000 + (i * 600); // 10 min blocks
-        h.prev_hash.fill(i);
-        h.hash.fill(i + 1);
+        h.prev_hash.fill(static_cast<unsigned char>(i));
+        h.hash.fill(static_cast<unsigned char>(i + 1));
         headers.push_back(h);
     }
     manager.ingest_headers(headers);

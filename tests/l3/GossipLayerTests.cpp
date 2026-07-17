@@ -18,9 +18,9 @@ public:
 
         // Setup some arbitrary but deterministic data
         for (int i = 0; i < 32; ++i) {
-            envelope.context.node_identity_hash[i] = i;
-            envelope.context.state_root_hash[i] = 32 - i;
-            envelope.context.epoch_hash[i] = i % 16;
+            envelope.context.node_identity_hash[i] = static_cast<uint8_t>(i);
+            envelope.context.state_root_hash[i] = static_cast<uint8_t>(32 - i);
+            envelope.context.epoch_hash[i] = static_cast<uint8_t>(i % 16);
         }
         envelope.context.l1_height = 100;
         coherence.score = 4;

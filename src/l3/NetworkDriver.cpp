@@ -145,11 +145,11 @@ NetworkRunSummary NetworkDriver::run_offline(
         summary.sequence.envelopes.push_back(envelope);
         summary.sequence.count++;
 
-        summary.final_network_height = net_snap.block.height;
+        summary.final_network_height = static_cast<uint32_t>(net_snap.block.height);
     }
 
     summary.total_steps_executed = config.max_steps;
-    summary.envelopes_produced = summary.sequence.count;
+    summary.envelopes_produced = static_cast<uint32_t>(summary.sequence.count);
 
     return summary;
 }

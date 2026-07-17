@@ -141,9 +141,9 @@ void DeterministicScheduler::run_tick(
                 reflection::ReflectionSnapshot dummy_reflection = {};
                 l1::SettlementIngestion dummy_settlement = {};
 
-                const auto& clock = mainnet_sync.get_clock();
-                dummy_settlement.latest_anchor.bitcoinHeight = clock.height;
-                dummy_settlement.latest_anchor.broadcastTime = static_cast<uint64_t>(clock.consensus_time);
+                const auto& sync_clock = mainnet_sync.get_clock();
+                dummy_settlement.latest_anchor.bitcoinHeight = sync_clock.height;
+                dummy_settlement.latest_anchor.broadcastTime = static_cast<uint64_t>(sync_clock.consensus_time);
                 mesh::MeshCoherenceResult dummy_coherence = {};
 
                 identity::NodeId node_id;

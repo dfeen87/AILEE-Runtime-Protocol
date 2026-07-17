@@ -25,10 +25,10 @@ namespace ailee::network {
 namespace {
     void writeString(std::vector<uint8_t>& buf, const std::string& str) {
         uint32_t len = static_cast<uint32_t>(str.size());
-        buf.push_back((len >> 24) & 0xFF);
-        buf.push_back((len >> 16) & 0xFF);
-        buf.push_back((len >> 8) & 0xFF);
-        buf.push_back(len & 0xFF);
+        buf.push_back(static_cast<uint8_t>((len >> 24) & 0xFF));
+        buf.push_back(static_cast<uint8_t>((len >> 16) & 0xFF));
+        buf.push_back(static_cast<uint8_t>((len >> 8) & 0xFF));
+        buf.push_back(static_cast<uint8_t>(len & 0xFF));
         buf.insert(buf.end(), str.begin(), str.end());
     }
 
@@ -67,10 +67,10 @@ namespace {
 
     void writeBytes(std::vector<uint8_t>& buf, const std::vector<uint8_t>& bytes) {
         uint32_t len = static_cast<uint32_t>(bytes.size());
-        buf.push_back((len >> 24) & 0xFF);
-        buf.push_back((len >> 16) & 0xFF);
-        buf.push_back((len >> 8) & 0xFF);
-        buf.push_back(len & 0xFF);
+        buf.push_back(static_cast<uint8_t>((len >> 24) & 0xFF));
+        buf.push_back(static_cast<uint8_t>((len >> 16) & 0xFF));
+        buf.push_back(static_cast<uint8_t>((len >> 8) & 0xFF));
+        buf.push_back(static_cast<uint8_t>(len & 0xFF));
         buf.insert(buf.end(), bytes.begin(), bytes.end());
     }
 

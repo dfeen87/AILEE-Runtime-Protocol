@@ -151,7 +151,7 @@ struct Reputation {
     }
 
     void decay(std::chrono::seconds elapsed) {
-        double decayFactor = std::min(0.5, elapsed.count() / 86400.0 * 0.01);
+        double decayFactor = std::min(0.5, static_cast<double>(elapsed.count()) / 86400.0 * 0.01);
         trustScore = std::max(0.0, trustScore - decayFactor);
     }
 };
@@ -302,7 +302,7 @@ public:
         
         // Update all-time success rate
         if (rep.totalTasks > 0) {
-            rep.allTimeSuccessRate = static_cast<double>(rep.successfulTasks) / rep.totalTasks;
+            rep.allTimeSuccessRate = static_cast<double>(rep.successfulTasks) / static_cast<double>(rep.totalTasks);
         }
         
         // Update trust score
@@ -320,7 +320,7 @@ public:
             rep.lastUpdated = std::chrono::system_clock::now();
             
             if (rep.totalTasks > 0) {
-                rep.allTimeSuccessRate = static_cast<double>(rep.successfulTasks) / rep.totalTasks;
+                rep.allTimeSuccessRate = static_cast<double>(rep.successfulTasks) / static_cast<double>(rep.totalTasks);
             }
             rep.trustScore = rep.score();
         }
@@ -343,7 +343,7 @@ public:
         double alpha = 0.1; // Exponential moving average factor
         rep.avgQualityScore = rep.avgQualityScore * (1.0 - alpha) + qualityScore * alpha;
         rep.avgResponseTime = rep.avgResponseTime * (1.0 - alpha) + 
-                             responseTime.count() / 1000.0 * alpha;
+                             static_cast<double>(responseTime.count()) / 1000.0 * alpha;
         
         rep.lastUpdated = std::chrono::system_clock::now();
         rep.trustScore = rep.score();

@@ -3,7 +3,7 @@
 namespace ailee {
 namespace ambient_node {
 
-AmbientRoutingEngine::AmbientRoutingEngine(const AmbientLowPowerProfile& profile) : profile(profile) {}
+AmbientRoutingEngine::AmbientRoutingEngine(const AmbientLowPowerProfile& prof) : profile(prof) {}
 
 bool AmbientRoutingEngine::canRoute(PowerState currentPower) const {
     return static_cast<uint8_t>(currentPower) >= static_cast<uint8_t>(profile.minBatteryThreshold);

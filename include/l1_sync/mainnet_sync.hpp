@@ -48,7 +48,7 @@ using MempoolSnapshot = std::vector<MempoolEntry>;
 
 class MainnetSyncManager {
 public:
-    MainnetSyncManager(size_t max_buffer_size = 144);
+    MainnetSyncManager(size_t max_buf_size = 144);
 
     // Ingest data and produce deterministic sync events
     void ingest_headers(const HeaderBatch& headers);

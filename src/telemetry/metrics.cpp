@@ -16,8 +16,9 @@ static double pearson(const std::deque<double>& x, const std::deque<double>& y) 
   if (n < 2) return 0.0;
   double sx=0, sy=0, sxx=0, syy=0, sxy=0;
   for (size_t i=0;i<n;++i){ sx+=x[i]; sy+=y[i]; sxx+=x[i]*x[i]; syy+=y[i]*y[i]; sxy+=x[i]*y[i]; }
-  double num = n*sxy - sx*sy;
-  double den = std::sqrt((n*sxx - sx*sx)*(n*syy - sy*sy));
+  double nd = static_cast<double>(n);
+  double num = nd*sxy - sx*sy;
+  double den = std::sqrt((nd*sxx - sx*sx)*(nd*syy - sy*sy));
   if (den <= 1e-12) return 0.0;
   double r = num/den;
   if (std::isnan(r) || std::isinf(r)) return 0.0;

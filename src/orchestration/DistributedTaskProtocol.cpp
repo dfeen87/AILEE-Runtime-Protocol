@@ -284,10 +284,10 @@ bool DistributedTaskProtocol::distributeTask(const DistributedTask& task) {
 
     // task_id_len
     uint32_t id_len = static_cast<uint32_t>(task.taskId.size());
-    payload.push_back((id_len >> 24) & 0xFF);
-    payload.push_back((id_len >> 16) & 0xFF);
-    payload.push_back((id_len >> 8) & 0xFF);
-    payload.push_back(id_len & 0xFF);
+    payload.push_back(static_cast<uint8_t>((id_len >> 24) & 0xFF));
+    payload.push_back(static_cast<uint8_t>((id_len >> 16) & 0xFF));
+    payload.push_back(static_cast<uint8_t>((id_len >> 8) & 0xFF));
+    payload.push_back(static_cast<uint8_t>(id_len & 0xFF));
 
     // task_id_bytes
     payload.insert(payload.end(), task.taskId.begin(), task.taskId.end());
@@ -295,15 +295,15 @@ bool DistributedTaskProtocol::distributeTask(const DistributedTask& task) {
     // timestamp
     uint64_t ts = task.createdAt;
     for (int i = 7; i >= 0; --i) {
-        payload.push_back((ts >> (i * 8)) & 0xFF);
+        payload.push_back(static_cast<uint8_t>((ts >> (i * 8)) & 0xFF));
     }
 
     // payload_length
     uint32_t pl_len = static_cast<uint32_t>(task.payload.size());
-    payload.push_back((pl_len >> 24) & 0xFF);
-    payload.push_back((pl_len >> 16) & 0xFF);
-    payload.push_back((pl_len >> 8) & 0xFF);
-    payload.push_back(pl_len & 0xFF);
+    payload.push_back(static_cast<uint8_t>((pl_len >> 24) & 0xFF));
+    payload.push_back(static_cast<uint8_t>((pl_len >> 16) & 0xFF));
+    payload.push_back(static_cast<uint8_t>((pl_len >> 8) & 0xFF));
+    payload.push_back(static_cast<uint8_t>(pl_len & 0xFF));
 
     // payload_bytes
     payload.insert(payload.end(), task.payload.begin(), task.payload.end());
@@ -393,8 +393,8 @@ DistributedTaskProtocol::ProtocolStats DistributedTaskProtocol::getStats() const
     std::lock_guard<std::mutex> lock(impl_->mutex);
     
     auto stats = impl_->stats;
-    stats.currentPendingTasks = impl_->pendingTasks.size();
-    stats.currentRunningTasks = impl_->runningTasks.size();
+    stats.currentPendingTasks = static_cast<uint32_t>(impl_->pendingTasks.size());
+    stats.currentRunningTasks = static_cast<uint32_t>(impl_->runningTasks.size());
     
     return stats;
 }

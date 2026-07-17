@@ -9,19 +9,19 @@ std::vector<uint8_t> EnergyProfile::canonicalSerialize() const {
     // Length-prefixed binary form for Merkle leaf creation
     // pubkey len (4) + pubkey + 3 * uint64_t (24)
     std::vector<uint8_t> out;
-    uint32_t pkLen = publicKeyHex.size();
+    uint32_t pkLen = static_cast<uint32_t>(publicKeyHex.size());
     out.reserve(4 + pkLen + 24);
 
-    out.push_back((pkLen >> 24) & 0xFF);
-    out.push_back((pkLen >> 16) & 0xFF);
-    out.push_back((pkLen >> 8) & 0xFF);
-    out.push_back(pkLen & 0xFF);
+    out.push_back(static_cast<uint8_t>((pkLen >> 24) & 0xFF));
+    out.push_back(static_cast<uint8_t>((pkLen >> 16) & 0xFF));
+    out.push_back(static_cast<uint8_t>((pkLen >> 8) & 0xFF));
+    out.push_back(static_cast<uint8_t>(pkLen & 0xFF));
 
     out.insert(out.end(), publicKeyHex.begin(), publicKeyHex.end());
 
     auto push64 = [&out](uint64_t val) {
         for (int i = 7; i >= 0; --i) {
-            out.push_back((val >> (i * 8)) & 0xFF);
+            out.push_back(static_cast<uint8_t>((val >> (i * 8)) & 0xFF));
         }
     };
 

@@ -508,7 +508,7 @@ std::vector<NodeMetrics> WeightedOrchestrator::filterCandidates(
                 task.blacklistedNodes.end()) {
             continue;
         }
-        if (task.maxCostTokens > 0 && node.costPerHour > task.maxCostTokens) {
+        if (task.maxCostTokens > 0 && node.costPerHour > static_cast<double>(task.maxCostTokens)) {
             continue;
         }
         filtered.push_back(node);

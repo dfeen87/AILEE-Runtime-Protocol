@@ -133,7 +133,7 @@ private:
         for (const auto& p : prices) {
             variance += std::abs(p.btcUsdPrice - median.btcUsdPrice);
         }
-        median.confidence = 1.0 - (variance / (median.btcUsdPrice * prices.size()));
+        median.confidence = 1.0 - (variance / (median.btcUsdPrice * static_cast<double>(prices.size())));
 
         // Aggregate sources
         for (const auto& p : prices) {
@@ -679,7 +679,7 @@ public:
         data_.goldPriceUsd = priceData.goldUsdPrice;
 
         // Calculate gold amount with fee
-        double btcValue = (data_.btcAmountSatoshis / BTC_TO_SATOSHI) * data_.btcPriceUsd;
+        double btcValue = (static_cast<double>(data_.btcAmountSatoshis) / BTC_TO_SATOSHI) * data_.btcPriceUsd;
         double feeAmount = btcValue * (CONVERSION_FEE_PERCENT / 100.0);
         double netValue = btcValue - feeAmount;
         
