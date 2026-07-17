@@ -6,7 +6,7 @@ Connects to the C++ AILEE-Core node to fetch real L2 state data
 import os
 import logging
 import time
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 import httpx
 
 logger = logging.getLogger(__name__)
@@ -50,7 +50,6 @@ class AILEECoreClient:
     
     async def get_status(self) -> Optional[Dict[str, Any]]:
         """Get node status from C++ node"""
-        # Check node availability first
         if not await self._check_and_update_availability():
             return None
         
@@ -80,7 +79,6 @@ class AILEECoreClient:
     
     async def get_metrics(self) -> Optional[Dict[str, Any]]:
         """Get metrics from C++ node"""
-        # Check node availability first
         if not await self._check_and_update_availability():
             return None
         
@@ -117,17 +115,14 @@ class AILEECoreClient:
         """
         current_time = time.time()
         
-        # If we recently checked, return cached result
         if self._node_available is not None and (current_time - self._last_check_time) < self._check_interval:
             return self._node_available
         
-        # Perform health check
         try:
             response = await self.client.get(f"{self.base_url}/api/health", timeout=self._health_check_timeout)
             is_available = response.status_code == 200
             
             if is_available and self._node_available is False:
-                # Node came back online (transition from False to True)
                 logger.info(f"C++ AILEE-Core node is now available at {self.base_url}")
                 self._consecutive_failures = 0
             
@@ -136,7 +131,6 @@ class AILEECoreClient:
             return is_available
         except Exception:
             if self._node_available is not False:
-                # First time we detect node is unavailable (transition from None/True to False)
                 logger.warning(f"C++ AILEE-Core node unavailable at {self.base_url}. API will run in standalone mode.")
             
             self._node_available = False
@@ -145,44 +139,35 @@ class AILEECoreClient:
     
     async def get_l2_state(self) -> Optional[Dict[str, Any]]:
         """Get L2 state from C++ node"""
-        # Check node availability first
         if not await self._check_and_update_availability():
-            # Node is known to be unavailable, skip connection attempt
             return None
         
         try:
             response = await self.client.get(f"{self.base_url}/api/l2/state")
             response.raise_for_status()
-            self._consecutive_failures = 0  # Reset failure counter on success
+            self._consecutive_failures = 0
             return response.json()
         except httpx.HTTPError as e:
             self._consecutive_failures += 1
-            
-            # Only log first few failures to avoid log spam
             if self._consecutive_failures <= self._max_log_failures:
                 logger.error(f"Failed to get L2 state from C++ node: {e}")
             elif self._consecutive_failures == self._max_log_failures + 1:
                 logger.warning(f"Suppressing further C++ node connection errors (node appears unavailable)")
-            
-            # Mark node as unavailable after failures
             self._node_available = False
             self._last_check_time = time.time()
             return None
         except Exception as e:
             self._consecutive_failures += 1
-            
             if self._consecutive_failures <= self._max_log_failures:
                 logger.error(f"Unexpected error getting L2 state: {e}")
             elif self._consecutive_failures == self._max_log_failures + 1:
                 logger.warning(f"Suppressing further C++ node connection errors (node appears unavailable)")
-            
             self._node_available = False
             self._last_check_time = time.time()
             return None
     
     async def get_orchestration_tasks(self) -> Optional[Dict[str, Any]]:
         """Get orchestration tasks from C++ node"""
-        # Check node availability first
         if not await self._check_and_update_availability():
             return None
         
@@ -212,7 +197,6 @@ class AILEECoreClient:
     
     async def get_latest_anchor(self) -> Optional[Dict[str, Any]]:
         """Get latest Bitcoin anchor from C++ node"""
-        # Check node availability first
         if not await self._check_and_update_availability():
             return None
         
@@ -241,22 +225,7 @@ class AILEECoreClient:
             return None
     
     async def submit_transaction(self, tx_payload: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-        """
-        Submit a transaction to the C++ node's mempool.
-
-        Uses the shared httpx client so that SSL verification settings and
-        timeout configuration are consistent with all other requests made
-        through this client.
-
-        Args:
-            tx_payload: Transaction fields expected by the C++ node
-                        (from_address, to_address, amount, data, tx_hash).
-
-        Returns:
-            Parsed JSON object returned by the C++ endpoint on success
-            (e.g. ``{"status": "accepted", "tx_hash": "...", "message": "..."}``),
-            or None on any error or when the node is unavailable.
-        """
+        """Submit a transaction to the C++ node's mempool"""
         if not await self._check_and_update_availability():
             return None
 
@@ -285,6 +254,47 @@ class AILEECoreClient:
                 logger.warning("Suppressing further C++ node connection errors (node appears unavailable)")
             self._node_available = False
             self._last_check_time = time.time()
+            return None
+
+    # V35 Proxy Methods
+
+    async def get_state_snapshot(self) -> Optional[Dict[str, Any]]:
+        """Get state snapshot from C++ node"""
+        if not await self._check_and_update_availability():
+            return None
+        try:
+            response = await self.client.get(f"{self.base_url}/api/state/snapshot")
+            response.raise_for_status()
+            self._consecutive_failures = 0
+            return response.json()
+        except Exception as e:
+            logger.error(f"Failed to get state snapshot from C++ node: {e}")
+            return None
+
+    async def get_replay_audit(self) -> Optional[List[Dict[str, Any]]]:
+        """Get replay audit logs from C++ node"""
+        if not await self._check_and_update_availability():
+            return None
+        try:
+            response = await self.client.get(f"{self.base_url}/api/replay/audit")
+            response.raise_for_status()
+            self._consecutive_failures = 0
+            return response.json()
+        except Exception as e:
+            logger.error(f"Failed to get replay audit from C++ node: {e}")
+            return None
+
+    async def get_replay_tick_by_index(self, index: int) -> Optional[Dict[str, Any]]:
+        """Get replay tick by index from C++ node"""
+        if not await self._check_and_update_availability():
+            return None
+        try:
+            response = await self.client.get(f"{self.base_url}/api/replay/tick/{index}")
+            response.raise_for_status()
+            self._consecutive_failures = 0
+            return response.json()
+        except Exception as e:
+            logger.error(f"Failed to get replay tick {index} from C++ node: {e}")
             return None
 
     async def health_check(self) -> bool:

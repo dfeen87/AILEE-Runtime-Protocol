@@ -24,7 +24,7 @@ from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 
 from api.config import settings
-from api.routers import health, status, trust, l2, metrics, transactions
+from api.routers import health, status, trust, l2, metrics, transactions, state, replay
 from api.security_audit import get_audit_logger, audit_log, AuditEventType, AuditEventSeverity
 from api.database import init_database, close_database
 from api.auth import init_api_key
@@ -295,6 +295,8 @@ app.include_router(trust.router, prefix="/trust", tags=["Trust"])
 app.include_router(l2.router, prefix="/l2", tags=["Layer-2"])
 app.include_router(transactions.router, prefix="/transactions", tags=["Transactions"])
 app.include_router(metrics.router, tags=["Metrics"])
+app.include_router(state.router, tags=["State"])
+app.include_router(replay.router, tags=["Replay"])
 
 # Mount static files (web dashboard)
 # Serve index.html at root, other static files at /web
