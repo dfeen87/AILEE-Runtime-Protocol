@@ -851,6 +851,27 @@ else()
 endif()
 
 # ============================================================================
+# AILEE Energy Runtime (Deterministic Battery Optimization)
+# ============================================================================
+
+option(AILEE_ENABLE_ENERGY "Enable AILEE Energy Runtime" ON)
+if(AILEE_ENABLE_ENERGY)
+    message(STATUS "AILEE Energy Runtime: ENABLED")
+    add_library(ailee_energy_lib STATIC
+        src/energy/energy_engine.cpp
+        src/energy/energy_config.cpp
+        src/energy/hlv_battery_model.cpp
+        src/energy/hlv_entropy.cpp
+        src/energy/hlv_torque_manager.cpp
+    )
+    target_include_directories(ailee_energy_lib PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+else()
+    message(STATUS "AILEE Energy Runtime: DISABLED")
+endif()
+
+# ============================================================================
 # Unit Tests (Optional)
 # ============================================================================
 set(GTest_FOUND FALSE)
@@ -1113,4 +1134,14 @@ if(BUILD_TESTS)
     target_include_directories(test_isla_mode PRIVATE include src)
     target_link_libraries(test_isla_mode PRIVATE ailee_adapters GTest::gtest GTest::gtest_main)
     add_test(NAME IslaModeEngineTests COMMAND test_isla_mode)
+
+    if(AILEE_ENABLE_ENERGY)
+        add_executable(ailee_energy_tests
+            tests/test_energy_runtime.cpp
+            tests/test_energy_config.cpp
+        )
+        target_include_directories(ailee_energy_tests PRIVATE include src)
+        target_link_libraries(ailee_energy_tests PRIVATE ailee_energy_lib GTest::gtest GTest::gtest_main)
+        add_test(NAME AileeEnergyTests COMMAND ailee_energy_tests)
+    endif()
 endif()
