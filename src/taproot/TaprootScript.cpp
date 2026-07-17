@@ -59,24 +59,24 @@ bool tweak_taproot_output_key(const std::array<uint8_t, 32>& internal_key,
 namespace {
 
 uint32_t polymod_step(uint32_t pre) {
-    uint8_t b = pre >> 25;
+    uint8_t b = static_cast<uint8_t>(pre >> 25);
     return ((pre & 0x1ffffff) << 5) ^
-           (-((b >> 0) & 1) & 0x3b6a57b2UL) ^
-           (-((b >> 1) & 1) & 0x26508e6dUL) ^
-           (-((b >> 2) & 1) & 0x1ea119faUL) ^
-           (-((b >> 3) & 1) & 0x3d4233ddUL) ^
-           (-((b >> 4) & 1) & 0x2a1462b3UL);
+           (static_cast<uint32_t>(-(static_cast<int32_t>((b >> 0) & 1))) & 0x3b6a57b2UL) ^
+           (static_cast<uint32_t>(-(static_cast<int32_t>((b >> 1) & 1))) & 0x26508e6dUL) ^
+           (static_cast<uint32_t>(-(static_cast<int32_t>((b >> 2) & 1))) & 0x1ea119faUL) ^
+           (static_cast<uint32_t>(-(static_cast<int32_t>((b >> 3) & 1))) & 0x3d4233ddUL) ^
+           (static_cast<uint32_t>(-(static_cast<int32_t>((b >> 4) & 1))) & 0x2a1462b3UL);
 }
 
 std::vector<uint8_t> expand_hrp(const std::string& hrp) {
     std::vector<uint8_t> ret;
     ret.reserve(hrp.size() * 2 + 1);
     for (char c : hrp) {
-        ret.push_back(c >> 5);
+        ret.push_back(static_cast<uint8_t>(static_cast<int>(c) >> 5));
     }
     ret.push_back(0);
     for (char c : hrp) {
-        ret.push_back(c & 31);
+        ret.push_back(static_cast<uint8_t>(static_cast<int>(c) & 31));
     }
     return ret;
 }
@@ -91,11 +91,11 @@ std::vector<uint8_t> convert_bits(const std::vector<uint8_t>& in, int frombits, 
         bits += frombits;
         while (bits >= tobits) {
             bits -= tobits;
-            ret.push_back((acc >> bits) & maxv);
+            ret.push_back(static_cast<uint8_t>((acc >> bits) & maxv));
         }
     }
     if (pad && bits > 0) {
-        ret.push_back((acc << (tobits - bits)) & maxv);
+        ret.push_back(static_cast<uint8_t>((acc << (tobits - bits)) & maxv));
     }
     return ret;
 }

@@ -20,8 +20,8 @@ public:
         remote_env.remote_summary.epoch_height = 100;
 
         for(int i=0; i<32; i++){
-            local_env.context.state_root_hash[i] = i;
-            remote_env.remote_summary.state_root_hash[i] = i;
+            local_env.context.state_root_hash[i] = static_cast<uint8_t>(i);
+            remote_env.remote_summary.state_root_hash[i] = static_cast<uint8_t>(i);
         }
 
         local_env.context.mesh_coherence_score = 4;

@@ -21,7 +21,7 @@ enum class RoutingState : uint8_t { DISCONNECTED, CONNECTING, CONNECTED, BACKOFF
 
 class AmbientRoutingEngine {
 public:
-    explicit AmbientRoutingEngine(const AmbientLowPowerProfile& profile);
+    explicit AmbientRoutingEngine(const AmbientLowPowerProfile& prof);
 
     // Determines if routing can proceed based on low-power constraints and battery state
     bool canRoute(PowerState currentPower) const;

@@ -355,7 +355,7 @@ public:
         for (const auto& data : history_) {
             sum += std::abs(data.error);
         }
-        return sum / history_.size();
+        return sum / static_cast<double>(history_.size());
     }
     
     double getRMSE() const {
@@ -364,7 +364,7 @@ public:
         for (const auto& data : history_) {
             sum += data.error * data.error;
         }
-        return std::sqrt(sum / history_.size());
+        return std::sqrt(sum / static_cast<double>(history_.size()));
     }
     
     const std::vector<double>& getCoefficients() const { return coeffs_; }
@@ -399,7 +399,7 @@ private:
         for (size_t i = 0; i < 7; ++i) {
             double regularizationPenalty = regularizationStrength_ * coeffs_[i];
             coeffs_[i] -= learningRate_ * 
-                ((gradients[i] / history_.size()) + regularizationPenalty);
+                ((gradients[i] / static_cast<double>(history_.size())) + regularizationPenalty);
         }
     }
 };
@@ -744,7 +744,7 @@ public:
         }
         
         for (size_t i = 0; i < cycles; ++i) {
-            double progress = static_cast<double>(i) / cycles;
+            double progress = static_cast<double>(i) / static_cast<double>(cycles);
             result.aiFactorHistory.push_back(
                 MIN_AI_FACTOR + progress * (MAX_AI_FACTOR - MIN_AI_FACTOR)
             );

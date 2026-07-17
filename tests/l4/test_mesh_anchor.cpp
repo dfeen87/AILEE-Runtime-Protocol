@@ -24,7 +24,7 @@ protected:
             }
 
             // Make some IN_SYNC for coherence
-            if (i < node_count * 0.7) {
+            if (static_cast<double>(i) < static_cast<double>(node_count) * 0.7) {
                 ailee::l3::PeerSyncState sync_state = {};
                 sync_state.sync_status = ailee::l3::SyncStatus::IN_SYNC;
                 view.nodes[i].peer_sync_states.push_back(sync_state);

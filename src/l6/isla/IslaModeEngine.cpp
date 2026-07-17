@@ -28,7 +28,7 @@ double IslaModeEngine::computeCoherenceScore(const EpochMetricsWindow& window) {
         total_score += score;
     }
 
-    return std::clamp(total_score / window.epochs.size(), 0.0, 1.0);
+    return std::clamp(total_score / static_cast<double>(window.epochs.size()), 0.0, 1.0);
 }
 
 double IslaModeEngine::computePerformanceScore(const PerformanceMetricsWindow& window) {
@@ -61,7 +61,7 @@ double IslaModeEngine::computePerformanceScore(const PerformanceMetricsWindow& w
         total_score += score;
     }
 
-    return std::clamp(total_score / window.epochs.size(), 0.0, 1.0);
+    return std::clamp(total_score / static_cast<double>(window.epochs.size()), 0.0, 1.0);
 }
 
 double IslaModeEngine::computeEconomicScore(const EconomicMetricsWindow& window) {
@@ -92,7 +92,7 @@ double IslaModeEngine::computeEconomicScore(const EconomicMetricsWindow& window)
         total_score += score;
     }
 
-    return std::clamp(total_score / window.epochs.size(), 0.0, 1.0);
+    return std::clamp(total_score / static_cast<double>(window.epochs.size()), 0.0, 1.0);
 }
 
 IslaTuningDecision IslaModeEngine::computeDecision(
@@ -111,7 +111,7 @@ IslaTuningDecision IslaModeEngine::computeDecision(
     double avg_dispute_rate = 0.0;
     if (!epoch_metrics.epochs.empty()) {
         for (const auto& e : epoch_metrics.epochs) avg_dispute_rate += e.dispute_rate;
-        avg_dispute_rate /= epoch_metrics.epochs.size();
+        avg_dispute_rate /= static_cast<double>(epoch_metrics.epochs.size());
     }
 
     double avg_proof_time = 0.0;
@@ -121,19 +121,19 @@ IslaTuningDecision IslaModeEngine::computeDecision(
             avg_proof_time += e.proof_generation_time;
             avg_utilization += e.prover_utilization;
         }
-        avg_proof_time /= perf_metrics.epochs.size();
-        avg_utilization /= perf_metrics.epochs.size();
+        avg_proof_time /= static_cast<double>(perf_metrics.epochs.size());
+        avg_utilization /= static_cast<double>(perf_metrics.epochs.size());
     }
 
     double avg_fees = 0.0;
     if (!econ_metrics.epochs.empty()) {
         for (const auto& e : econ_metrics.epochs) avg_fees += e.sat_per_vbyte_fee_band;
-        avg_fees /= econ_metrics.epochs.size();
+        avg_fees /= static_cast<double>(econ_metrics.epochs.size());
     }
     double avg_anchor_time = 0.0;
     if (!epoch_metrics.epochs.empty()) {
         for (const auto& e : epoch_metrics.epochs) avg_anchor_time += e.anchor_confirmation_time;
-        avg_anchor_time /= epoch_metrics.epochs.size();
+        avg_anchor_time /= static_cast<double>(epoch_metrics.epochs.size());
     }
 
     bool has_epoch_data = !epoch_metrics.epochs.empty();

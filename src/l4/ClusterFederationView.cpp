@@ -28,7 +28,7 @@ ClusterFederationView build_federation_view(
     }
 
     if (!clusters.empty()) {
-        view.coherence_summary.average_coherence = total_coherence / clusters.size();
+        view.coherence_summary.average_coherence = total_coherence / static_cast<double>(clusters.size());
         view.coherence_summary.min_coherence = min_coherence;
         view.coherence_summary.max_coherence = max_coherence;
     } else {

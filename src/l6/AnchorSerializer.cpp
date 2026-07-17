@@ -7,14 +7,14 @@ namespace l6 {
 namespace {
 
 void encode_u64_be(uint64_t val, uint8_t* out) {
-    out[0] = (val >> 56) & 0xFF;
-    out[1] = (val >> 48) & 0xFF;
-    out[2] = (val >> 40) & 0xFF;
-    out[3] = (val >> 32) & 0xFF;
-    out[4] = (val >> 24) & 0xFF;
-    out[5] = (val >> 16) & 0xFF;
-    out[6] = (val >> 8)  & 0xFF;
-    out[7] = (val)       & 0xFF;
+    out[0] = static_cast<uint8_t>((val >> 56) & 0xFF);
+    out[1] = static_cast<uint8_t>((val >> 48) & 0xFF);
+    out[2] = static_cast<uint8_t>((val >> 40) & 0xFF);
+    out[3] = static_cast<uint8_t>((val >> 32) & 0xFF);
+    out[4] = static_cast<uint8_t>((val >> 24) & 0xFF);
+    out[5] = static_cast<uint8_t>((val >> 16) & 0xFF);
+    out[6] = static_cast<uint8_t>((val >> 8)  & 0xFF);
+    out[7] = static_cast<uint8_t>((val)       & 0xFF);
 }
 
 uint64_t decode_u64_be(const uint8_t* in) {

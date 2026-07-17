@@ -134,7 +134,7 @@ MeshCoherenceSummary summarize_mesh_coherence(
     std::memset(&summary, 0, sizeof(summary));
 
     summary.self_id = self.node_id;
-    summary.total_nodes = count;
+    summary.total_nodes = static_cast<uint32_t>(count);
 
     for (size_t i = 0; i < count; ++i) {
         MeshCoherenceResult result = compute_mesh_coherence(self, others[i]);

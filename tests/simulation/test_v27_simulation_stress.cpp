@@ -92,13 +92,13 @@ TEST(V27SimulationStress, HighFrequencyPassiveSyncAndHICE) {
         h.version = 1;
         h.height = 10000 + i;
         h.timestamp = 1600000000 + (i * 60); // Simulated 1 min blocks for high frequency
-        h.prev_hash.fill(i % 255);
-        h.hash.fill((i + 1) % 255);
+        h.prev_hash.fill(static_cast<unsigned char>(i % 255));
+        h.hash.fill(static_cast<unsigned char>((i + 1) % 255));
         headers.push_back(h);
 
         MempoolDelta d;
         d.is_add = true;
-        d.txid.fill(i % 255);
+        d.txid.fill(static_cast<unsigned char>(i % 255));
         d.fee = 100 + i;
         d.size = 250;
         deltas.push_back(d);

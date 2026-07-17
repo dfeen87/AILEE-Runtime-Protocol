@@ -5,7 +5,7 @@ namespace ailee {
 namespace wnn {
 
 void MeshOrchestrator::evaluate_topology(const std::vector<MeshNodeState>& nodes) {
-    int total_nodes = nodes.size();
+    int total_nodes = static_cast<int>(nodes.size());
     int healthy_nodes = 0;
 
     for (const auto& node : nodes) {

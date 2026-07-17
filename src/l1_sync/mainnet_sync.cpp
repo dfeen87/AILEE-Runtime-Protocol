@@ -15,8 +15,8 @@ bool MempoolEntry::operator<(const MempoolEntry& other) const {
     return size < other.size;
 }
 
-MainnetSyncManager::MainnetSyncManager(size_t max_buffer_size)
-    : max_buffer_size(max_buffer_size)
+MainnetSyncManager::MainnetSyncManager(size_t max_buf_size)
+    : max_buffer_size(max_buf_size)
 {
     clock.height = 0;
     clock.consensus_time = 0.0;
@@ -183,7 +183,7 @@ std::string ailee::l1_sync::MainnetSyncManager::compute_utxo_reflection_hash() c
 }
 
 void ailee::l1_sync::MainnetSyncManager::simulate_sync_cycle_metrics() {
-    double new_auc = mempool.size() > 0 ? 0.85 + (mempool.size() * 0.001) : 0.80;
+    double new_auc = mempool.size() > 0 ? 0.85 + (static_cast<double>(mempool.size()) * 0.001) : 0.80;
     static double last_auc = 0.80;
     delta_auc = new_auc - last_auc;
     last_auc = new_auc;
@@ -191,12 +191,12 @@ void ailee::l1_sync::MainnetSyncManager::simulate_sync_cycle_metrics() {
     if (historical_intervals.size() >= 5) {
         double mean = 0;
         for (double val : historical_intervals) mean += val;
-        mean /= historical_intervals.size();
+        mean /= static_cast<double>(historical_intervals.size());
 
         double variance = 0;
         for (double val : historical_intervals) variance += (val - mean) * (val - mean);
 
-        spectral_drift = (variance / historical_intervals.size()) * 0.0001;
+        spectral_drift = (variance / static_cast<double>(historical_intervals.size())) * 0.0001;
     } else {
         spectral_drift = 0.0;
     }

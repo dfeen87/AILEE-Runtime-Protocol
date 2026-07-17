@@ -57,6 +57,7 @@ ZkEpochValiditySurface TemporalAuditor::evaluate(
     full_window.push_back(current_state);
 
     size_t n = full_window.size();
+    double nd = static_cast<double>(n);
 
     // 1. Coherence(m, W) - average over window
     double sum_cov = 0, sum_spec = 0, sum_mem = 0, sum_leak = 0, sum_null = 0, sum_auc = 0;
@@ -69,12 +70,12 @@ ZkEpochValiditySurface TemporalAuditor::evaluate(
         sum_auc += state.metrics.delta_auc;
     }
 
-    surface.coherence.average_covariance_error = sum_cov / n;
-    surface.coherence.average_spectral_drift = sum_spec / n;
-    surface.coherence.average_delta_memory = sum_mem / n;
-    surface.coherence.average_context_leakage = sum_leak / n;
-    surface.coherence.average_null_matching_rate = sum_null / n;
-    surface.coherence.average_delta_auc = sum_auc / n;
+    surface.coherence.average_covariance_error = sum_cov / nd;
+    surface.coherence.average_spectral_drift = sum_spec / nd;
+    surface.coherence.average_delta_memory = sum_mem / nd;
+    surface.coherence.average_context_leakage = sum_leak / nd;
+    surface.coherence.average_null_matching_rate = sum_null / nd;
+    surface.coherence.average_delta_auc = sum_auc / nd;
 
     // 2. Drift(W) - sum of absolute differences for some key metrics (e.g. covariance, spectral)
     double total_drift = 0.0;

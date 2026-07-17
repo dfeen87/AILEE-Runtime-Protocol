@@ -356,7 +356,7 @@ L2StateSnapshot captureSnapshot(const ailee::econ::ILedger& ledger,
         record.taskType = static_cast<int>(task.taskType);
         record.priority = static_cast<int>(task.priority);
         record.submitterId = task.submitterId;
-        record.submittedAtMs = static_cast<double>(
+        record.submittedAtMs = static_cast<std::uint64_t>(
             std::chrono::duration_cast<std::chrono::milliseconds>(
                 task.submittedAt.time_since_epoch())
                 .count());

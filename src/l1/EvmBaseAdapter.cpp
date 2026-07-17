@@ -23,8 +23,8 @@ static void logEvt(Severity s, const std::string& msg, const std::string& comp, 
 // Jittered exponential backoff
 static bool backoffRetry(size_t attempt, size_t maxAttempts, std::chrono::milliseconds base, std::chrono::milliseconds& wait) {
     if (attempt >= maxAttempts) return false;
-    double factor = std::min<double>(8.0, std::pow(2.0, attempt));
-    auto dur = static_cast<long long>(base.count() * factor);
+    double factor = std::min<double>(8.0, std::pow(2.0, static_cast<double>(attempt)));
+    auto dur = static_cast<long long>(static_cast<double>(base.count()) * factor);
     std::uniform_int_distribution<long long> jitter(0, dur / 4);
     static thread_local std::mt19937_64 rng{std::random_device{}()};
     wait = std::chrono::milliseconds(dur + jitter(rng));

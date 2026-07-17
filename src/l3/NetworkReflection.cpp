@@ -26,9 +26,9 @@ void hexToBytes(const std::string& hex, uint8_t* out, size_t outLen) {
         char c1 = (hexPos > startIdx) ? hex[hexPos - 1] : '0';
 
         auto hexCharToInt = [](char c) -> uint8_t {
-            if (c >= '0' && c <= '9') return c - '0';
-            if (c >= 'a' && c <= 'f') return c - 'a' + 10;
-            if (c >= 'A' && c <= 'F') return c - 'A' + 10;
+            if (c >= '0' && c <= '9') return static_cast<uint8_t>(c - '0');
+            if (c >= 'a' && c <= 'f') return static_cast<uint8_t>(c - 'a' + 10);
+            if (c >= 'A' && c <= 'F') return static_cast<uint8_t>(c - 'A' + 10);
             return 0;
         };
 
@@ -72,7 +72,7 @@ NetworkBlockSnapshot parse_network_block_snapshot(const std::string& json_data) 
             std::string bits_hex = root["bits"].asString();
             uint32_t bits = 0;
             try {
-                bits = std::stoul(bits_hex, nullptr, 16);
+                bits = static_cast<uint32_t>(std::stoul(bits_hex, nullptr, 16));
             } catch (...) {}
             snap.difficulty_target = bits;
         } else {

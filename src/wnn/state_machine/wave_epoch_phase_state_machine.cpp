@@ -25,7 +25,7 @@ double generate_phase_salt(double ts, double omega) {
     uint64_t combined = epoch ^ w_bits;
     uint64_t hash = fnv1a_64(combined);
 
-    return (hash % 1000) * 1e-5;
+    return static_cast<double>(hash % 1000) * 1e-5;
 }
 
 void PllController::monitor_phase_error(double incoming_phase_error, double current_ts, double current_omega, double incoming_salt) {

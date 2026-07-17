@@ -744,7 +744,7 @@ public:
             log(LogLevel::INFO, "  Queued tasks:            " + std::to_string(metrics.queuedTasks));
             
             double successRate = metrics.totalTasksSubmitted > 0 ?
-                (double)metrics.totalTasksCompleted / metrics.totalTasksSubmitted * 100.0 : 0.0;
+                static_cast<double>(metrics.totalTasksCompleted) / static_cast<double>(metrics.totalTasksSubmitted) * 100.0 : 0.0;
             log(LogLevel::INFO, "  Success rate:            " + std::to_string(successRate) + "%");
             log(LogLevel::INFO, "╚════════════════════════════════════════════════╝");
             
@@ -849,7 +849,7 @@ private:
             }
             
             orchConfig.monitoring.enableMetrics = cfg_.enableMetrics;
-            orchConfig.network.listenPort = cfg_.netFlowPort + 100; // Offset from NetFlow
+            orchConfig.network.listenPort = static_cast<uint16_t>(cfg_.netFlowPort + 100); // Offset from NetFlow
             
             orchestrationEngine_ = ailee::sched::createEngine(orchConfig);
             

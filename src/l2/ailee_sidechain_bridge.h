@@ -734,8 +734,8 @@ public:
         
         // Update moving average
         stats_.averagePeginTime = 
-            (stats_.averagePeginTime * (stats_.totalPegins - 1) + duration) / 
-            stats_.totalPegins;
+            (stats_.averagePeginTime * static_cast<double>(stats_.totalPegins - 1) + static_cast<double>(duration)) /
+            static_cast<double>(stats_.totalPegins);
     }
 
     void recordPegout(uint64_t amount, uint64_t duration) {
@@ -747,8 +747,8 @@ public:
         
         // Update moving average
         stats_.averagePegoutTime = 
-            (stats_.averagePegoutTime * (stats_.totalPegouts - 1) + duration) / 
-            stats_.totalPegouts;
+            (stats_.averagePegoutTime * static_cast<double>(stats_.totalPegouts - 1) + static_cast<double>(duration)) /
+            static_cast<double>(stats_.totalPegouts);
     }
 
     void updateFederationHealth(size_t activeSigners, double healthScore) {
@@ -1317,7 +1317,7 @@ public:
                 "Federation below quorum",
                 "Active signers: " + std::to_string(activeSigners)
             );
-        } else if (activeSigners < FEDERATION_SIZE * 0.8) {
+        } else if (static_cast<double>(activeSigners) < static_cast<double>(FEDERATION_SIZE) * 0.8) {
             raiseAlert(
                 SecurityAlert::AlertLevel::WARNING,
                 "Federation degraded",

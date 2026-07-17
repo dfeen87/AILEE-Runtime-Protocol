@@ -459,13 +459,13 @@ private:
     void dump_impl(std::ostringstream& oss) const {
         if (std::holds_alternative<std::nullptr_t>(data_)) {
             oss << "null";
-        } else if (auto val = std::get_if<bool>(&data_)) {
-            oss << (*val ? "true" : "false");
-        } else if (auto val = std::get_if<double>(&data_)) {
-            oss << *val;
-        } else if (auto val = std::get_if<std::string>(&data_)) {
+        } else if (auto val_bool = std::get_if<bool>(&data_)) {
+            oss << (*val_bool ? "true" : "false");
+        } else if (auto val_double = std::get_if<double>(&data_)) {
+            oss << *val_double;
+        } else if (auto val_str = std::get_if<std::string>(&data_)) {
             oss << '"';
-            for (char c : *val) {
+            for (char c : *val_str) {
                 switch (c) {
                     case '"': oss << "\\\""; break;
                     case '\\': oss << "\\\\"; break;
@@ -476,17 +476,17 @@ private:
                 }
             }
             oss << '"';
-        } else if (auto val = std::get_if<array_t>(&data_)) {
+        } else if (auto val_arr = std::get_if<array_t>(&data_)) {
             oss << '[';
-            for (size_t i = 0; i < val->size(); ++i) {
+            for (size_t i = 0; i < val_arr->size(); ++i) {
                 if (i > 0) oss << ',';
-                (*val)[i].dump_impl(oss);
+                (*val_arr)[i].dump_impl(oss);
             }
             oss << ']';
-        } else if (auto val = std::get_if<object_t>(&data_)) {
+        } else if (auto val_obj = std::get_if<object_t>(&data_)) {
             oss << '{';
             bool first = true;
-            for (const auto& [key, value] : *val) {
+            for (const auto& [key, value] : *val_obj) {
                 if (!first) oss << ',';
                 first = false;
                 oss << '"' << key << "\":";
