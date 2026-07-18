@@ -189,7 +189,6 @@ Tip: Make sure your in the build folder, then proceed to prompt.
 
 ```
 ./ailee_node
-
 ```
 
 This launches the deterministic execution engine.  
