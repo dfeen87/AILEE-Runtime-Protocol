@@ -8,7 +8,7 @@ authors:
   - family-names: Feeney
     given-names: Don Michael
     affiliation: Independent Research
-repository-code: https://github.com/dfeen87/AILEE-Protocol-Core-For-Bitcoin
+repository-code: https://github.com/dfeen87/AILEE-Runtime-Protocol
 url: https://github.com/dfeen87/AILEE-Runtime-Protocol
 license: PolyForm Noncommercial 1.0.0
 abstract: >
