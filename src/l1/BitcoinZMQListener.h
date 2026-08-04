@@ -8,7 +8,7 @@
  * - Exponential Backoff Reconnection Strategy
  * - Binary-safe payload handling
  * 
- * License: MIT
+ * Licensed under the PolyForm Noncommercial License 1.0.0
  * Author: Don Michael Feeney Jr
  */
 

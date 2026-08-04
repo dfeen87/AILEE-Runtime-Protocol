@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// Licensed under the PolyForm Noncommercial License 1.0.0
 // Ambient AI + VCP Integration Demo
 // Demonstrates end-to-end workflow: Task submission → Node selection → WASM execution → ZK verification → Reward distribution
 

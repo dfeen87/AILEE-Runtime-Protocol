@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// Licensed under the PolyForm Noncommercial License 1.0.0
 // HashProofSystem.cpp — Production-Grade Hash-Based Verification Implementation
 
 #include "HashProofSystem.h"

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// Licensed under the PolyForm Noncommercial License 1.0.0
 // AmbientAI.cpp — Production-grade implementation for Decentralized Ambient AI Infrastructure
 // Fully integrated with AILEE-Core AmbientNode, ZK proofs, federated learning, token incentives,
 // Byzantine fault detection, and system health metrics.

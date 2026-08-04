@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// Licensed under the PolyForm Noncommercial License 1.0.0
 // AILEE-Core Node [v2.0.0-Production-Ready]
 // Enhanced with distributed task orchestration, advanced monitoring, and unified architecture
 

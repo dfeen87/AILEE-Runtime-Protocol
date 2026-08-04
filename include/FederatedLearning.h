@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// Licensed under the PolyForm Noncommercial License 1.0.0
 // FederatedLearning.h — Production-Grade Federated Learning for AILEE-Core
 // Privacy-preserving distributed ML with differential privacy, secure aggregation,
 // Byzantine fault tolerance, ZK proof verification, and token incentive alignment.

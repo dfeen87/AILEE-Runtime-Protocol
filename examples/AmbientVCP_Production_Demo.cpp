@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// Licensed under the PolyForm Noncommercial License 1.0.0
 // AmbientVCP_Production_Demo.cpp
 // Enhanced demo using PRODUCTION WasmEdgeEngine and HashProofSystem
 // Demonstrates real execution pipeline as specified in PRODUCTION_ROADMAP.md

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// Licensed under the PolyForm Noncommercial License 1.0.0
 // ambient_vcp_cli.cpp — Ambient VCP command-line interface
 //
 // Maintains node session state locally (via LocalSessionManager) even when

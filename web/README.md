@@ -78,4 +78,4 @@ See [`../docs/WEB_INTEGRATION.md`](../docs/WEB_INTEGRATION.md) for complete API 
 
 ## License
 
-MIT License - Same as AILEE Protocol Core
+PolyForm Noncommercial License 1.0.0 - Same as AILEE Protocol Core

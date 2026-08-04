@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// Licensed under the PolyForm Noncommercial License 1.0.0
 // DistributedTaskProtocol.h — Task distribution protocol for multi-node coordination
 
 #pragma once

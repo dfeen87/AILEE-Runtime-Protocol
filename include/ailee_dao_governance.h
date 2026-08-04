@@ -13,7 +13,7 @@
  * - Validator reputation scoring
  * - Treasury management for development funding
  * 
- * License: MIT
+ * Licensed under the PolyForm Noncommercial License 1.0.0
  * Author: Don Michael Feeney Jr
  */
 

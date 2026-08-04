@@ -13,7 +13,7 @@
  * - Emergency recovery mechanisms
  * - Atomic swap support for trustless exchanges
  * 
- * License: MIT
+ * Licensed under the PolyForm Noncommercial License 1.0.0
  * Author: Don Michael Feeney Jr
  */
 

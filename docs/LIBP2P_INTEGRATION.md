@@ -413,4 +413,4 @@ For issues or questions:
 
 ## License
 
-This implementation is released under the MIT License. See LICENSE file for details.
+This implementation is released under the PolyForm Noncommercial License 1.0.0. See LICENSE file for details.

@@ -2,7 +2,7 @@
 //  httplib.h
 //
 //  Copyright (c) 2024 Yuji Hirose. All rights reserved.
-//  MIT License
+//  PolyForm Noncommercial License 1.0.0
 //
 
 #ifndef CPPHTTPLIB_HTTPLIB_H

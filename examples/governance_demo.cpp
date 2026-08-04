@@ -12,7 +12,7 @@
  * Compile: g++ -std=c++17 governance_demo.cpp -lssl -lcrypto -o governance_demo
  * Run: ./governance_demo
  * 
- * License: MIT
+ * Licensed under the PolyForm Noncommercial License 1.0.0
  * Author: Don Michael Feeney Jr
  */
 
@@ -320,7 +320,7 @@ int main() {
         "addr_frank_006",
         "Research Grant: Advanced Mempool Optimization",
         "Request 50,000 ADU to fund 6-month research project on mempool "
-        "optimization algorithms. Team from MIT will work on reducing "
+        "optimization algorithms. Team from a university research lab will work on reducing "
         "queueing delays. Expected outcome: 10-15% TPS improvement.",
         ProposalType::TREASURY_ALLOCATION
     );
@@ -347,7 +347,7 @@ int main() {
     dao.finalizeProposal(proposal2Id);
     
     std::cout << "\n✓ Research funding approved!\n";
-    std::cout << "Treasury allocation: 50,000 ADU → MIT Research Team\n";
+    std::cout << "Treasury allocation: 50,000 ADU → University Research Team\n";
     std::cout << "Remaining treasury: " 
               << dao.getTreasury()->getAvailableBalance() << " ADU\n";
 
