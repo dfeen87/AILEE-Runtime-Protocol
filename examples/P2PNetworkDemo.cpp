@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// Licensed under the PolyForm Noncommercial License 1.0.0
 // P2PNetworkDemo.cpp - Demonstration of P2P networking with libp2p
 // 
 // This example shows how to:

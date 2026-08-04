@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// Licensed under the PolyForm Noncommercial License 1.0.0
 // AmbientAI.h — Bulletproof Ambient AI Node Interfaces for AILEE-Core
 // Full integration of telemetry, ZK proofs, federated learning, token incentives,
 // Byzantine detection, safety policies, and weighted node health scoring.

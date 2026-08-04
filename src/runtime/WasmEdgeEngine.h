@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// Licensed under the PolyForm Noncommercial License 1.0.0
 // WasmEdgeEngine.h — Production WASM Engine using WasmEdge Runtime
 // Real sandboxed execution with resource limits and metrics collection
 

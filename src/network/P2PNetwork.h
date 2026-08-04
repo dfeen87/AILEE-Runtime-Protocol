@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// Licensed under the PolyForm Noncommercial License 1.0.0
 // P2PNetwork.h — Peer-to-peer networking layer for distributed AILEE nodes
 
 #pragma once

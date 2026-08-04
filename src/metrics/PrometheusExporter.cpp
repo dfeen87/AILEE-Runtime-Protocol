@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// Licensed under the PolyForm Noncommercial License 1.0.0
 // PrometheusExporter.cpp — Prometheus metrics export implementation
 
 #include "PrometheusExporter.h"

@@ -11,7 +11,7 @@
  *  - Energy Integrity Score (EIS)
  *  - "GreenHash v2" (Merkle-ready hash for global proofs)
  *
- * License: MIT
+ * Licensed under the PolyForm Noncommercial License 1.0.0
  * Author: Don Michael Feeney Jr
  */
 

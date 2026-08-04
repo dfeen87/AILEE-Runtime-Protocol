@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// Licensed under the PolyForm Noncommercial License 1.0.0
 // HashProofSystem.h — Production-Grade Hash-Based Verification
 // Deterministic, fast proofs for WASM execution verification
 // Bridge to full ZK proofs (RISC Zero, Plonky2) in Phase 2

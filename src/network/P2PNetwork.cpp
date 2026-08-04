@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// Licensed under the PolyForm Noncommercial License 1.0.0
 // P2PNetwork.cpp — P2P networking implementation with libp2p C++ bindings
 
 #include "P2PNetwork.h"

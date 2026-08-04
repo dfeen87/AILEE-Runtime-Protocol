@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// Licensed under the PolyForm Noncommercial License 1.0.0
 // ailee_netflow.h — Layer-2 Full-Relay Engine for Hybrid Decentralized Internet
 // Integrates AmbientAI, ZK Proof-of-Bandwidth, tokenized incentives, and hybrid relay tunneling.
 

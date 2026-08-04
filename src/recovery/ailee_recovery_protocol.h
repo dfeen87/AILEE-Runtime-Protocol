@@ -8,7 +8,7 @@
  * - Multi-signature original owner challenge system
  * - Comprehensive audit logging
  * 
- * License: MIT
+ * Licensed under the PolyForm Noncommercial License 1.0.0
  * Author: Don Michael Feeney Jr
  */
 

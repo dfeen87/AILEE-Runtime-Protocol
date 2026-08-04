@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// Licensed under the PolyForm Noncommercial License 1.0.0
 // ProverSwarm.h — Deterministic Multi-Prover Swarm (Ambient AI v2)
 
 #pragma once

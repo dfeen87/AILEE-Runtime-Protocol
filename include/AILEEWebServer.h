@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// Licensed under the PolyForm Noncommercial License 1.0.0
 // AILEE Web Server - REST API for global web integration
 
 #ifndef AILEE_WEB_SERVER_H

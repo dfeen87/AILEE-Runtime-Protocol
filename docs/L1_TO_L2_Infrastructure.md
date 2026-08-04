@@ -853,5 +853,5 @@ The system is designed to scale horizontally; additional L2 validators increase 
 
 License
 
-MIT License — See LICENSE.md for details.
+PolyForm Noncommercial License 1.0.0 — See LICENSE.md for details.
 Author: Don Michael Feeney Jr. — System Architect & Believer

@@ -89,7 +89,7 @@ sed -i 's/default="[0-9.]\+"/default="X.Y.Z"/' api/config.py
 name = "ailee-core"
 version = "1.2.1"
 description = "Bitcoin-anchored Layer-2 orchestration and verification framework..."
-license = {text = "MIT"}
+license = {text = "PolyForm Noncommercial 1.0.0"}
 authors = [{name = "Don Michael Feeney"}]
 keywords = ["bitcoin", "layer-2", "sidechain", ...]
 
@@ -197,7 +197,7 @@ AILEE-Core: Bitcoin-Anchored Layer-2 Orchestration and Verification Framework
 - **Name**: Don Michael Feeney
 - **GitHub**: @dfeen87
 - **Affiliation**: Independent Research
-- **License**: MIT
+- **License**: PolyForm Noncommercial 1.0.0
 
 ---
 

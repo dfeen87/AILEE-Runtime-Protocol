@@ -6,7 +6,7 @@
  * 2. Recovery Protocol v2.0 - Trustless BTC recovery with dispute handling
  * 3. AmbientAI Core v2.0 - Consensus, energy telemetry, token economics
  * 
- * License: MIT
+ * Licensed under the PolyForm Noncommercial License 1.0.0
  * Author: Don Michael Feeney Jr
  */
 

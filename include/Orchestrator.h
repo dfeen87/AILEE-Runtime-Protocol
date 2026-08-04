@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// Licensed under the PolyForm Noncommercial License 1.0.0
 // Engine.h — Unified Orchestration Engine for AILEE-Core
 // Integrates reputation, latency tracking, node discovery, and task orchestration
 // into a cohesive runtime system.

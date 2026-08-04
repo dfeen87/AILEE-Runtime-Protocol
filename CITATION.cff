@@ -10,7 +10,7 @@ authors:
     affiliation: Independent Research
 repository-code: https://github.com/dfeen87/AILEE-Protocol-Core-For-Bitcoin
 url: https://github.com/dfeen87/AILEE-Runtime-Protocol
-license: MIT
+license: PolyForm Noncommercial 1.0.0
 abstract: >
   AILEE-Core is a Bitcoin-anchored Layer-2 orchestration and verification framework
   combining ambient AI-driven task scheduling with deterministic state verification,

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT  
+// Licensed under the PolyForm Noncommercial License 1.0.0
 // PersistentStorage.h — Production persistence layer using RocksDB
 // Stores nodes, tasks, proofs, and telemetry with ACID guarantees
 
@@ -13,7 +13,7 @@ namespace ailee::storage {
 
 /**
  * Persistent storage layer for AILEE-Core components.
- * 
+ *
  * Storage Schema:
  * - nodes/{pubkey} → NodeState (serialized)
  * - tasks/{task_id} → TaskRecord
@@ -28,7 +28,7 @@ public:
         size_t writeBufferSizeMB;
         size_t blockCacheSizeMB;
         bool createIfMissing;
-        
+
         Config()
             : dbPath("./data/ailee.db")
             , maxOpenFiles(1000)
@@ -37,16 +37,16 @@ public:
             , createIfMissing(true)
         {}
     };
-    
+
     explicit PersistentStorage(const Config& config = Config());
     ~PersistentStorage();
-    
+
     // Disable copy, allow move
     PersistentStorage(const PersistentStorage&) = delete;
     PersistentStorage& operator=(const PersistentStorage&) = delete;
     PersistentStorage(PersistentStorage&&) = default;
     PersistentStorage& operator=(PersistentStorage&&) = default;
-    
+
     bool put(const std::string& key, const std::string& value);
     std::optional<std::string> get(const std::string& key);
     bool remove(const std::string& key);

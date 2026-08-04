@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// Licensed under the PolyForm Noncommercial License 1.0.0
 // AmbientAI-Core.h — Legacy compatibility header for AmbientAI.
 // This header now forwards to AmbientAI.h to avoid duplicate type definitions.
 

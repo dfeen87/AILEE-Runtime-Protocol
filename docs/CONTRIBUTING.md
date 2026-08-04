@@ -215,7 +215,7 @@ If you operate a fork, please do not misrepresent the security model.
 
 ## License
 
-By contributing, you agree that your contributions are licensed under the **MIT License**.
+By contributing, you agree that your contributions are licensed under the **PolyForm Noncommercial License 1.0.0**.
 
 You must have the right to contribute the code you submit.
 

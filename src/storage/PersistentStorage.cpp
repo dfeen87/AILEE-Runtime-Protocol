@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// Licensed under the PolyForm Noncommercial License 1.0.0
 // PersistentStorage.cpp — RocksDB-based persistent storage implementation
 
 #include "PersistentStorage.h"

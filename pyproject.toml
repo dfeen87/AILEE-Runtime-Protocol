@@ -8,7 +8,7 @@ version = "5.3.0"
 description = "Bitcoin-anchored Layer-2 orchestration and verification framework with ambient AI, deterministic verification, and federated security"
 readme = "README.md"
 requires-python = ">=3.9"
-license = {text = "MIT"}
+license = {text = "PolyForm Noncommercial 1.0.0"}
 authors = [
     {name = "Don Michael Feeney", email = "dfeen87@users.noreply.github.com"}
 ]
@@ -40,7 +40,7 @@ classifiers = [
     "Topic :: System :: Distributed Computing",
     "Topic :: Office/Business :: Financial :: Investment",
     "Topic :: Security :: Cryptography",
-    "License :: OSI Approved :: MIT License",
+    "License :: Other/Proprietary License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
