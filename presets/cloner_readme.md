@@ -30,4 +30,4 @@ Load these JSON files into your instance of AILEE-Core during initialization. Fo
 
 > **Note:** These presets are designed to ensure Bitcoin's conservative protocol guarantees are preserved when integrating with middle-layer protocols. Modify them with caution.
 
-*All logic is deterministic, safe, and PolyForm Noncommercial licensed.*
+*All logic is deterministic, safe, and MIT License licensed.*

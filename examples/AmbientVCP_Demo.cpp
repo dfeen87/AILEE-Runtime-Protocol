@@ -1,4 +1,5 @@
-// Licensed under the PolyForm Noncommercial License 1.0.0
+// Licensed under the MIT License
+// Copyright (c) 2026 Don Michael Feeney Jr.
 // Ambient AI + VCP Integration Demo
 // Demonstrates end-to-end workflow: Task submission → Node selection → WASM execution → ZK verification → Reward distribution
 

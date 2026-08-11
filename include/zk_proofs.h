@@ -6,7 +6,8 @@
  * Provides interfaces for generating and verifying ZK proofs for telemetry
  * and federated learning computations. Currently stubbed; ready for libsnark integration.
  *
- * Licensed under the PolyForm Noncommercial License 1.0.0
+ * Licensed under the MIT License
+ * Copyright (c) 2026 Don Michael Feeney Jr.
  * Author: Don Michael Feeney Jr
  */
 

@@ -1,4 +1,5 @@
-// Licensed under the PolyForm Noncommercial License 1.0.0
+// Licensed under the MIT License
+// Copyright (c) 2026 Don Michael Feeney Jr.
 // P2PNetwork.cpp — P2P networking implementation with libp2p C++ bindings
 
 #include "P2PNetwork.h"

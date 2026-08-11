@@ -1,4 +1,5 @@
-// Licensed under the PolyForm Noncommercial License 1.0.0
+// Licensed under the MIT License
+// Copyright (c) 2026 Don Michael Feeney Jr.
 // ZKVerifier.h — Production-Grade Zero-Knowledge Proof Verification for AILEE-Core
 // Multi-backend support (RISC Zero, SP1, Groth16, PLONK, STARKs) with batching,
 // caching, and cryptographic binding for trustless distributed AI computation.

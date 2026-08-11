@@ -1,4 +1,5 @@
-// Licensed under the PolyForm Noncommercial License 1.0.0
+// Licensed under the MIT License
+// Copyright (c) 2026 Don Michael Feeney Jr.
 // WasmEngine.h — Production-Grade WASM Execution Engine for AILEE-Core
 // Secure sandboxed execution with resource limits, telemetry, ZK proof integration,
 // and multi-runtime support for decentralized AI inference workloads.

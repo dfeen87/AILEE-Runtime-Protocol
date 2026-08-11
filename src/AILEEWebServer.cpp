@@ -1,4 +1,5 @@
-// Licensed under the PolyForm Noncommercial License 1.0.0
+// Licensed under the MIT License
+// Copyright (c) 2026 Don Michael Feeney Jr.
 // AILEE Web Server Implementation - REST API for global web integration
 
 #include "AILEEWebServer.h"

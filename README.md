@@ -2,7 +2,7 @@
 
 *Building Intelligent, Verifiable, and Sustainable Bitcoin Infrastructure*
 
-[![Licensed under the PolyForm Noncommercial License 1.0.0](https://img.shields.io/badge/License-PolyForm%20Noncommercial-blue.svg)](https://polyformproject.org/licenses/noncommercial/1.0.0)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![C++ Standard](https://img.shields.io/badge/C%2B%2B-17-blue.svg)](https://isocpp.org/)
 [![CMake](https://img.shields.io/badge/CMake-3.10+-blue.svg)](https://cmake.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-Python-green.svg)](https://fastapi.tiangolo.com/)
@@ -453,7 +453,7 @@ You must provide:
 - temporal sync adapters  
 - unified clock clients
 
-When both your files and this repos PolyForm Noncommercial License 1.0.0 files, cloners can communicate freely with hardware and internet technologies, your entities will be able to do a variety of things.
+When both your files and this repos MIT License files, cloners can communicate freely with hardware and internet technologies, your entities will be able to do a variety of things.
 
 ---
 
@@ -857,7 +857,7 @@ If you use or build upon this work in academic research, please cite:
   year = {2025},
   publisher = {GitHub},
   url = {https://github.com/dfeen87/AILEE-Protocol-Core-For-Bitcoin},
-  license = {PolyForm Noncommercial 1.0.0}
+  license = {MIT}
 }
 ```
 ---
@@ -1031,7 +1031,9 @@ I am honored that some of you reading this post is intrigued and considering out
 
 ## 📄 License
 
-This project is licensed under the PolyForm Noncommercial License 1.0.0. Non-commercial uses such as personal study, research, experimentation, education, charitable work, public-interest work, and government use are permitted under the license terms. Commercial use is not granted by this license; review the [LICENSE](LICENSE) file before using this project in a commercial context.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+Copyright (c) 2026 Don Michael Feeney Jr.
 
 ---
 

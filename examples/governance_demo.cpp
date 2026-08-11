@@ -12,7 +12,8 @@
  * Compile: g++ -std=c++17 governance_demo.cpp -lssl -lcrypto -o governance_demo
  * Run: ./governance_demo
  * 
- * Licensed under the PolyForm Noncommercial License 1.0.0
+ * Licensed under the MIT License
+ * Copyright (c) 2026 Don Michael Feeney Jr.
  * Author: Don Michael Feeney Jr
  */
 
