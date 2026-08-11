@@ -1,4 +1,5 @@
-// Licensed under the PolyForm Noncommercial License 1.0.0
+// Licensed under the MIT License
+// Copyright (c) 2026 Don Michael Feeney Jr.
 // AILEE_NetFlow.cpp — Implementation for Hybrid Layer-2 Decentralized Internet
 // Integrates AmbientAI telemetry, ZK proof-of-bandwidth, token rewards, and relay scheduling
 

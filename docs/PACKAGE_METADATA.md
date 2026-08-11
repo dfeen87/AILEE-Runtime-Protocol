@@ -89,7 +89,7 @@ sed -i 's/default="[0-9.]\+"/default="X.Y.Z"/' api/config.py
 name = "ailee-core"
 version = "1.2.1"
 description = "Bitcoin-anchored Layer-2 orchestration and verification framework..."
-license = {text = "PolyForm Noncommercial 1.0.0"}
+license = {text = "MIT"}
 authors = [{name = "Don Michael Feeney"}]
 keywords = ["bitcoin", "layer-2", "sidechain", ...]
 
@@ -197,7 +197,7 @@ AILEE-Core: Bitcoin-Anchored Layer-2 Orchestration and Verification Framework
 - **Name**: Don Michael Feeney
 - **GitHub**: @dfeen87
 - **Affiliation**: Independent Research
-- **License**: PolyForm Noncommercial 1.0.0
+- **License**: MIT License 1.0.0
 
 ---
 
@@ -430,4 +430,4 @@ pip install -e . --dry-run
 
 **Last Updated**: 2025-01-15  
 **Version**: 1.2.1  
-**Maintainer**: Don Michael Feeney (@dfeen87)
+**Maintainer**: Don Michael Feeney Jr. (@dfeen87)

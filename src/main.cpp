@@ -1,4 +1,5 @@
-// Licensed under the PolyForm Noncommercial License 1.0.0
+// Licensed under the MIT License
+// Copyright (c) 2026 Don Michael Feeney Jr.
 // AILEE-Core Node [v2.0.0-Production-Ready]
 // Enhanced with distributed task orchestration, advanced monitoring, and unified architecture
 

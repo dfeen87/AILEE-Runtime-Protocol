@@ -1,4 +1,5 @@
-// Licensed under the PolyForm Noncommercial License 1.0.0
+// Licensed under the MIT License
+// Copyright (c) 2026 Don Michael Feeney Jr.
 // WasmEdgeEngine.h — Production WASM Engine using WasmEdge Runtime
 // Real sandboxed execution with resource limits and metrics collection
 

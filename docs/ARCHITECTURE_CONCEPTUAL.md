@@ -405,7 +405,7 @@ States:
 - ❌ No company ownership
 - ❌ No centralized servers
 - ✅ Community-governed parameters
-- ✅ Source-available codebase (PolyForm Noncommercial License 1.0.0)
+- ✅ Source-available codebase (MIT License)
 - ✅ Cryptographic verification only
 
 **Governance Process:**
@@ -609,4 +609,5 @@ AILEE represents a **paradigm shift** in blockchain scalability:
 
 *Last Updated: December 2024*  
 *Version: 1.0*  
-*Licensed under the PolyForm Noncommercial License 1.0.0*
+*Licensed under the MIT License
+ * Copyright (c) 2026 Don Michael Feeney Jr.*

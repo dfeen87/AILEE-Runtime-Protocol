@@ -3,7 +3,8 @@
  *
  * Declarations for the AILEE Autonomous Circuit Breaker (canonical v1.4)
  *
- * Licensed under the PolyForm Noncommercial License 1.0.0
+ * Licensed under the MIT License
+ * Copyright (c) 2026 Don Michael Feeney Jr.
  * Author: Don Michael Feeney Jr
  */
 

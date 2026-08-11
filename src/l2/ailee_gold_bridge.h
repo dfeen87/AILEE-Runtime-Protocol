@@ -4,7 +4,8 @@
  * A secure, autonomous system for converting Bitcoin to physical gold
  * with proof-of-burn mechanics, oracle pricing, and tokenized gold receipts.
  * 
- * Licensed under the PolyForm Noncommercial License 1.0.0
+ * Licensed under the MIT License
+ * Copyright (c) 2026 Don Michael Feeney Jr.
  * Author: Don Michael Feeney Jr
  */
 

@@ -1,4 +1,5 @@
-// Licensed under the PolyForm Noncommercial License 1.0.0
+// Licensed under the MIT License
+// Copyright (c) 2026 Don Michael Feeney Jr.
 // AmbientVCP_Production_Demo.cpp
 // Enhanced demo using PRODUCTION WasmEdgeEngine and HashProofSystem
 // Demonstrates real execution pipeline as specified in PRODUCTION_ROADMAP.md

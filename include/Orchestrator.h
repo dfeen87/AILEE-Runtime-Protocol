@@ -1,4 +1,5 @@
-// Licensed under the PolyForm Noncommercial License 1.0.0
+// Licensed under the MIT License
+// Copyright (c) 2026 Don Michael Feeney Jr.
 // Engine.h — Unified Orchestration Engine for AILEE-Core
 // Integrates reputation, latency tracking, node discovery, and task orchestration
 // into a cohesive runtime system.

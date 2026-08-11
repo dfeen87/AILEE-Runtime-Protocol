@@ -331,7 +331,7 @@ To contribute to the web integration:
 
 ## License
 
-PolyForm Noncommercial License 1.0.0 - Same as AILEE Protocol Core
+MIT License - Same as AILEE Protocol Core
 
 ## Support
 

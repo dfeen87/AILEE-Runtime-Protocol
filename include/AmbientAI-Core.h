@@ -1,4 +1,5 @@
-// Licensed under the PolyForm Noncommercial License 1.0.0
+// Licensed under the MIT License
+// Copyright (c) 2026 Don Michael Feeney Jr.
 // AmbientAI-Core.h — Legacy compatibility header for AmbientAI.
 // This header now forwards to AmbientAI.h to avoid duplicate type definitions.
 

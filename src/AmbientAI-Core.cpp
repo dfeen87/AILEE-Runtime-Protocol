@@ -8,7 +8,8 @@
  * - Multi-signature validation for distributed decisions
  * - Real-time system health diagnostics
  * 
- * Licensed under the PolyForm Noncommercial License 1.0.0
+ * Licensed under the MIT License
+ * Copyright (c) 2026 Don Michael Feeney Jr.
  * Author: Don Michael Feeney Jr
  */
 

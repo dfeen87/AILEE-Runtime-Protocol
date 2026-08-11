@@ -1,4 +1,5 @@
-// Licensed under the PolyForm Noncommercial License 1.0.0
+// Licensed under the MIT License
+// Copyright (c) 2026 Don Michael Feeney Jr.
 // crypto_utils.h — Shared cryptographic utility functions for AILEE-Core
 //
 // Provides a single, canonical SHA-256 hex-encoding helper used across
