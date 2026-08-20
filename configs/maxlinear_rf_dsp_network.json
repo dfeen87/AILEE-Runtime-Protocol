@@ -1,0 +1,42 @@
+{
+  "profileName": "maxlinear_rf_dsp_network",
+  "vendorName": "MaxLinear",
+  "domains": [
+    {
+      "domainId": "RF",
+      "enabled": true,
+      "adapterClassName": "MaxLinearRFClockAdapter",
+      "parameters": {
+        "sourceId": "MXL_RF_0",
+        "carrierFrequencyHz": 3500000000,
+        "symbolRateHz": 30720000,
+        "hardwareRegisterAddress": "0x40001000"
+      }
+    },
+    {
+      "domainId": "DSP",
+      "enabled": true,
+      "adapterClassName": "MaxLinearDSPClockAdapter",
+      "parameters": {
+        "sourceId": "MXL_DSP_0",
+        "basebandClockHz": 122880000
+      }
+    },
+    {
+      "domainId": "NETWORK",
+      "enabled": true,
+      "adapterClassName": "MaxLinearNetworkClockAdapter",
+      "parameters": {
+        "sourceId": "MXL_NET_0",
+        "interfaceId": "eth0",
+        "networkClockHz": 156250000
+      }
+    },
+    {
+      "domainId": "SECURITY",
+      "enabled": false,
+      "adapterClassName": "GenericSecurityClockAdapter",
+      "parameters": {}
+    }
+  ]
+}

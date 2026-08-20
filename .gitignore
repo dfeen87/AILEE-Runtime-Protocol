@@ -132,3 +132,4 @@ telemetry/
 *.snapshot.json
 *.tick.json
 
+node_modules/
