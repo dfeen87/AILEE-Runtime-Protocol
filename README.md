@@ -13,7 +13,7 @@
 
 ---
 
-Current Version number: 33.4
+Current Version number: 36.0.0
 
 ## 📑 Table of Contents
 - [🎯 Overview](#-overview)
@@ -73,6 +73,7 @@ Current Version number: 33.4
 - [1. Recursive Zero‑Knowledge State Compression (V33 Recursion Layer)](#1-recursive-zeroknowledge-state-compression-v33-recursion-layer)
 - [2. Deterministic Taproot Anchoring Engine (V33 Anchor Layer)](#2-deterministic-taproot-anchoring-engine-v33-anchor-layer)
 - [3. Isla Mode Autonomous Heuristic Engine (V33 Isla Layer)](#3-isla-mode-autonomous-heuristic-engine-v33-isla-layer)
+- [AILEE-CommClockBridge (ACB) Module (v36.0.0 Upgrade)](#ailee-commclockbridge-acb--communication-grade-clock-synchronizer-v3600-upgrade)
 - [📄 License](#-license)
 - [🙏 Closing Reflection](#-closing-reflection)
 
@@ -1002,6 +1003,32 @@ Together, these three layers transform AILEE Core into a deterministic, continuo
 - **Autonomous tuning** → stable, adaptive behavior under changing network conditions  
 
 V33 is the first release where AILEE behaves like a single, coherent organism — compressing its past, anchoring its present, and optimizing its future through pure reproducible mathematics.
+
+---
+
+# **AILEE-CommClockBridge (ACB) — Communication-Grade Clock Synchronizer (v36.0.0 Upgrade)**
+
+**AILEE-CommClockBridge (ACB)** is an add-on software module that extends AILEE's Bitcoin-aligned internal Kernel Clock to synchronize with high-speed, communication-grade hardware clock domains without modifying AILEE core code.
+
+### Key Features & Architectural Components
+
+- **7 High-Speed Telecom Hardware Clock Domains:**
+  1. **RF / Radio Frequency (`RFClockDomain`):** Transceivers, phase-coherent synthesizers, and beam-forming timing pipelines.
+  2. **Analog / Mixed-Signal (`MixedSignalClockDomain`):** High-speed ADC/DAC sampling pipelines and conversion latency tracking.
+  3. **DSP Baseband (`DSPClockDomain`):** Baseband signal processing including 5G NR, LTE frame/subframe timing, and OFDM alignment.
+  4. **Security Engine (`SecurityClockDomain`):** Cryptographic hardware accelerators and hardware secure enclaves.
+  5. **Data Compression (`CompressionClockDomain`):** Hardware compression blocks for optical transport and telecom backhaul.
+  6. **Network Transport (`NetworkClockDomain`):** Switches, Wi-Fi 6E/7, DOCSIS modems, PON, DSL, and PTP IEEE 1588 timestamps.
+  7. **Power Management (`PowerClockDomain`):** PMICs, DVFS frequency/voltage scaling states, and clock gating dynamics.
+
+- **Abstract Hardware Adapters:** Pure abstract adapter framework (`RFClockAdapter`, `DSPClockAdapter`, etc.) enabling seamless third-party telecom hardware integration while preserving strict AILEE core immutability.
+- **MaxLinear Vendor Integration Stubs:** Built-in reference integration stubs (`MaxLinearRFClockAdapter`, `MaxLinearDSPClockAdapter`, `MaxLinearNetworkClockAdapter`) providing out-of-the-box support for MaxLinear 5G NR and baseband hardware architectures.
+- **Multi-Domain Clock Aggregator (`CommClockAggregator`):** Collects, indexes, and normalizes high-resolution hardware clock timestamps into a windowed timeline (`UnifiedCommTimeline`) correlated against Bitcoin Kernel snapshots.
+- **Clock Coherence Engine (`ClockCoherenceEngine`):** Computes real-time frequency drift rate (`driftNsPerSecond`), timing jitter (`jitterNs`), and alignment confidence metrics (`alignmentConfidence`, 0.0 to 1.0) relative to Bitcoin kernel ticks.
+- **Kernel Clock Bridge (`KernelClockBridge`):** Subscribes to AILEE `KernelClockAPI`, correlates telecom hardware events with incoming Bitcoin block/mempool events, and emits unified `KernelCommBridgeEvent` streams.
+- **Replay & Introspection API (`CommReplayAPI`):** Enables engineers to deterministically replay historical telecom hardware events aligned against Bitcoin mainnet block windows with domain filters and confidence thresholding.
+- **Vendor Configuration Profiles:** Hot-swappable JSON profiles (`configs/maxlinear_rf_dsp_network.json`, `configs/generic_optical_transceiver.json`, `configs/home_wifi_router.json`) supporting multi-vendor hardware deployments without code modifications.
+- **Unit Tests & Documentation:** Fully covered TypeScript unit tests (`npm test`) validating configuration parsing, multi-domain aggregation, coherence calculations, event bridging, and historical replay, fully documented in `README_COMM_CLOCK_BRIDGE.md`.
 
 ---
 
