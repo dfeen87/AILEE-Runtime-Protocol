@@ -1,6 +1,6 @@
 {
   "name": "ailee-commclock-bridge",
-  "version": "1.0.0",
+  "version": "36.0.0",
   "description": "AILEE-CommClockBridge (ACB) - Communication-grade Clock Domain Synchronizer for AILEE Runtime",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

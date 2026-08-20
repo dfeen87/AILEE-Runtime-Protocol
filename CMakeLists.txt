@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(AILEE_Core VERSION 5.3.0 LANGUAGES CXX)
+project(AILEE_Core VERSION 36.0.0 LANGUAGES CXX)
 
 include_directories(/opt/homebrew/include)
 link_directories(/opt/homebrew/lib)
@@ -31,7 +31,7 @@ if(NOT AILEE_BUILD_NUMBER)
     set(AILEE_BUILD_NUMBER "0")
 endif()
 if(NOT AILEE_PROTOCOL_VERSION)
-    set(AILEE_PROTOCOL_VERSION "1.0.0")
+    set(AILEE_PROTOCOL_VERSION "36.0.0")
 endif()
 
 # Build type default to Release for performance
@@ -1100,7 +1100,7 @@ if(NOT ZeroMQ_FOUND)
 endif()
 
 # Add fallback FFI implementation so the codebase compiles
-if(NOT AILEE_USE_RUST_PROVER)
+if(NOT AILEE_USE_RUST_PROVER AND NOT TARGET ailee_rust_ffi_fallback)
     add_library(ailee_rust_ffi_fallback STATIC src/security/ailee_rust_ffi_fallback.cpp)
     target_include_directories(ailee_rust_ffi_fallback PUBLIC include)
 endif()
