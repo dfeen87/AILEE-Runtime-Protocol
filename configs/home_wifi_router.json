@@ -1,0 +1,35 @@
+{
+  "profileName": "home_wifi_router",
+  "vendorName": "Wi-Fi Gateway Vendor",
+  "domains": [
+    {
+      "domainId": "RF",
+      "enabled": true,
+      "adapterClassName": "WiFi6ERFAdapter",
+      "parameters": {
+        "sourceId": "WIFI_6E_RF",
+        "carrierFrequencyHz": 6000000000,
+        "symbolRateHz": 160000000
+      }
+    },
+    {
+      "domainId": "NETWORK",
+      "enabled": true,
+      "adapterClassName": "DocsisNetworkAdapter",
+      "parameters": {
+        "sourceId": "DOCSIS_31_NET",
+        "interfaceId": "cable0",
+        "networkClockHz": 204800000
+      }
+    },
+    {
+      "domainId": "SECURITY",
+      "enabled": true,
+      "adapterClassName": "RouterSecurityEngineAdapter",
+      "parameters": {
+        "sourceId": "CRYPTO_ACCEL_0",
+        "securityClockHz": 300000000
+      }
+    }
+  ]
+}

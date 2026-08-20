@@ -1,0 +1,34 @@
+{
+  "profileName": "generic_optical_transceiver",
+  "vendorName": "GenericOpticalVendor",
+  "domains": [
+    {
+      "domainId": "MIXED_SIGNAL",
+      "enabled": true,
+      "adapterClassName": "OpticalMixedSignalAdapter",
+      "parameters": {
+        "sourceId": "OPT_ADC_DAC_0",
+        "adcSamplingRateHz": 56000000000,
+        "dacUpdateRateHz": 56000000000
+      }
+    },
+    {
+      "domainId": "COMPRESSION",
+      "enabled": true,
+      "adapterClassName": "OpticalCompressionAdapter",
+      "parameters": {
+        "sourceId": "OPT_COMP_0",
+        "compressionClockHz": 400000000
+      }
+    },
+    {
+      "domainId": "POWER",
+      "enabled": true,
+      "adapterClassName": "OpticalPowerAdapter",
+      "parameters": {
+        "sourceId": "OPT_PMIC_0",
+        "powerClockHz": 50000000
+      }
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "name": "ailee-commclock-bridge",
+  "version": "1.0.0",
+  "description": "AILEE-CommClockBridge (ACB) - Communication-grade Clock Domain Synchronizer for AILEE Runtime",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "jest",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "ailee",
+    "bitcoin",
+    "clock-synchronization",
+    "telecom",
+    "5g",
+    "rf",
+    "dsp",
+    "maxlinear"
+  ],
+  "author": "Don Michael Feeney Jr.",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/jest": "^29.5.14",
+    "@types/node": "^22.13.1",
+    "jest": "^29.7.0",
+    "jest-util": "^30.4.1",
+    "ts-jest": "^29.2.5",
+    "typescript": "5.7.3"
+  }
+}
