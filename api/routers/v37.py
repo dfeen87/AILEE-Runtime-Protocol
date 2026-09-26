@@ -4,6 +4,8 @@ Provides REST endpoints for posture evaluation, governance approval gate, ALCOA 
 compartment state machine, and regime interpretation.
 """
 
+import hashlib
+import time
 from typing import List, Optional
 from fastapi import APIRouter, HTTPException, Query, Security
 from pydantic import BaseModel, Field
@@ -86,7 +88,7 @@ class CompartmentModel(BaseModel):
 # In-Memory State for API Router (v37)
 _MOCK_LEDGER: List[AlcoaEntryModel] = [
     AlcoaEntryModel(
-        entry_id="alcoa-v37-genesis",
+        entry_id="alcoa-0x425e70c240a19594bac19c354a12fa7e",
         operator_id="operator-canonical",
         system_id="ailee-v37-core",
         operator_signature="0x616c636f61736967",
@@ -96,6 +98,7 @@ _MOCK_LEDGER: List[AlcoaEntryModel] = [
         timestamp_utc=1743000000,
         epoch_id=3700,
         epoch_hash="0x425e70c240a19594bac19c354a12fa7edbe6e6c6d3c5790e32b5af52de6ff8ee",
+        parent_entry_id="0x0000000000000000000000000000000000000000000000000000000000000000",
         source_system="AILEE-Trust-Layer-37.0.0",
         posture_regime_id="neutral",
         posture_score=1.5,
@@ -143,9 +146,10 @@ _MOCK_COMPARTMENTS: List[CompartmentModel] = [
 @router.post("/posture/evaluate", response_model=PostureResponse)
 async def evaluate_posture(req: PostureEvaluationRequest):
     risk_score = 0.0
-    if req.current_fee_rate > req.high_fee_band * 1.5:
+    high_band = max(1.0, req.high_fee_band)
+    if req.current_fee_rate > high_band * 1.5:
         risk_score += 3.0
-    elif req.current_fee_rate > req.high_fee_band:
+    elif req.current_fee_rate > high_band:
         risk_score += 1.5
 
     if req.recent_volatility > 0.8:
@@ -158,7 +162,7 @@ async def evaluate_posture(req: PostureEvaluationRequest):
     if req.time_since_last_block > 1800:
         risk_score += 2.0
 
-    risk_score = min(10.0, risk_score)
+    risk_score = min(10.0, max(0.0, risk_score))
 
     regime_id = "neutral"
     if req.recent_volatility > 0.7 and req.daily_change_pct > 5.0:
@@ -169,8 +173,10 @@ async def evaluate_posture(req: PostureEvaluationRequest):
         regime_id = "chop"
     elif risk_score >= 7.0:
         regime_id = "stress"
+    elif risk_score < 3.0 and req.signal_coherence > 0.8:
+        regime_id = "recovery"
 
-    summary = "Network conditions nominal." if risk_score < 3.0 else "Elevated network fee/volatility risk."
+    summary = "Network conditions stable with high temporal coherence." if risk_score < 3.0 else "Elevated network fee/volatility risk."
 
     return PostureResponse(
         risk_score=risk_score,
@@ -178,15 +184,21 @@ async def evaluate_posture(req: PostureEvaluationRequest):
         regime_id=regime_id,
         summary=summary,
         confidence=1.0 if req.time_since_last_block <= 3600 else 0.5,
-        temporal_coherence_index=req.signal_coherence
+        temporal_coherence_index=max(0.0, min(1.0, req.signal_coherence))
     )
 
 
 @router.post("/governance/gate/evaluate", response_model=GateDecisionResponse)
 async def evaluate_approval_gate(factors: ApprovalFactorsRequest):
-    quorum_passed = factors.quorum_count >= 3
+    quorum_passed = (factors.quorum_count >= 3 and
+                      factors.total_validators >= 3 and
+                      factors.quorum_count <= factors.total_validators)
     signatures_valid = factors.operator_signature_valid and factors.system_signature_valid
-    zk_valid = factors.zk_state_consistent
+
+    root = factors.zk_recursion_root.strip()
+    root_valid = bool(root and root != "0x0" and root != "0x" + "0" * 64)
+    zk_valid = factors.zk_state_consistent and root_valid
+
     posture_passed = factors.posture_score <= 2.5
     coherence_passed = factors.temporal_coherence_index >= 0.70
 
@@ -197,16 +209,16 @@ async def evaluate_approval_gate(factors: ApprovalFactorsRequest):
         if not quorum_passed:
             rejection_reason = "Quorum threshold not met"
         elif not signatures_valid:
-            rejection_reason = "Invalid signatures"
+            rejection_reason = "Invalid operator or system signatures"
         elif not zk_valid:
-            rejection_reason = "ZK proof state inconsistent"
+            rejection_reason = "ZK proof state inconsistent or stale recursion root"
         elif not posture_passed:
-            rejection_reason = "Posture score exceeds threshold"
+            rejection_reason = "Posture risk score exceeds safety thresholds"
         elif not coherence_passed:
-            rejection_reason = "Temporal coherence below threshold"
+            rejection_reason = "Temporal coherence index below threshold"
 
     evaluated_factors = [
-        f"Quorum: {factors.quorum_count}/3 -> {'PASS' if quorum_passed else 'FAIL'}",
+        f"Quorum: {factors.quorum_count}/{factors.total_validators} (min: 3) -> {'PASS' if quorum_passed else 'FAIL'}",
         f"Signatures: {'PASS' if signatures_valid else 'FAIL'}",
         f"ZK State: {'PASS' if zk_valid else 'FAIL'}",
         f"Posture: {factors.posture_score} <= 2.5 -> {'PASS' if posture_passed else 'FAIL'}",

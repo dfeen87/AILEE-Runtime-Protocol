@@ -1,4 +1,5 @@
 #include "ailee/approval/ApprovalGate.hpp"
+#include <algorithm>
 
 namespace ailee::approval {
 
@@ -7,10 +8,15 @@ GateDecision ApprovalGate::evaluate_factors(const ApprovalFactors& factors) cons
     GateDecision decision;
 
     // Factor 1: Threshold quorum
-    decision.quorum_passed = (factors.quorum_count >= rules.min_quorum_threshold);
+    bool quorum_count_ok = (factors.quorum_count >= rules.min_quorum_threshold);
+    bool total_validators_ok = (factors.total_validators >= rules.min_quorum_threshold);
+    bool bounds_ok = (factors.quorum_count <= factors.total_validators);
+    decision.quorum_passed = quorum_count_ok && total_validators_ok && bounds_ok;
+
     decision.evaluated_factors.push_back(
         "Factor 1 Quorum: " + std::to_string(factors.quorum_count) + "/" +
-        std::to_string(rules.min_quorum_threshold) + " -> " +
+        std::to_string(factors.total_validators) + " (min threshold: " +
+        std::to_string(rules.min_quorum_threshold) + ") -> " +
         (decision.quorum_passed ? "PASS" : "FAIL")
     );
 
@@ -24,16 +30,23 @@ GateDecision ApprovalGate::evaluate_factors(const ApprovalFactors& factors) cons
         (decision.signatures_valid ? "PASS" : "FAIL")
     );
 
-    // Factor 3: ZK Proof state
-    decision.zk_valid = factors.zk_state_consistent;
+    // Factor 3: ZK Proof state & Recursion Root consistency
+    bool root_non_empty = !factors.zk_recursion_root.empty();
+    bool root_non_zero = (factors.zk_recursion_root != "0x0000000000000000000000000000000000000000000000000000000000000000" &&
+                          factors.zk_recursion_root != "0x0");
+    decision.zk_valid = factors.zk_state_consistent && root_non_empty && root_non_zero;
+
     decision.evaluated_factors.push_back(
-        "Factor 3 ZK State: " + std::string(decision.zk_valid ? "CONSISTENT" : "INCONSISTENT")
+        "Factor 3 ZK State: " + std::string(decision.zk_valid ? "CONSISTENT" : "INCONSISTENT") +
+        " (root: " + (root_non_empty ? (root_non_zero ? "VALID" : "ZERO_STALE") : "EMPTY") + ")"
     );
 
-    // Factor 4: Posture score
-    decision.posture_passed = (factors.posture_score <= rules.min_posture_score || factors.posture_score == 0.0);
+    // Factor 4: Posture score threshold enforcement (NO BYPASS VECTOR)
+    double max_allowed = rules.max_allowable_posture_score;
+    decision.posture_passed = (factors.posture_score <= max_allowed);
     decision.evaluated_factors.push_back(
-        "Factor 4 Posture Score: " + std::to_string(factors.posture_score) + " -> " +
+        "Factor 4 Posture Score: " + std::to_string(factors.posture_score) +
+        " <= " + std::to_string(max_allowed) + " -> " +
         (decision.posture_passed ? "PASS" : "FAIL")
     );
 
@@ -55,7 +68,7 @@ GateDecision ApprovalGate::evaluate_factors(const ApprovalFactors& factors) cons
     if (!decision.approved) {
         if (!decision.quorum_passed) decision.rejection_reason = "Quorum threshold not met";
         else if (!decision.signatures_valid) decision.rejection_reason = "Invalid operator or system signatures";
-        else if (!decision.zk_valid) decision.rejection_reason = "ZK proof state inconsistent";
+        else if (!decision.zk_valid) decision.rejection_reason = "ZK proof state inconsistent or stale recursion root";
         else if (!decision.posture_passed) decision.rejection_reason = "Posture risk score exceeds safety thresholds";
         else if (!decision.coherence_passed) decision.rejection_reason = "Temporal coherence index below threshold";
     }

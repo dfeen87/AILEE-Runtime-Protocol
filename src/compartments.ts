@@ -21,16 +21,37 @@ export interface CompartmentInfo {
 export class CompartmentStateMachineMirror {
   private compartments: Map<string, CompartmentInfo> = new Map();
 
+  public static isValidTransition(current: CompartmentState, target: CompartmentState): boolean {
+    if (current === target) return true;
+
+    switch (current) {
+      case CompartmentState.ISOLATED:
+        return target === CompartmentState.MONITORED || target === CompartmentState.QUARANTINED;
+      case CompartmentState.MONITORED:
+        return target === CompartmentState.ACTIVE || target === CompartmentState.ISOLATED ||
+               target === CompartmentState.SUSPENDED || target === CompartmentState.QUARANTINED;
+      case CompartmentState.ACTIVE:
+        return target === CompartmentState.MONITORED || target === CompartmentState.SUSPENDED ||
+               target === CompartmentState.QUARANTINED;
+      case CompartmentState.SUSPENDED:
+        return target === CompartmentState.MONITORED || target === CompartmentState.ISOLATED ||
+               target === CompartmentState.QUARANTINED;
+      case CompartmentState.QUARANTINED:
+        return target === CompartmentState.ISOLATED;
+    }
+    return false;
+  }
+
   constructor() {
     this.registerCompartment("core-execution", "Core Execution Engine");
     this.registerCompartment("governance-gate", "Governance Approval Gate");
     this.registerCompartment("alcoa-ledger", "ALCOA Ledger Subsystem");
     this.registerCompartment("network-relay", "P2P Network & Relay");
 
-    this.transitionState("core-execution", CompartmentState.ACTIVE, "System initialization");
-    this.transitionState("governance-gate", CompartmentState.ACTIVE, "System initialization");
-    this.transitionState("alcoa-ledger", CompartmentState.ACTIVE, "System initialization");
-    this.transitionState("network-relay", CompartmentState.MONITORED, "System initialization");
+    this.transitionState("core-execution", CompartmentState.ACTIVE, "System initialization", true);
+    this.transitionState("governance-gate", CompartmentState.ACTIVE, "System initialization", true);
+    this.transitionState("alcoa-ledger", CompartmentState.ACTIVE, "System initialization", true);
+    this.transitionState("network-relay", CompartmentState.MONITORED, "System initialization", true);
   }
 
   public registerCompartment(id: string, name: string): boolean {
@@ -46,9 +67,13 @@ export class CompartmentStateMachineMirror {
     return true;
   }
 
-  public transitionState(id: string, newState: CompartmentState, reason?: string): boolean {
+  public transitionState(id: string, newState: CompartmentState, reason?: string, force = false): boolean {
     const comp = this.compartments.get(id);
     if (!comp) return false;
+
+    if (!force && !CompartmentStateMachineMirror.isValidTransition(comp.state, newState)) {
+      return false; // Invalid transition rejected
+    }
 
     comp.state = newState;
     comp.lastTransitionTimestamp = Math.floor(Date.now() / 1000);

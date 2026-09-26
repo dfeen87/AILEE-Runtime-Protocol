@@ -971,6 +971,8 @@ if(BUILD_TESTS)
         tests/test_anchor_commit_validator.cpp
         tests/test_v35_capabilities.cpp
         tests/test_v37_protocol.cpp
+        tests/test_v37_hardening.cpp
+        tests/test_v37_stress.cpp
     )
 
     add_executable(anchor_metadata_tests

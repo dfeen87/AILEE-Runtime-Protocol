@@ -1,7 +1,7 @@
 import { GovernanceMirror, AlcoaLedgerMirror, CompartmentStateMachineMirror, CompartmentState } from '../../src/index.js';
 
 describe('v37 TypeScript Governance Mirror', () => {
-  test('GovernanceMirror evaluates factors correctly', () => {
+  test('GovernanceMirror evaluates valid factors correctly', () => {
     const mirror = new GovernanceMirror();
     const decision = mirror.evaluateFactors({
       quorumCount: 4,
@@ -11,7 +11,7 @@ describe('v37 TypeScript Governance Mirror', () => {
       zkStateConsistent: true,
       postureScore: 1.2,
       temporalCoherenceIndex: 0.95,
-      zkRecursionRoot: '0x123456789',
+      zkRecursionRoot: '0x123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0',
     });
 
     expect(decision.approved).toBe(true);
@@ -19,13 +19,45 @@ describe('v37 TypeScript Governance Mirror', () => {
     expect(decision.evaluatedFactors.length).toBe(5);
   });
 
-  test('AlcoaLedgerMirror records and verifies entries', () => {
+  test('GovernanceMirror rejects high posture score and zero/stale ZK root', () => {
+    const mirror = new GovernanceMirror();
+
+    // High posture score (> 2.5) fails
+    const decHighPosture = mirror.evaluateFactors({
+      quorumCount: 4,
+      totalValidators: 5,
+      operatorSignatureValid: true,
+      systemSignatureValid: true,
+      zkStateConsistent: true,
+      postureScore: 3.8,
+      temporalCoherenceIndex: 0.95,
+      zkRecursionRoot: '0x123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0',
+    });
+    expect(decHighPosture.approved).toBe(false);
+    expect(decHighPosture.posturePassed).toBe(false);
+
+    // Empty/zero ZK recursion root fails
+    const decZeroRoot = mirror.evaluateFactors({
+      quorumCount: 4,
+      totalValidators: 5,
+      operatorSignatureValid: true,
+      systemSignatureValid: true,
+      zkStateConsistent: true,
+      postureScore: 1.0,
+      temporalCoherenceIndex: 0.95,
+      zkRecursionRoot: '0x0000000000000000000000000000000000000000000000000000000000000000',
+    });
+    expect(decZeroRoot.approved).toBe(false);
+    expect(decZeroRoot.zkValid).toBe(false);
+  });
+
+  test('AlcoaLedgerMirror records, verifies entries, and verifies parent hash chain', () => {
     const ledger = new AlcoaLedgerMirror();
-    const entry = ledger.recordEntry({
+    const entry1 = ledger.recordEntry({
       operatorId: 'operator-ts',
       systemId: 'ailee-ts-mirror',
       operatorSignature: '0xsig123',
-      humanReadableSummary: 'TS Mirror Entry',
+      humanReadableSummary: 'TS Mirror Entry 1',
       regimeLabel: 'neutral',
       compartmentLabel: 'core-execution',
       epochId: 3700,
@@ -39,17 +71,39 @@ describe('v37 TypeScript Governance Mirror', () => {
       coherenceScore: 0.99,
     });
 
-    expect(entry.entryId).toBeDefined();
-    expect(ledger.verifyEntry(entry.entryId)).toBe(true);
-    expect(ledger.getEntries().length).toBe(1);
+    const entry2 = ledger.recordEntry({
+      operatorId: 'operator-ts',
+      systemId: 'ailee-ts-mirror',
+      operatorSignature: '0xsig456',
+      humanReadableSummary: 'TS Mirror Entry 2',
+      regimeLabel: 'chop',
+      compartmentLabel: 'core-execution',
+      epochId: 3701,
+      epochHash: '0xepochhash38',
+      sourceSystem: 'AILEE-TS-Mirror',
+      postureRegimeId: 'chop',
+      postureScore: 1.5,
+      zkRecursionRoot: '0xzkroot2',
+      temporalCoherenceIndex: 0.98,
+      signalEnergy: 12.0,
+      coherenceScore: 0.98,
+    });
+
+    expect(entry1.entryId).toBeDefined();
+    expect(ledger.verifyEntry(entry1.entryId)).toBe(true);
+    expect(ledger.verifyEntry(entry2.entryId)).toBe(true);
+    expect(ledger.verifyChain()).toBe(true);
   });
 
-  test('CompartmentStateMachineMirror manages states', () => {
+  test('CompartmentStateMachineMirror manages valid/invalid transitions', () => {
     const sm = new CompartmentStateMachineMirror();
-    expect(sm.isIsolated('core-execution')).toBe(false);
-    expect(sm.isIsolated('unknown-comp')).toBe(true);
+    sm.registerCompartment('test-comp', 'Test Compartment'); // Starts in ISOLATED
 
-    sm.transitionState('core-execution', CompartmentState.QUARANTINED, 'Safety override');
-    expect(sm.isIsolated('core-execution')).toBe(true);
+    // Direct ISOLATED -> ACTIVE should fail
+    expect(sm.transitionState('test-comp', CompartmentState.ACTIVE)).toBe(false);
+
+    // ISOLATED -> MONITORED -> ACTIVE should pass
+    expect(sm.transitionState('test-comp', CompartmentState.MONITORED)).toBe(true);
+    expect(sm.transitionState('test-comp', CompartmentState.ACTIVE)).toBe(true);
   });
 });

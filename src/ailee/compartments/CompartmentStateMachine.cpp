@@ -3,6 +3,29 @@
 
 namespace ailee::compartments {
 
+bool CompartmentStateMachine::is_valid_transition(CompartmentState current, CompartmentState target) {
+    if (current == target) {
+        return true; // No-op transition
+    }
+
+    switch (current) {
+        case CompartmentState::ISOLATED:
+            return target == CompartmentState::MONITORED || target == CompartmentState::QUARANTINED;
+        case CompartmentState::MONITORED:
+            return target == CompartmentState::ACTIVE || target == CompartmentState::ISOLATED ||
+                   target == CompartmentState::SUSPENDED || target == CompartmentState::QUARANTINED;
+        case CompartmentState::ACTIVE:
+            return target == CompartmentState::MONITORED || target == CompartmentState::SUSPENDED ||
+                   target == CompartmentState::QUARANTINED;
+        case CompartmentState::SUSPENDED:
+            return target == CompartmentState::MONITORED || target == CompartmentState::ISOLATED ||
+                   target == CompartmentState::QUARANTINED;
+        case CompartmentState::QUARANTINED:
+            return target == CompartmentState::ISOLATED; // Recovery requires returning to ISOLATED first
+    }
+    return false;
+}
+
 CompartmentStateMachine::CompartmentStateMachine() {
     // Default system compartments
     register_compartment("core-execution", "Core Execution Engine");
@@ -10,14 +33,15 @@ CompartmentStateMachine::CompartmentStateMachine() {
     register_compartment("alcoa-ledger", "ALCOA Ledger Subsystem");
     register_compartment("network-relay", "P2P Network & Relay");
 
-    // Set initial default active state for system compartments
-    transition_state("core-execution", CompartmentState::ACTIVE, "System initialization");
-    transition_state("governance-gate", CompartmentState::ACTIVE, "System initialization");
-    transition_state("alcoa-ledger", CompartmentState::ACTIVE, "System initialization");
-    transition_state("network-relay", CompartmentState::MONITORED, "System initialization");
+    // Set initial default active state for system compartments with force=true
+    transition_state("core-execution", CompartmentState::ACTIVE, "System initialization", true);
+    transition_state("governance-gate", CompartmentState::ACTIVE, "System initialization", true);
+    transition_state("alcoa-ledger", CompartmentState::ACTIVE, "System initialization", true);
+    transition_state("network-relay", CompartmentState::MONITORED, "System initialization", true);
 }
 
 bool CompartmentStateMachine::register_compartment(const std::string& id, const std::string& name) {
+    std::lock_guard<std::mutex> lock(mutex_);
     if (compartments_.find(id) != compartments_.end()) {
         return false;
     }
@@ -39,10 +63,15 @@ bool CompartmentStateMachine::register_compartment(const std::string& id, const 
     return true;
 }
 
-bool CompartmentStateMachine::transition_state(const std::string& id, CompartmentState new_state, const std::string& reason) {
+bool CompartmentStateMachine::transition_state(const std::string& id, CompartmentState new_state, const std::string& reason, bool force) {
+    std::lock_guard<std::mutex> lock(mutex_);
     auto it = compartments_.find(id);
     if (it == compartments_.end()) {
         return false;
+    }
+
+    if (!force && !is_valid_transition(it->second.state, new_state)) {
+        return false; // Invalid transition rejected
     }
 
     uint64_t now = static_cast<uint64_t>(
@@ -60,6 +89,7 @@ bool CompartmentStateMachine::transition_state(const std::string& id, Compartmen
 }
 
 CompartmentInfo CompartmentStateMachine::get_compartment(const std::string& id) const {
+    std::lock_guard<std::mutex> lock(mutex_);
     auto it = compartments_.find(id);
     if (it != compartments_.end()) {
         return it->second;
@@ -68,6 +98,7 @@ CompartmentInfo CompartmentStateMachine::get_compartment(const std::string& id) 
 }
 
 std::vector<CompartmentInfo> CompartmentStateMachine::list_compartments() const {
+    std::lock_guard<std::mutex> lock(mutex_);
     std::vector<CompartmentInfo> result;
     for (const auto& [id, info] : compartments_) {
         result.push_back(info);
@@ -76,6 +107,7 @@ std::vector<CompartmentInfo> CompartmentStateMachine::list_compartments() const 
 }
 
 bool CompartmentStateMachine::is_isolated(const std::string& id) const {
+    std::lock_guard<std::mutex> lock(mutex_);
     auto it = compartments_.find(id);
     if (it != compartments_.end()) {
         return it->second.state == CompartmentState::ISOLATED ||

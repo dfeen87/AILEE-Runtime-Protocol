@@ -584,6 +584,16 @@
 
             const latestLedger = (ledger && ledger.length > 0) ? ledger[0] : null;
 
+            let compsHtml = '';
+            if (compartments && Array.isArray(compartments)) {
+                compsHtml = compartments.map(c => {
+                    let color = '#38a169'; // GREEN
+                    if (c.state === 'MONITORED') color = '#dd6b20'; // ORANGE
+                    else if (c.state === 'ISOLATED' || c.state === 'QUARANTINED') color = '#e53e3e'; // RED
+                    return `<span style="display:inline-block; margin-right:4px; margin-bottom:4px; padding:2px 6px; border-radius:4px; background:${color}; color:#fff; font-size:0.75em; font-weight:bold;">${escapeHtml(c.compartment_id)}: ${escapeHtml(c.state)}</span>`;
+                }).join(' ');
+            }
+
             card.innerHTML = `
                 <h2>v37.0.0 Governance & Posture</h2>
                 <div class="metric">
@@ -592,16 +602,20 @@
                 </div>
                 <div class="metric">
                     <span class="metric-label">Multi-Factor Gate</span>
-                    <span class="metric-value" style="color: #38a169;">ACTIVE (Quorum: 3/5)</span>
+                    <span class="metric-value" style="color: #38a169; font-weight:bold;">ENFORCED (Quorum: 3/5)</span>
                 </div>
-                <div class="metric">
-                    <span class="metric-label">Active Compartments</span>
-                    <span class="metric-value">${compartments ? compartments.length : 0} registered</span>
+                <div class="metric" style="flex-direction:column; align-items:flex-start; gap:4px;">
+                    <span class="metric-label">Compartment Matrix</span>
+                    <div>${compsHtml}</div>
                 </div>
                 ${latestLedger ? `
                 <div class="metric">
-                    <span class="metric-label">ALCOA Ledger Latest</span>
-                    <span class="metric-value" style="font-size: 0.8em;">${escapeHtml(latestLedger.entry_id)} (${escapeHtml(latestLedger.regime_label)})</span>
+                    <span class="metric-label">ALCOA Hash Chain Entry</span>
+                    <span class="metric-value" style="font-size: 0.75em; font-family:monospace;">${escapeHtml(latestLedger.entry_id)}</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Posture Regime</span>
+                    <span class="metric-value" style="font-size: 0.85em; font-weight:bold; color:#2b6cb0;">${escapeHtml(latestLedger.regime_label.toUpperCase())} (Score: ${latestLedger.posture_score})</span>
                 </div>
                 <div class="metric">
                     <span class="metric-label">Temporal Coherence</span>

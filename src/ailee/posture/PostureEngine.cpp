@@ -5,20 +5,25 @@
 namespace ailee::posture {
 
 PostureResult PostureEngine::evaluate(const PostureEvaluationInput& input) const {
+    // Sanitize and clamp inputs
+    double current_fee_rate = std::max(0.0, std::isnan(input.current_fee_rate) ? 0.0 : input.current_fee_rate);
+    double high_fee_band = std::max(1.0, std::isnan(input.high_fee_band) ? 50.0 : input.high_fee_band);
+    double recent_volatility = std::max(0.0, std::min(1.0, std::isnan(input.recent_volatility) ? 0.0 : input.recent_volatility));
+    double signal_coherence = std::max(0.0, std::min(1.0, std::isnan(input.signal_coherence) ? 1.0 : input.signal_coherence));
+
     double score = 0.0;
 
     // 1. Fee Rate Risk
-    double high_band = input.high_fee_band > 0.0 ? input.high_fee_band : 50.0;
-    if (input.current_fee_rate > high_band * 1.5) {
+    if (current_fee_rate > high_fee_band * 1.5) {
         score += 3.0;
-    } else if (input.current_fee_rate > high_band) {
+    } else if (current_fee_rate > high_fee_band) {
         score += 1.5;
     }
 
     // 2. Volatility Risk
-    if (input.recent_volatility > 0.8) {
+    if (recent_volatility > 0.8) {
         score += 3.0;
-    } else if (input.recent_volatility > 0.5) {
+    } else if (recent_volatility > 0.5) {
         score += 1.5;
     }
 
@@ -32,25 +37,25 @@ PostureResult PostureEngine::evaluate(const PostureEvaluationInput& input) const
     }
 
     // Cap at 10.0
-    score = std::min(10.0, score);
+    score = std::min(10.0, std::max(0.0, score));
 
     // Regime classification
     PostureRegime regime = PostureRegime::NEUTRAL;
     std::string regime_id = "neutral";
 
-    if (input.recent_volatility > 0.7 && input.daily_change_pct > 5.0) {
+    if (recent_volatility > 0.7 && input.daily_change_pct > 5.0) {
         regime = PostureRegime::PARABOLIC;
         regime_id = "parabolic";
-    } else if (input.recent_volatility > 0.7 && input.daily_change_pct < -5.0) {
+    } else if (recent_volatility > 0.7 && input.daily_change_pct < -5.0) {
         regime = PostureRegime::RISK_OFF;
         regime_id = "risk-off";
-    } else if (input.recent_volatility < 0.3) {
+    } else if (recent_volatility < 0.3) {
         regime = PostureRegime::CHOP;
         regime_id = "chop";
     } else if (score >= 7.0) {
         regime = PostureRegime::STRESS;
         regime_id = "stress";
-    } else if (score < 3.0 && input.signal_coherence > 0.8) {
+    } else if (score < 3.0 && signal_coherence > 0.8) {
         regime = PostureRegime::RECOVERY;
         regime_id = "recovery";
     }
@@ -71,9 +76,7 @@ PostureResult PostureEngine::evaluate(const PostureEvaluationInput& input) const
         confidence = 0.5;
     }
 
-    double temporal_coherence = std::max(0.0, std::min(1.0, input.signal_coherence));
-
-    return {score, regime, regime_id, summary, confidence, temporal_coherence};
+    return {score, regime, regime_id, summary, confidence, signal_coherence};
 }
 
 std::string PostureEngine::regime_to_string(PostureRegime regime) {

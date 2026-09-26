@@ -42,9 +42,12 @@ public:
 
     std::string record_entry(AlcoaEntry entry);
     bool verify_entry(const std::string& entry_id) const;
+    bool verify_chain() const;
     const std::vector<AlcoaEntry>& entries() const { return ledger_entries_; }
     AlcoaEntry get_latest_entry() const;
     size_t size() const { return ledger_entries_.size(); }
+
+    static std::string compute_entry_hash(const AlcoaEntry& entry);
 
 private:
     std::vector<AlcoaEntry> ledger_entries_;
