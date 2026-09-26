@@ -42,6 +42,13 @@ struct TestState {
 TestState& CurrentState();
 void ReportFailure(const std::string& message, const char* file, int line);
 
+struct DummyStream {
+    template <typename T>
+    DummyStream& operator<<(const T&) {
+        return *this;
+    }
+};
+
 // -----------------------------
 // Custom ToString overloads
 // -----------------------------
@@ -205,6 +212,8 @@ inline void ExpectTrue(bool result,
 #define EXPECT_NEAR(A, B, C)                                                  \
     ::testing::detail::ExpectBinary(std::abs((A) - (B)) <= (C), (A), (B), "NEAR", #A, #B, \
                                     __FILE__, __LINE__, false)
+
+#define SUCCEED() ::testing::detail::DummyStream()
 
 namespace testing {
 class Test {
