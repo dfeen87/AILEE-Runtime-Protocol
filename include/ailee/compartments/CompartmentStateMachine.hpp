@@ -4,6 +4,7 @@
 #include <vector>
 #include <map>
 #include <cstdint>
+#include <mutex>
 
 namespace ailee::compartments {
 
@@ -28,15 +29,17 @@ public:
     CompartmentStateMachine();
 
     bool register_compartment(const std::string& id, const std::string& name);
-    bool transition_state(const std::string& id, CompartmentState new_state, const std::string& reason = "");
+    bool transition_state(const std::string& id, CompartmentState new_state, const std::string& reason = "", bool force = false);
     CompartmentInfo get_compartment(const std::string& id) const;
     std::vector<CompartmentInfo> list_compartments() const;
     bool is_isolated(const std::string& id) const;
 
+    static bool is_valid_transition(CompartmentState current, CompartmentState target);
     static std::string state_to_string(CompartmentState state);
 
 private:
     std::map<std::string, CompartmentInfo> compartments_;
+    mutable std::mutex mutex_;
 };
 
 } // namespace ailee::compartments

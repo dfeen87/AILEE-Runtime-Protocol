@@ -4,7 +4,8 @@
 
 export interface ConstitutionRules {
   minQuorumThreshold: number;
-  minPostureScore: number;
+  maxAllowablePostureScore: number;
+  minPostureScore: number; // Backward compatibility alias
   minTemporalCoherence: number;
   requireOperatorSignature: boolean;
   requireSystemSignature: boolean;
@@ -37,9 +38,11 @@ export class GovernanceMirror {
   private constitution: ConstitutionRules;
 
   constructor(rules?: Partial<ConstitutionRules>) {
+    const maxScore = rules?.maxAllowablePostureScore ?? rules?.minPostureScore ?? 2.5;
     this.constitution = {
       minQuorumThreshold: rules?.minQuorumThreshold ?? 3,
-      minPostureScore: rules?.minPostureScore ?? 2.5,
+      maxAllowablePostureScore: maxScore,
+      minPostureScore: maxScore,
       minTemporalCoherence: rules?.minTemporalCoherence ?? 0.70,
       requireOperatorSignature: rules?.requireOperatorSignature ?? true,
       requireSystemSignature: rules?.requireSystemSignature ?? true,
@@ -52,12 +55,20 @@ export class GovernanceMirror {
   }
 
   public evaluateFactors(factors: ApprovalFactors): GateDecision {
-    const quorumPassed = factors.quorumCount >= this.constitution.minQuorumThreshold;
+    const quorumPassed =
+      factors.quorumCount >= this.constitution.minQuorumThreshold &&
+      factors.totalValidators >= this.constitution.minQuorumThreshold &&
+      factors.quorumCount <= factors.totalValidators;
+
     const signaturesValid =
       (!this.constitution.requireOperatorSignature || factors.operatorSignatureValid) &&
       (!this.constitution.requireSystemSignature || factors.systemSignatureValid);
-    const zkValid = factors.zkStateConsistent;
-    const posturePassed = factors.postureScore <= this.constitution.minPostureScore || factors.postureScore === 0.0;
+
+    const root = (factors.zkRecursionRoot || "").trim();
+    const rootValid = !!root && root !== "0x0" && root !== "0x" + "0".repeat(64);
+    const zkValid = factors.zkStateConsistent && rootValid;
+
+    const posturePassed = factors.postureScore <= this.constitution.maxAllowablePostureScore;
     const coherencePassed = factors.temporalCoherenceIndex >= this.constitution.minTemporalCoherence;
 
     const approved = quorumPassed && signaturesValid && zkValid && posturePassed && coherencePassed;
@@ -65,17 +76,17 @@ export class GovernanceMirror {
     let rejectionReason: string | undefined;
     if (!approved) {
       if (!quorumPassed) rejectionReason = "Quorum threshold not met";
-      else if (!signaturesValid) rejectionReason = "Invalid signatures";
-      else if (!zkValid) rejectionReason = "ZK proof state inconsistent";
-      else if (!posturePassed) rejectionReason = "Posture score exceeds threshold";
-      else if (!coherencePassed) rejectionReason = "Temporal coherence below threshold";
+      else if (!signaturesValid) rejectionReason = "Invalid operator or system signatures";
+      else if (!zkValid) rejectionReason = "ZK proof state inconsistent or stale recursion root";
+      else if (!posturePassed) rejectionReason = "Posture risk score exceeds safety thresholds";
+      else if (!coherencePassed) rejectionReason = "Temporal coherence index below threshold";
     }
 
     const evaluatedFactors = [
-      `Quorum: ${factors.quorumCount}/${this.constitution.minQuorumThreshold} -> ${quorumPassed ? "PASS" : "FAIL"}`,
+      `Quorum: ${factors.quorumCount}/${factors.totalValidators} (min: ${this.constitution.minQuorumThreshold}) -> ${quorumPassed ? "PASS" : "FAIL"}`,
       `Signatures: ${signaturesValid ? "PASS" : "FAIL"}`,
       `ZK State: ${zkValid ? "PASS" : "FAIL"}`,
-      `Posture: ${factors.postureScore} <= ${this.constitution.minPostureScore} -> ${posturePassed ? "PASS" : "FAIL"}`,
+      `Posture: ${factors.postureScore} <= ${this.constitution.maxAllowablePostureScore} -> ${posturePassed ? "PASS" : "FAIL"}`,
       `Coherence: ${factors.temporalCoherenceIndex} >= ${this.constitution.minTemporalCoherence} -> ${coherencePassed ? "PASS" : "FAIL"}`,
     ];
 
