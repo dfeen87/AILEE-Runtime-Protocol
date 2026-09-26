@@ -10,3 +10,6 @@ export * from './core/ClockCoherenceEngine.js';
 export * from './core/KernelClockBridge.js';
 export * from './core/CommReplayAPI.js';
 export * from './config/CommClockConfig.js';
+export * from './governance.js';
+export * from './ledger.js';
+export * from './compartments.js';

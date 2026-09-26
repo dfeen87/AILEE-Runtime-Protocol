@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(AILEE_Core VERSION 36.0.0 LANGUAGES CXX)
+project(AILEE_Core VERSION 37.0.0 LANGUAGES CXX)
 
 include_directories(/opt/homebrew/include)
 link_directories(/opt/homebrew/lib)
@@ -31,7 +31,7 @@ if(NOT AILEE_BUILD_NUMBER)
     set(AILEE_BUILD_NUMBER "0")
 endif()
 if(NOT AILEE_PROTOCOL_VERSION)
-    set(AILEE_PROTOCOL_VERSION "36.0.0")
+    set(AILEE_PROTOCOL_VERSION "37.0.0")
 endif()
 
 # Build type default to Release for performance
@@ -702,6 +702,12 @@ endif()
 # --- 2. Adapter Library (Static) ---
 # Useful for testing adapters without running the full node
 add_library(ailee_adapters STATIC 
+    src/ailee/ledger/AlcoaLedger.cpp
+    src/ailee/posture/PostureEngine.cpp
+    src/ailee/interpretation/InterpretationEngine.cpp
+    src/ailee/compartments/CompartmentStateMachine.cpp
+    src/ailee/approval/ApprovalGate.cpp
+    src/ailee/protocol/RuntimeProtocol.cpp
     src/webserver/RouteRegistry.cpp
     src/kernel/Hooks.cpp
     src/runtime/StateProjection.cpp
@@ -964,6 +970,7 @@ if(BUILD_TESTS)
         tests/test_anchor_commit_signing.cpp
         tests/test_anchor_commit_validator.cpp
         tests/test_v35_capabilities.cpp
+        tests/test_v37_protocol.cpp
     )
 
     add_executable(anchor_metadata_tests

@@ -13,7 +13,7 @@
 
 ---
 
-Current Version number: 36.0.0
+Current Version number: 37.0.0
 
 ## 📑 Table of Contents
 - [🎯 Overview](#-overview)
@@ -1003,6 +1003,43 @@ Together, these three layers transform AILEE Core into a deterministic, continuo
 - **Autonomous tuning** → stable, adaptive behavior under changing network conditions  
 
 V33 is the first release where AILEE behaves like a single, coherent organism — compressing its past, anchoring its present, and optimizing its future through pure reproducible mathematics.
+
+---
+
+# **AILEE-Trust-Layer — Version 37.0.0 Protocol Upgrade**
+
+AILEE-Trust-Layer v37.0.0 is a milestone architectural release that introduces multi-factor governance approval gates, an expanded ALCOA immutable ledger, compartment state machine isolation, and posture regime classification while preserving full backward compatibility with v36.x.x.
+
+---
+
+## Key Features & Enhancements in v37.0.0
+
+- **Multi-Factor Governance Approval Gate (`ailee::approval`):**
+  Enforces a 5-factor evaluation process:
+  1. Threshold quorum (`quorum_count >= 3`)
+  2. Cryptographic signature verification (operator and system keys)
+  3. ZK proof state consistency
+  4. Posture risk score thresholds (`posture_score <= 2.5`)
+  5. Temporal coherence index validation (`coherence_index >= 0.70`)
+
+- **Expanded ALCOA Immutable Ledger (`ailee::ledger`):**
+  Implements full Attributable, Legible, Contemporaneous, Original, and Accurate metadata tracking:
+  - `operator_id`, `system_id`, `operator_signature`
+  - `human_readable_summary`, `regime_label`, `compartment_label`
+  - `timestamp_utc`, `epoch_id`, `epoch_hash`
+  - `entry_id`, `parent_entry_id`, `source_system`
+  - `posture_regime_id`, `posture_score`, `zk_recursion_root`, `temporal_coherence_index`, `signal_energy`, `coherence_score`
+
+- **Compartment State Machine (`ailee::compartments`):**
+  Enforces strict compartmentalization across `core-execution`, `governance-gate`, `alcoa-ledger`, and `network-relay` with discrete states (`ISOLATED`, `MONITORED`, `ACTIVE`, `SUSPENDED`, `QUARANTINED`).
+
+- **Interpretation Engine (`ailee::interpretation`):**
+  Provides deterministic regime classification (`NOMINAL`, `ELEVATED_VOLATILITY`, `MEMPOOL_CONGESTION`, `TEMPORAL_DRIFT`, `CRITICAL_ISOLATION`) with automated operational recommendations.
+
+- **Cross-Layer Bindings & REST Visualization Pipeline:**
+  - Python FastAPI endpoints under `/v37/` (`/v37/posture/evaluate`, `/v37/governance/gate/evaluate`, `/v37/ledger/entries`, `/v37/compartments`, `/v37/status`).
+  - TypeScript governance, ledger, and compartment mirrors (`GovernanceMirror`, `AlcoaLedgerMirror`, `CompartmentStateMachineMirror`).
+  - Web dashboard updates for real-time visualization of multi-factor gate status, posture regimes, and ALCOA ledger trails.
 
 ---
 
