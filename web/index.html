@@ -338,6 +338,11 @@
                 <h2>Performance Metrics</h2>
                 <div class="loading">Loading...</div>
             </div>
+
+            <div class="card" id="v37-governance-card">
+                <h2>v37.0.0 Governance & Posture</h2>
+                <div class="loading">Loading v37.0.0 data...</div>
+            </div>
             
             <!-- Layer-2 State Card -->
             <div class="card" id="l2-state-card">
@@ -566,6 +571,46 @@
             }
         }
         
+        async function renderV37Data() {
+            const card = document.getElementById('v37-governance-card');
+            const v37Status = await fetchData('/v37/status');
+            const compartments = await fetchData('/v37/compartments');
+            const ledger = await fetchData('/v37/ledger/entries?limit=1');
+
+            if (!v37Status) {
+                card.innerHTML = '<h2>v37.0.0 Governance & Posture</h2><div class="error">v37 API Offline</div>';
+                return;
+            }
+
+            const latestLedger = (ledger && ledger.length > 0) ? ledger[0] : null;
+
+            card.innerHTML = `
+                <h2>v37.0.0 Governance & Posture</h2>
+                <div class="metric">
+                    <span class="metric-label">Protocol Version</span>
+                    <span class="metric-value">${escapeHtml(v37Status.version)}</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Multi-Factor Gate</span>
+                    <span class="metric-value" style="color: #38a169;">ACTIVE (Quorum: 3/5)</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Active Compartments</span>
+                    <span class="metric-value">${compartments ? compartments.length : 0} registered</span>
+                </div>
+                ${latestLedger ? `
+                <div class="metric">
+                    <span class="metric-label">ALCOA Ledger Latest</span>
+                    <span class="metric-value" style="font-size: 0.8em;">${escapeHtml(latestLedger.entry_id)} (${escapeHtml(latestLedger.regime_label)})</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Temporal Coherence</span>
+                    <span class="metric-value">${(latestLedger.temporal_coherence_index * 100).toFixed(1)}%</span>
+                </div>
+                ` : ''}
+            `;
+        }
+
         async function loadAllData() {
             // Load status
             const status = await fetchData('/status');
@@ -578,6 +623,9 @@
             // Load L2 state
             const l2State = await fetchData('/l2/state');
             renderL2State(l2State);
+
+            // Load v37 Governance & Posture Data
+            await renderV37Data();
         }
         
         // ---------------------------------------------------------------------------

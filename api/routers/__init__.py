@@ -10,4 +10,5 @@ __all__ = [
     "transactions",
     "trust",
     "energy",
+    "v37",
 ]
