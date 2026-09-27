@@ -13,7 +13,7 @@ struct ConstitutionRules {
     double min_temporal_coherence{0.70};
     bool require_operator_signature{true};
     bool require_system_signature{true};
-    std::string constitution_id{"v37.0.0-canonical-constitution"};
+    std::string constitution_id{"v37.1.0-canonical-constitution"};
 };
 
 class GovernanceConstitution {

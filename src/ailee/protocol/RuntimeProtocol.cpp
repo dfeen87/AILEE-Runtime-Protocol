@@ -10,7 +10,7 @@ RuntimeState RuntimeProtocol::evaluate_and_record(const posture::PostureEvaluati
                                                   const std::string& operator_id,
                                                   const std::string& operator_sig) {
     RuntimeState state;
-    state.version = "37.0.0";
+    state.version = "37.1.0";
 
     // 1. Posture Evaluation
     state.posture = posture_engine_.evaluate(posture_input);
@@ -38,7 +38,7 @@ RuntimeState RuntimeProtocol::evaluate_and_record(const posture::PostureEvaluati
     entry.compartment_label = "core-execution";
     entry.epoch_id = 3700;
     entry.epoch_hash = "0x" + state.posture.regime_id + "-hash-v37";
-    entry.source_system = "AILEE-Trust-Layer-37.0.0";
+    entry.source_system = "AILEE-Trust-Layer-37.1.0";
     entry.posture_regime_id = state.posture.regime_id;
     entry.posture_score = state.posture.risk_score;
     entry.zk_recursion_root = approval_factors.zk_recursion_root.empty() ? "0x0000000000000000000000000000000000000000" : approval_factors.zk_recursion_root;

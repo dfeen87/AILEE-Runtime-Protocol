@@ -92,7 +92,7 @@ class Settings(BaseSettings):
         description="Application name"
     )
     app_version: str = Field(
-        default="37.0.0",
+        default="37.1.0",
         description="Application version"
     )
     app_description: str = Field(

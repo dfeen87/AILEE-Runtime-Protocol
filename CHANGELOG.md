@@ -14,6 +14,15 @@ This change improves alignment between documentation and current implementation 
 
 ---
 
+## v37.1.0 — Repository Organization
+
+### Changed
+- Synchronized package, runtime, API, web, and citation metadata at version 37.1.0.
+- Collected the V12 reproducibility bundle under `artifacts/v12/`.
+- Moved supplemental documentation and retired build-repair material out of the repository root.
+
+---
+
 ## v5.2.0 — Security Hardening & Architectural Uplift
 
 ### Security

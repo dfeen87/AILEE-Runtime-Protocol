@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(AILEE_Core VERSION 37.0.0 LANGUAGES CXX)
+project(AILEE_Core VERSION 37.1.0 LANGUAGES CXX)
 
 include_directories(/opt/homebrew/include)
 link_directories(/opt/homebrew/lib)
@@ -31,7 +31,7 @@ if(NOT AILEE_BUILD_NUMBER)
     set(AILEE_BUILD_NUMBER "0")
 endif()
 if(NOT AILEE_PROTOCOL_VERSION)
-    set(AILEE_PROTOCOL_VERSION "37.0.0")
+    set(AILEE_PROTOCOL_VERSION "37.1.0")
 endif()
 
 # Build type default to Release for performance

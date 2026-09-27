@@ -50,8 +50,8 @@ def extract_state_root(stdout_str):
 def main():
     parser = argparse.ArgumentParser(description="AILEE-Core Epoch Replay Inspector")
     parser.add_argument("--run-epoch", type=int, required=True, help="Epoch to run and inspect")
-    parser.add_argument("--binary", type=str, default="./ailee_core_v12.bin", help="Path to the orchestrator binary")
-    parser.add_argument("--manifest", type=str, default="v12_receipt_manifest.json", help="Path to the receipt manifest")
+    parser.add_argument("--binary", type=str, default="artifacts/v12/ailee_core_v12.bin", help="Path to the orchestrator binary")
+    parser.add_argument("--manifest", type=str, default="artifacts/v12/v12_receipt_manifest.json", help="Path to the receipt manifest")
     parser.add_argument("--out", type=str, help="Optional output JSON file path", default=None)
 
     args = parser.parse_args()
