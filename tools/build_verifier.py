@@ -62,7 +62,7 @@ def verify_hash(name, file_to_hash, expected_hash_file, manifest_embedded_hash=N
 def main():
     parser = argparse.ArgumentParser(description="AILEE-Core Deterministic Build Verifier")
     parser.add_argument("--out", type=str, help="Optional output JSON file path", default=None)
-    parser.add_argument("--dir", type=str, help="Directory containing the artifacts (default: current directory)", default=".")
+    parser.add_argument("--dir", type=str, help="Directory containing the artifacts (default: artifacts/v12)", default="artifacts/v12")
 
     args = parser.parse_args()
 

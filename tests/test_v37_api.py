@@ -8,7 +8,7 @@ def test_v37_status():
     response = client.get("/v37/status")
     assert response.status_code == 200
     data = response.json()
-    assert data["version"] == "37.0.0"
+    assert data["version"] == "37.1.0"
     assert data["status"] == "OPERATIONAL"
     assert data["multi_factor_governance"] is True
 

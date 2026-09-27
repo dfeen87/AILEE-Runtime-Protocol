@@ -64,7 +64,7 @@ def main():
     # Mode B args
     parser.add_argument("--run-epoch", type=int, help="Epoch to run and compare")
     parser.add_argument("--compare-to", type=str, help="Path to canonical state root JSON file for comparison")
-    parser.add_argument("--binary", type=str, default="./ailee_core_v12.bin", help="Path to orchestrator binary")
+    parser.add_argument("--binary", type=str, default="artifacts/v12/ailee_core_v12.bin", help="Path to orchestrator binary")
 
     # Common
     parser.add_argument("--out", type=str, help="Optional output JSON file path", default=None)

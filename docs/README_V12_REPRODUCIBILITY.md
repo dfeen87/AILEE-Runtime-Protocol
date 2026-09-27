@@ -3,6 +3,8 @@
 
 This document defines the full reproducibility package for **AILEE CORE V12**, enabling any engineer, auditor, or automated system to reproduce the build, verify the execution outputs, and deterministically replay the protocol from genesis through epoch 4.
 
+The canonical bundle is stored in `artifacts/v12/`. Paths below are relative to that directory unless otherwise noted; run `python3 tools/build_verifier.py` from the repository root to verify the bundle in place.
+
 It contains four canonical artifacts:
 
 1. **Frozen Genesis**  

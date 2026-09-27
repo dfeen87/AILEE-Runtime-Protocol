@@ -1,5 +1,5 @@
 """
-AILEE Trust Layer v37.0.0 API Router.
+AILEE Trust Layer v37.1.0 API Router.
 Provides REST endpoints for posture evaluation, governance approval gate, ALCOA ledger,
 compartment state machine, and regime interpretation.
 """
@@ -92,14 +92,14 @@ _MOCK_LEDGER: List[AlcoaEntryModel] = [
         operator_id="operator-canonical",
         system_id="ailee-v37-core",
         operator_signature="0x616c636f61736967",
-        human_readable_summary="Genesis entry for AILEE-Trust-Layer v37.0.0",
+        human_readable_summary="Genesis entry for AILEE-Trust-Layer v37.1.0",
         regime_label="neutral",
         compartment_label="core-execution",
         timestamp_utc=1743000000,
         epoch_id=3700,
         epoch_hash="0x425e70c240a19594bac19c354a12fa7edbe6e6c6d3c5790e32b5af52de6ff8ee",
         parent_entry_id="0x0000000000000000000000000000000000000000000000000000000000000000",
-        source_system="AILEE-Trust-Layer-37.0.0",
+        source_system="AILEE-Trust-Layer-37.1.0",
         posture_regime_id="neutral",
         posture_score=1.5,
         zk_recursion_root="0xf4ffb4ab1eb4e31906c42f16367af8b10664f91876d1c932e1c44f96c0821c0f",
@@ -250,9 +250,9 @@ async def get_compartments():
 @router.get("/status")
 async def get_v37_status():
     return {
-        "version": "37.0.0",
+        "version": "37.1.0",
         "status": "OPERATIONAL",
-        "protocol": "AILEE-Trust-Layer-37.0.0",
+        "protocol": "AILEE-Trust-Layer-37.1.0",
         "multi_factor_governance": True,
         "alcoa_ledger_active": True,
         "compartments_count": len(_MOCK_COMPARTMENTS)

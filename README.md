@@ -13,7 +13,7 @@
 
 ---
 
-Current Version number: 37.0.0
+Current Version number: 37.1.0
 
 ## 📑 Table of Contents
 - [🎯 Overview](#-overview)
@@ -580,10 +580,10 @@ Within AILEE Core, WNN guarantees that consensus loops, block production, and fe
 
 To guarantee verifiable execution, V12 introduces a comprehensive Reproducibility Package. This suite of canonical artifacts allows any engineer or automated system to rebuild the binary, run the protocol, and replay state transitions with bit-for-bit accuracy.
 
-*   **Frozen Genesis (`v12_frozen_genesis.json`):** Defines the immutable, deterministic starting state for the protocol, anchoring all subsequent epoch roots.
-*   **Build Hash (`v12_build_hash.txt`):** Cryptographically fingerprints the deterministic V12 build environment and compilation manifest.
-*   **Receipt Hash (`v12_receipt_hash.txt`):** Fingerprints the deterministic execution outputs and finalized epoch roots.
-*   **Re-Execution Path (`v12_reexecution_manifest.json`):** Provides step-by-step, deterministic replay instructions to re-execute the protocol from genesis through epoch 4.
+*   **Frozen Genesis (`artifacts/v12/v12_frozen_genesis.json`):** Defines the immutable, deterministic starting state for the protocol, anchoring all subsequent epoch roots.
+*   **Build Hash (`artifacts/v12/v12_build_hash.txt`):** Cryptographically fingerprints the deterministic V12 build environment and compilation manifest.
+*   **Receipt Hash (`artifacts/v12/v12_receipt_hash.txt`):** Fingerprints the deterministic execution outputs and finalized epoch roots.
+*   **Re-Execution Path (`artifacts/v12/v12_reexecution_manifest.json`):** Provides step-by-step, deterministic replay instructions to re-execute the protocol from genesis through epoch 4.
 *   **Epoch State Roots:** The verified Merkle roots of the AILEE L2 state after each epoch of execution.
 *   **Verification Script (`verify_v12.sh`):** An automated utility to cryptographically validate the integrity of the reproducibility artifacts.
 
@@ -1006,13 +1006,13 @@ V33 is the first release where AILEE behaves like a single, coherent organism �
 
 ---
 
-# **AILEE-Trust-Layer — Version 37.0.0 Protocol Upgrade**
+# **AILEE-Trust-Layer — Version 37.1.0 Protocol Upgrade**
 
-AILEE-Trust-Layer v37.0.0 is a milestone architectural release that introduces multi-factor governance approval gates, an expanded ALCOA immutable ledger, compartment state machine isolation, and posture regime classification while preserving full backward compatibility with v36.x.x.
+AILEE-Trust-Layer v37.1.0 is a milestone architectural release that introduces multi-factor governance approval gates, an expanded ALCOA immutable ledger, compartment state machine isolation, and posture regime classification while preserving full backward compatibility with v36.x.x.
 
 ---
 
-## Key Features & Enhancements in v37.0.0
+## Key Features & Enhancements in v37.1.0
 
 - **Multi-Factor Governance Approval Gate (`ailee::approval`):**
   Enforces a 5-factor evaluation process:
