@@ -79,6 +79,10 @@ class BitcoinRPCFailoverManager:
         """
         if not endpoints:
             raise ValueError("At least one Bitcoin RPC endpoint required")
+        if max_retries < 1:
+            raise ValueError("max_retries must be at least 1")
+        if circuit_breaker_threshold < 1:
+            raise ValueError("circuit_breaker_threshold must be at least 1")
         
         self.endpoints = sorted(endpoints, key=lambda x: x.priority)
         self.health_check_interval = health_check_interval
@@ -142,6 +146,7 @@ class BitcoinRPCFailoverManager:
                         endpoint.status = EndpointStatus.HEALTHY
                         endpoint.last_success = datetime.now()
                         endpoint.consecutive_failures = 0
+                        self._circuit_open_until.pop(endpoint.url, None)
                         # Update rolling average latency
                         if endpoint.avg_latency_ms == 0:
                             endpoint.avg_latency_ms = latency
@@ -254,12 +259,9 @@ class BitcoinRPCFailoverManager:
                 
                 with self._lock:
                     endpoint.total_requests += 1
-                    endpoint.consecutive_failures += 1
-                    endpoint.last_failure = datetime.now()
-                
-                # Mark as unhealthy if threshold exceeded
-                if endpoint.consecutive_failures >= self.circuit_breaker_threshold:
-                    self._mark_endpoint_unhealthy(endpoint)
+
+                # Record this failed call exactly once and update circuit state.
+                self._mark_endpoint_unhealthy(endpoint)
                 
                 # Continue to next endpoint
                 continue
