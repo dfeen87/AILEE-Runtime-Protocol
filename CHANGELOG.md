@@ -14,6 +14,20 @@ This change improves alignment between documentation and current implementation 
 
 ---
 
+## v38.0.0 — BEDROCK Engineering Baseline
+
+- Bound governance approval to posture and coherence values produced by the runtime's authoritative telemetry evaluation.
+- Made governance evidence fail closed for non-finite/out-of-domain numbers, malformed recursion roots, and invalid constitutions.
+- Made ALCOA entry identifiers content-derived and added content-hash and genesis-link verification.
+- Made non-finite posture telemetry deterministically produce maximum risk and zero coherence.
+- Added regression coverage for malformed evidence, telemetry, ledger tampering, invalid governance configuration, and cross-component posture binding.
+- Expanded CI from one directly invoked C++ binary to CTest, Python, TypeScript, and release-metadata checks.
+- Preserved the layered architecture and `/v37` REST compatibility route. The major milestone reflects stricter behavioral contracts, not a wholesale API redesign.
+
+See `docs/V38_BEDROCK_RELEASE.md` for the complete report and validation boundaries.
+
+---
+
 ## v37.1.0 — Repository Organization
 
 ### Changed

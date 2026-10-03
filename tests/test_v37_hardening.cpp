@@ -2,6 +2,7 @@
 #include <gtest/gtest.h>
 #include <thread>
 #include <vector>
+#include <limits>
 
 TEST(V37HardeningTest, PostureEngineDeterminismAndSanitization) {
     ailee::posture::PostureEngine engine;
@@ -77,6 +78,39 @@ TEST(V37HardeningTest, ApprovalGateGovernanceHardening) {
     EXPECT_FALSE(gate.evaluate_factors(factors).approved);
 }
 
+TEST(V37HardeningTest, ApprovalGateRejectsMalformedNumericEvidenceAndRoots) {
+    ailee::approval::ApprovalGate gate;
+    ailee::approval::ApprovalFactors factors;
+    factors.quorum_count = 4;
+    factors.total_validators = 5;
+    factors.operator_signature_valid = true;
+    factors.system_signature_valid = true;
+    factors.zk_state_consistent = true;
+    factors.posture_score = 1.0;
+    factors.temporal_coherence_index = 0.9;
+    factors.zk_recursion_root = "0x123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0";
+
+    factors.posture_score = std::numeric_limits<double>::quiet_NaN();
+    EXPECT_FALSE(gate.evaluate_factors(factors).approved);
+    factors.posture_score = 1.0;
+
+    factors.temporal_coherence_index = std::numeric_limits<double>::infinity();
+    EXPECT_FALSE(gate.evaluate_factors(factors).approved);
+    factors.temporal_coherence_index = 0.9;
+
+    factors.zk_recursion_root = "not-a-cryptographic-root";
+    EXPECT_FALSE(gate.evaluate_factors(factors).approved);
+}
+
+TEST(V37HardeningTest, ApprovalGateRejectsInvalidConstitution) {
+    ailee::governance::ConstitutionRules rules;
+    rules.max_allowable_posture_score = std::numeric_limits<double>::infinity();
+    ailee::approval::ApprovalGate gate{ailee::governance::GovernanceConstitution{rules}};
+    ailee::approval::ApprovalFactors factors;
+    EXPECT_FALSE(gate.evaluate_factors(factors).approved);
+    EXPECT_EQ(gate.evaluate_factors(factors).rejection_reason, "Invalid governance constitution");
+}
+
 TEST(V37HardeningTest, AlcoaLedgerIntegrityAndChainVerification) {
     ailee::ledger::AlcoaLedger ledger;
 
@@ -120,6 +154,70 @@ TEST(V37HardeningTest, AlcoaLedgerIntegrityAndChainVerification) {
 
     // Verify parent hash chain continuity
     EXPECT_TRUE(ledger.verify_chain());
+}
+
+TEST(V37HardeningTest, AlcoaLedgerDetectsContentAndIdentifierTampering) {
+    ailee::ledger::AlcoaLedger ledger;
+    ailee::ledger::AlcoaEntry entry;
+    entry.operator_id = "op-alice";
+    entry.system_id = "ailee-v37";
+    entry.operator_signature = "sig-1";
+    entry.human_readable_summary = "Original evidence";
+    entry.regime_label = "neutral";
+    entry.compartment_label = "core-execution";
+    entry.timestamp_utc = 1743000001;
+    entry.epoch_id = 1;
+    entry.epoch_hash = "0xhash1";
+    entry.posture_regime_id = "neutral";
+    entry.posture_score = 1.0;
+    entry.zk_recursion_root = "0xzkroot1";
+    entry.temporal_coherence_index = 0.95;
+    entry.entry_id = "caller-controlled-id";
+
+    const auto id = ledger.record_entry(entry);
+    EXPECT_NE(id, "caller-controlled-id");
+    ASSERT_TRUE(ledger.verify_chain());
+
+    auto& stored = const_cast<ailee::ledger::AlcoaEntry&>(ledger.entries().front());
+    stored.human_readable_summary = "Tampered evidence";
+    EXPECT_FALSE(ledger.verify_entry(id));
+    EXPECT_FALSE(ledger.verify_chain());
+}
+
+TEST(V37HardeningTest, RuntimeBindsApprovalToAuthoritativePostureEvaluation) {
+    ailee::protocol::RuntimeProtocol protocol;
+    ailee::posture::PostureEvaluationInput telemetry;
+    telemetry.current_fee_rate = 200.0;
+    telemetry.high_fee_band = 50.0;
+    telemetry.recent_volatility = 1.0;
+    telemetry.block_interval_avg = 1200;
+    telemetry.time_since_last_block = 4000;
+    telemetry.signal_coherence = 0.1;
+
+    ailee::approval::ApprovalFactors factors;
+    factors.quorum_count = 4;
+    factors.total_validators = 5;
+    factors.operator_signature_valid = true;
+    factors.system_signature_valid = true;
+    factors.zk_state_consistent = true;
+    factors.posture_score = 0.0; // Untrusted caller cannot override evaluated risk.
+    factors.temporal_coherence_index = 1.0;
+    factors.zk_recursion_root = "0x123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0";
+
+    const auto state = protocol.evaluate_and_record(telemetry, factors, "operator", "signature");
+    EXPECT_FALSE(state.last_gate_decision.approved);
+    EXPECT_FALSE(state.healthy);
+    EXPECT_FALSE(state.last_gate_decision.posture_passed);
+    EXPECT_FALSE(state.last_gate_decision.coherence_passed);
+}
+
+TEST(V37HardeningTest, NonFiniteTelemetryFailsClosed) {
+    ailee::posture::PostureEngine engine;
+    ailee::posture::PostureEvaluationInput input;
+    input.current_fee_rate = std::numeric_limits<double>::quiet_NaN();
+    const auto result = engine.evaluate(input);
+    EXPECT_EQ(result.risk_score, 10.0);
+    EXPECT_EQ(result.temporal_coherence_index, 0.0);
 }
 
 TEST(V37HardeningTest, CompartmentStateMachineBoundaryTransitionRules) {

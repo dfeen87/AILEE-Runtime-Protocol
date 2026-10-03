@@ -340,8 +340,8 @@
             </div>
 
             <div class="card" id="v37-governance-card">
-                <h2>v37.1.0 Governance & Posture</h2>
-                <div class="loading">Loading v37.1.0 data...</div>
+                <h2>v38.0.0 Governance & Posture</h2>
+                <div class="loading">Loading v38.0.0 data...</div>
             </div>
             
             <!-- Layer-2 State Card -->
@@ -578,7 +578,7 @@
             const ledger = await fetchData('/v37/ledger/entries?limit=1');
 
             if (!v37Status) {
-                card.innerHTML = '<h2>v37.1.0 Governance & Posture</h2><div class="error">v37 API Offline</div>';
+                card.innerHTML = '<h2>v38.0.0 Governance & Posture</h2><div class="error">v37 API Offline</div>';
                 return;
             }
 
@@ -595,7 +595,7 @@
             }
 
             card.innerHTML = `
-                <h2>v37.1.0 Governance & Posture</h2>
+                <h2>v38.0.0 Governance & Posture</h2>
                 <div class="metric">
                     <span class="metric-label">Protocol Version</span>
                     <span class="metric-value">${escapeHtml(v37Status.version)}</span>

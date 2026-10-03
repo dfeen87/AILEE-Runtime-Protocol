@@ -1,5 +1,5 @@
 /**
- * AILEE Trust Layer v37.1.0 - ALCOA Ledger Mirror
+ * AILEE Trust Layer v38.0.0 - ALCOA Ledger Mirror
  */
 
 export interface AlcoaEntry {

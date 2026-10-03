@@ -13,7 +13,7 @@
 
 ---
 
-Current Version number: 37.1.0
+Current Version number: 38.0.0
 
 ## 📑 Table of Contents
 - [🎯 Overview](#-overview)
@@ -1006,13 +1006,13 @@ V33 is the first release where AILEE behaves like a single, coherent organism �
 
 ---
 
-# **AILEE-Trust-Layer — Version 37.1.0 Protocol Upgrade**
+# **AILEE-Trust-Layer — Version 38.0.0 Protocol Upgrade**
 
-AILEE-Trust-Layer v37.1.0 is a milestone architectural release that introduces multi-factor governance approval gates, an expanded ALCOA immutable ledger, compartment state machine isolation, and posture regime classification while preserving full backward compatibility with v36.x.x.
+AILEE-Trust-Layer v38.0.0 establishes the BEDROCK engineering baseline. It preserves the existing layered architecture and the `/v37` compatibility route while deliberately tightening malformed-evidence, telemetry, governance, and ledger-integrity behavior. See [the v38 release report](docs/V38_BEDROCK_RELEASE.md) for compatibility and validation boundaries.
 
 ---
 
-## Key Features & Enhancements in v37.1.0
+## Key Features & Enhancements in v38.0.0
 
 - **Multi-Factor Governance Approval Gate (`ailee::approval`):**
   Enforces a 5-factor evaluation process:

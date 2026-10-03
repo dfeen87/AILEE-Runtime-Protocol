@@ -13,7 +13,7 @@
 namespace ailee::protocol {
 
 struct RuntimeState {
-    std::string version{"37.1.0"};
+    std::string version{"38.0.0"};
     posture::PostureResult posture;
     interpretation::InterpretationResult interpretation;
     approval::GateDecision last_gate_decision;

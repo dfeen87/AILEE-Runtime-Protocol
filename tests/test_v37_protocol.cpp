@@ -25,7 +25,7 @@ TEST(V37ProtocolTest, FullPipelineEvaluation) {
 
     auto state = protocol.evaluate_and_record(posture_input, factors, "operator-alice", "sig-valid-123");
 
-    EXPECT_EQ(state.version, "37.1.0");
+    EXPECT_EQ(state.version, "38.0.0");
     EXPECT_TRUE(state.healthy);
     EXPECT_TRUE(state.last_gate_decision.approved);
     EXPECT_EQ(state.last_gate_decision.evaluated_factors.size(), 5u);

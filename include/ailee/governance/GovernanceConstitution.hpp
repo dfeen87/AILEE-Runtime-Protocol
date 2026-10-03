@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include <cstdint>
+#include <cmath>
 
 namespace ailee::governance {
 
@@ -13,7 +14,7 @@ struct ConstitutionRules {
     double min_temporal_coherence{0.70};
     bool require_operator_signature{true};
     bool require_system_signature{true};
-    std::string constitution_id{"v37.1.0-canonical-constitution"};
+    std::string constitution_id{"v38.0.0-canonical-constitution"};
 };
 
 class GovernanceConstitution {
@@ -34,7 +35,10 @@ public:
 
     bool validate_rules() const {
         return rules_.min_quorum_threshold > 0 &&
+               std::isfinite(rules_.max_allowable_posture_score) &&
                rules_.max_allowable_posture_score >= 0.0 &&
+               rules_.max_allowable_posture_score <= 10.0 &&
+               std::isfinite(rules_.min_temporal_coherence) &&
                rules_.min_temporal_coherence >= 0.0 &&
                rules_.min_temporal_coherence <= 1.0;
     }

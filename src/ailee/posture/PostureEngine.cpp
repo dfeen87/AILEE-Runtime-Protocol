@@ -5,6 +5,16 @@
 namespace ailee::posture {
 
 PostureResult PostureEngine::evaluate(const PostureEvaluationInput& input) const {
+    const bool malformed = !std::isfinite(input.current_fee_rate) ||
+                           !std::isfinite(input.high_fee_band) ||
+                           !std::isfinite(input.recent_volatility) ||
+                           !std::isfinite(input.daily_change_pct) ||
+                           !std::isfinite(input.signal_coherence);
+    if (malformed) {
+        return {10.0, PostureRegime::STRESS, "stress",
+                "Malformed non-finite telemetry; operations fail closed.", 0.0, 0.0};
+    }
+
     // Sanitize and clamp inputs
     double current_fee_rate = std::max(0.0, std::isnan(input.current_fee_rate) ? 0.0 : input.current_fee_rate);
     double high_fee_band = std::max(1.0, std::isnan(input.high_fee_band) ? 50.0 : input.high_fee_band);
