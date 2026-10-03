@@ -14,6 +14,9 @@ PYPROJECT_VERSION=$(grep "^version = " pyproject.toml | grep -oP '\d+\.\d+\.\d+'
 CITATION_VERSION=$(grep "^version: " CITATION.cff | grep -oP '\d+\.\d+\.\d+' || echo "NOT_FOUND")
 API_VERSION=$(grep -A 1 "app_version" api/config.py | grep "default=" | grep -oP '\d+\.\d+\.\d+' || echo "NOT_FOUND")
 WEBDEMO_VERSION=$(grep "status.version" examples/WebServerDemo.cpp | grep -oP '\d+\.\d+\.\d+' || echo "NOT_FOUND")
+PACKAGE_VERSION=$(python3 -c 'import json; print(json.load(open("package.json"))["version"])' 2>/dev/null || echo "NOT_FOUND")
+RUNTIME_VERSION=$(grep 'state.version = ' src/ailee/protocol/RuntimeProtocol.cpp | grep -oP '\d+\.\d+\.\d+' || echo "NOT_FOUND")
+README_VERSION=$(grep 'Current Version number:' README.md | grep -oP '\d+\.\d+\.\d+' || echo "NOT_FOUND")
 
 echo "📌 Version Numbers:"
 echo "  CMakeLists.txt:                $CMAKE_VERSION"
@@ -21,6 +24,9 @@ echo "  pyproject.toml:                $PYPROJECT_VERSION"
 echo "  CITATION.cff:                  $CITATION_VERSION"
 echo "  api/config.py:                 $API_VERSION"
 echo "  examples/WebServerDemo.cpp:    $WEBDEMO_VERSION"
+echo "  package.json:                  $PACKAGE_VERSION"
+echo "  RuntimeProtocol.cpp:           $RUNTIME_VERSION"
+echo "  README.md:                     $README_VERSION"
 echo ""
 
 # Check version consistency
@@ -28,7 +34,10 @@ VERSION_MATCH=true
 if [ "$CMAKE_VERSION" != "$PYPROJECT_VERSION" ] || \
    [ "$PYPROJECT_VERSION" != "$CITATION_VERSION" ] || \
    [ "$CITATION_VERSION" != "$API_VERSION" ] || \
-   [ "$API_VERSION" != "$WEBDEMO_VERSION" ]; then
+   [ "$API_VERSION" != "$WEBDEMO_VERSION" ] || \
+   [ "$WEBDEMO_VERSION" != "$PACKAGE_VERSION" ] || \
+   [ "$PACKAGE_VERSION" != "$RUNTIME_VERSION" ] || \
+   [ "$RUNTIME_VERSION" != "$README_VERSION" ]; then
     VERSION_MATCH=false
 fi
 

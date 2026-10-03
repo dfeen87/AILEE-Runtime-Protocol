@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(AILEE_Core VERSION 37.1.0 LANGUAGES CXX)
+project(AILEE_Core VERSION 38.0.0 LANGUAGES CXX)
 
 include_directories(/opt/homebrew/include)
 link_directories(/opt/homebrew/lib)
@@ -31,7 +31,7 @@ if(NOT AILEE_BUILD_NUMBER)
     set(AILEE_BUILD_NUMBER "0")
 endif()
 if(NOT AILEE_PROTOCOL_VERSION)
-    set(AILEE_PROTOCOL_VERSION "37.1.0")
+    set(AILEE_PROTOCOL_VERSION "38.0.0")
 endif()
 
 # Build type default to Release for performance
@@ -911,7 +911,7 @@ if(BUILD_TESTS)
 
     enable_testing()
 
-    add_executable(anchor_commit_tapleaf_tests EXCLUDE_FROM_ALL
+    add_executable(anchor_commit_tapleaf_tests
         tests/test_anchor_commit_tapleaf.cpp
     )
     target_link_libraries(anchor_commit_tapleaf_tests
@@ -922,7 +922,7 @@ if(BUILD_TESTS)
     )
     add_test(NAME AnchorCommitTapleafTests COMMAND anchor_commit_tapleaf_tests)
 
-    add_executable(ailee_tests EXCLUDE_FROM_ALL
+    add_executable(ailee_tests
         tests/NodeIdentityTests.cpp
         tests/AdapterRegistryTests.cpp
         tests/BitVMInterpreterTests.cpp

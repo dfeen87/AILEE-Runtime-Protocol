@@ -1,5 +1,5 @@
 /**
- * AILEE Trust Layer v37.1.0 - TypeScript Governance Mirror
+ * AILEE Trust Layer v38.0.0 - TypeScript Governance Mirror
  */
 
 export interface ConstitutionRules {
@@ -46,7 +46,7 @@ export class GovernanceMirror {
       minTemporalCoherence: rules?.minTemporalCoherence ?? 0.70,
       requireOperatorSignature: rules?.requireOperatorSignature ?? true,
       requireSystemSignature: rules?.requireSystemSignature ?? true,
-      constitutionId: rules?.constitutionId ?? "v37.1.0-canonical-constitution",
+      constitutionId: rules?.constitutionId ?? "v38.0.0-canonical-constitution",
     };
   }
 

@@ -8,7 +8,7 @@ def test_v37_status():
     response = client.get("/v37/status")
     assert response.status_code == 200
     data = response.json()
-    assert data["version"] == "37.1.0"
+    assert data["version"] == "38.0.0"
     assert data["status"] == "OPERATIONAL"
     assert data["multi_factor_governance"] is True
 
@@ -38,7 +38,7 @@ def test_v37_approval_gate_evaluate():
         "zk_state_consistent": True,
         "posture_score": 1.5,
         "temporal_coherence_index": 0.95,
-        "zk_recursion_root": "0x123456789abcdef"
+        "zk_recursion_root": "0x123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0"
     }
     response = client.post("/v37/governance/gate/evaluate", json=payload)
     assert response.status_code == 200
@@ -46,6 +46,19 @@ def test_v37_approval_gate_evaluate():
     assert data["approved"] is True
     assert data["quorum_passed"] is True
     assert len(data["evaluated_factors"]) == 5
+
+@pytest.mark.parametrize("root", ["", "0x1", "not-a-root", "0x" + "g" * 64])
+def test_v37_approval_gate_rejects_malformed_roots(root):
+    response = client.post("/v37/governance/gate/evaluate", json={"zk_recursion_root": root})
+    assert response.status_code == 422
+
+def test_v37_posture_rejects_non_finite_telemetry():
+    response = client.post(
+        "/v37/posture/evaluate",
+        content='{"current_fee_rate": NaN}',
+        headers={"content-type": "application/json"},
+    )
+    assert response.status_code == 422
 
 def test_v37_ledger_and_compartments():
     resp_ledger = client.get("/v37/ledger/entries")

@@ -1,5 +1,5 @@
 """
-AILEE Trust Layer v37.1.0 API Router.
+AILEE Trust Layer v38.0.0 API Router.
 Provides REST endpoints for posture evaluation, governance approval gate, ALCOA ledger,
 compartment state machine, and regime interpretation.
 """
@@ -8,7 +8,7 @@ import hashlib
 import time
 from typing import List, Optional
 from fastapi import APIRouter, HTTPException, Query, Security
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 router = APIRouter(prefix="/v37", tags=["v37-protocol"])
 
@@ -16,8 +16,10 @@ router = APIRouter(prefix="/v37", tags=["v37-protocol"])
 # Pydantic Request & Response Models
 
 class PostureEvaluationRequest(BaseModel):
+    model_config = ConfigDict(allow_inf_nan=False)
+
     current_fee_rate: float = Field(25.0, ge=0.0)
-    high_fee_band: float = Field(50.0, ge=0.0)
+    high_fee_band: float = Field(50.0, gt=0.0)
     recent_volatility: float = Field(0.2, ge=0.0, le=1.0)
     block_interval_avg: int = Field(600, ge=0)
     time_since_last_block: int = Field(300, ge=0)
@@ -35,14 +37,19 @@ class PostureResponse(BaseModel):
 
 
 class ApprovalFactorsRequest(BaseModel):
+    model_config = ConfigDict(allow_inf_nan=False)
+
     quorum_count: int = Field(4, ge=0)
     total_validators: int = Field(5, ge=1)
     operator_signature_valid: bool = True
     system_signature_valid: bool = True
     zk_state_consistent: bool = True
-    posture_score: float = Field(1.5, ge=0.0)
+    posture_score: float = Field(1.5, ge=0.0, le=10.0)
     temporal_coherence_index: float = Field(0.95, ge=0.0, le=1.0)
-    zk_recursion_root: str = "0x123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0"
+    zk_recursion_root: str = Field(
+        "0x123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0",
+        pattern=r"^0x[0-9a-fA-F]{64}$",
+    )
 
 
 class GateDecisionResponse(BaseModel):
@@ -92,14 +99,14 @@ _MOCK_LEDGER: List[AlcoaEntryModel] = [
         operator_id="operator-canonical",
         system_id="ailee-v37-core",
         operator_signature="0x616c636f61736967",
-        human_readable_summary="Genesis entry for AILEE-Trust-Layer v37.1.0",
+        human_readable_summary="Genesis entry for AILEE-Trust-Layer v38.0.0",
         regime_label="neutral",
         compartment_label="core-execution",
         timestamp_utc=1743000000,
         epoch_id=3700,
         epoch_hash="0x425e70c240a19594bac19c354a12fa7edbe6e6c6d3c5790e32b5af52de6ff8ee",
         parent_entry_id="0x0000000000000000000000000000000000000000000000000000000000000000",
-        source_system="AILEE-Trust-Layer-37.1.0",
+        source_system="AILEE-Trust-Layer-38.0.0",
         posture_regime_id="neutral",
         posture_score=1.5,
         zk_recursion_root="0xf4ffb4ab1eb4e31906c42f16367af8b10664f91876d1c932e1c44f96c0821c0f",
@@ -250,9 +257,9 @@ async def get_compartments():
 @router.get("/status")
 async def get_v37_status():
     return {
-        "version": "37.1.0",
+        "version": "38.0.0",
         "status": "OPERATIONAL",
-        "protocol": "AILEE-Trust-Layer-37.1.0",
+        "protocol": "AILEE-Trust-Layer-38.0.0",
         "multi_factor_governance": True,
         "alcoa_ledger_active": True,
         "compartments_count": len(_MOCK_COMPARTMENTS)

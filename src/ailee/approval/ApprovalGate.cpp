@@ -1,11 +1,32 @@
 #include "ailee/approval/ApprovalGate.hpp"
 #include <algorithm>
+#include <cmath>
+#include <cctype>
+
+namespace {
+
+bool is_sha256_hex(const std::string& value) {
+    if (value.size() != 66 || value[0] != '0' || value[1] != 'x') {
+        return false;
+    }
+    return std::all_of(value.begin() + 2, value.end(), [](unsigned char ch) {
+        return std::isxdigit(ch) != 0;
+    });
+}
+
+} // namespace
 
 namespace ailee::approval {
 
 GateDecision ApprovalGate::evaluate_factors(const ApprovalFactors& factors) const {
     const auto& rules = constitution_.rules();
     GateDecision decision;
+
+    if (!constitution_.validate_rules()) {
+        decision.rejection_reason = "Invalid governance constitution";
+        decision.evaluated_factors.push_back("Governance constitution -> FAIL");
+        return decision;
+    }
 
     // Factor 1: Threshold quorum
     bool quorum_count_ok = (factors.quorum_count >= rules.min_quorum_threshold);
@@ -34,7 +55,8 @@ GateDecision ApprovalGate::evaluate_factors(const ApprovalFactors& factors) cons
     bool root_non_empty = !factors.zk_recursion_root.empty();
     bool root_non_zero = (factors.zk_recursion_root != "0x0000000000000000000000000000000000000000000000000000000000000000" &&
                           factors.zk_recursion_root != "0x0");
-    decision.zk_valid = factors.zk_state_consistent && root_non_empty && root_non_zero;
+    bool root_well_formed = is_sha256_hex(factors.zk_recursion_root);
+    decision.zk_valid = factors.zk_state_consistent && root_non_empty && root_non_zero && root_well_formed;
 
     decision.evaluated_factors.push_back(
         "Factor 3 ZK State: " + std::string(decision.zk_valid ? "CONSISTENT" : "INCONSISTENT") +
@@ -43,7 +65,8 @@ GateDecision ApprovalGate::evaluate_factors(const ApprovalFactors& factors) cons
 
     // Factor 4: Posture score threshold enforcement (NO BYPASS VECTOR)
     double max_allowed = rules.max_allowable_posture_score;
-    decision.posture_passed = (factors.posture_score <= max_allowed);
+    decision.posture_passed = std::isfinite(factors.posture_score) && factors.posture_score >= 0.0 &&
+                              factors.posture_score <= 10.0 && factors.posture_score <= max_allowed;
     decision.evaluated_factors.push_back(
         "Factor 4 Posture Score: " + std::to_string(factors.posture_score) +
         " <= " + std::to_string(max_allowed) + " -> " +
@@ -51,7 +74,10 @@ GateDecision ApprovalGate::evaluate_factors(const ApprovalFactors& factors) cons
     );
 
     // Factor 5: Temporal coherence index
-    decision.coherence_passed = (factors.temporal_coherence_index >= rules.min_temporal_coherence);
+    decision.coherence_passed = std::isfinite(factors.temporal_coherence_index) &&
+                                factors.temporal_coherence_index >= 0.0 &&
+                                factors.temporal_coherence_index <= 1.0 &&
+                                factors.temporal_coherence_index >= rules.min_temporal_coherence;
     decision.evaluated_factors.push_back(
         "Factor 5 Temporal Coherence: " + std::to_string(factors.temporal_coherence_index) +
         " >= " + std::to_string(rules.min_temporal_coherence) + " -> " +

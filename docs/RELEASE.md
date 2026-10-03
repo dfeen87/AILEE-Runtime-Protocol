@@ -1,5 +1,13 @@
 # Release Process (Draft)
 
+## Current release: 38.0.0
+
+Version 38.0.0 is the BEDROCK engineering baseline. Several behavioral contracts
+are intentionally stricter: malformed trust evidence, non-finite telemetry, invalid
+governance configuration, and mutated ledger content are rejected. The `/v37` API
+route remains available. See `V38_BEDROCK_RELEASE.md` for the release contract and
+remaining external-validation requirements.
+
 This project is currently in a research and prototype stage. The steps below define a future-facing, lightweight release process to improve consistency and
 traceability as the codebase matures.
 
@@ -10,7 +18,9 @@ We follow **Semantic Versioning** (`MAJOR.MINOR.PATCH`):
 - **MINOR**: backward-compatible functionality
 - **PATCH**: backward-compatible bug fixes
 
-Until a stable release is defined, versions should be prefixed with `0.`.
+The repository is now on a stable major release line. Version 38.0.0 contains
+incompatible malformed-input and trust-decision behavior changes, while preserving
+valid public interfaces and the existing architecture.
 
 ## Release Checklist
 

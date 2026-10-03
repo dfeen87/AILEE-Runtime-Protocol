@@ -1,5 +1,5 @@
 /**
- * AILEE Trust Layer v37.1.0 - Compartment State Machine Mirror
+ * AILEE Trust Layer v38.0.0 - Compartment State Machine Mirror
  */
 
 export enum CompartmentState {

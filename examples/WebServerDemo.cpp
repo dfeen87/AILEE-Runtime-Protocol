@@ -45,7 +45,7 @@ int main() {
         
         ailee::NodeStatus status;
         status.running = true;
-        status.version = "37.1.0-web-enabled";
+        status.version = "38.0.0-web-enabled";
         status.uptime_seconds = uptime.count();
         status.total_transactions = 0;  // Simulated
         status.total_blocks = 0;         // Simulated

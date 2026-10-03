@@ -3,6 +3,7 @@
 #include <sstream>
 #include <iomanip>
 #include <chrono>
+#include <cmath>
 
 namespace ailee::ledger {
 
@@ -56,9 +57,8 @@ std::string AlcoaLedger::record_entry(AlcoaEntry entry) {
         }
     }
 
-    if (entry.entry_id.empty()) {
-        entry.entry_id = compute_entry_hash(entry);
-    }
+    // Entry identifiers are content-derived. Never trust a caller-supplied ID.
+    entry.entry_id = compute_entry_hash(entry);
 
     ledger_entries_.push_back(entry);
     return entry.entry_id;
@@ -73,9 +73,16 @@ bool AlcoaLedger::verify_entry(const std::string& entry_id) const {
             bool contemporaneous = entry.timestamp_utc > 0 && !entry.epoch_hash.empty();
             bool original = !entry.entry_id.empty();
             bool accurate = !entry.posture_regime_id.empty() &&
-                            entry.temporal_coherence_index >= 0.0 && entry.temporal_coherence_index <= 1.0;
+                            std::isfinite(entry.posture_score) &&
+                            std::isfinite(entry.temporal_coherence_index) &&
+                            std::isfinite(entry.signal_energy) &&
+                            std::isfinite(entry.coherence_score) &&
+                            entry.posture_score >= 0.0 && entry.posture_score <= 10.0 &&
+                            entry.temporal_coherence_index >= 0.0 && entry.temporal_coherence_index <= 1.0 &&
+                            entry.coherence_score >= 0.0 && entry.coherence_score <= 1.0;
 
-            return attributable && legible && contemporaneous && original && accurate;
+            bool content_bound = entry.entry_id == compute_entry_hash(entry);
+            return attributable && legible && contemporaneous && original && accurate && content_bound;
         }
     }
     return false;
@@ -92,7 +99,11 @@ bool AlcoaLedger::verify_chain() const {
             return false;
         }
 
-        if (i > 0) {
+        if (i == 0) {
+            if (entry.parent_entry_id != "0x0000000000000000000000000000000000000000000000000000000000000000") {
+                return false;
+            }
+        } else {
             if (entry.parent_entry_id != ledger_entries_[i - 1].entry_id) {
                 return false; // Parent hash link broken
             }
