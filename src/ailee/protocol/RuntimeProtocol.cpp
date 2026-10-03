@@ -18,10 +18,10 @@ RuntimeState RuntimeProtocol::evaluate_and_record(const posture::PostureEvaluati
     // 2. Interpretation
     interpretation::InterpretationInput interp_input;
     interp_input.volatility = posture_input.recent_volatility;
-    interp_input.fee_rate = posture_input.current_fee_rate;
+    interp_input.fee_rate = state.posture.canonical_signal_energy.value_or(posture_input.current_fee_rate);
     interp_input.high_fee_band = posture_input.high_fee_band;
     interp_input.block_lag_seconds = posture_input.time_since_last_block;
-    interp_input.coherence_score = posture_input.signal_coherence;
+    interp_input.coherence_score = state.posture.temporal_coherence_index;
 
     state.interpretation = interpretation_engine_.interpret(interp_input);
 
@@ -33,7 +33,14 @@ RuntimeState RuntimeProtocol::evaluate_and_record(const posture::PostureEvaluati
     bound_factors.temporal_coherence_index = state.posture.temporal_coherence_index;
     state.last_gate_decision = approval_gate_.evaluate_factors(bound_factors);
 
-    // 4. Record in ALCOA Ledger
+    // 4. Record only canonical evidence in the ALCOA Ledger. Non-finite input
+    // has no truthful finite signal-energy representation, so it is rejected
+    // before append rather than poisoning the chain or inventing a sentinel.
+    if (!state.posture.canonical_signal_energy.has_value()) {
+        state.healthy = false;
+        return state;
+    }
+
     ledger::AlcoaEntry entry;
     entry.operator_id = operator_id;
     entry.system_id = "ailee-v37-core";
@@ -48,8 +55,8 @@ RuntimeState RuntimeProtocol::evaluate_and_record(const posture::PostureEvaluati
     entry.posture_score = state.posture.risk_score;
     entry.zk_recursion_root = approval_factors.zk_recursion_root.empty() ? "0x0000000000000000000000000000000000000000" : approval_factors.zk_recursion_root;
     entry.temporal_coherence_index = state.posture.temporal_coherence_index;
-    entry.signal_energy = posture_input.current_fee_rate;
-    entry.coherence_score = posture_input.signal_coherence;
+    entry.signal_energy = *state.posture.canonical_signal_energy;
+    entry.coherence_score = state.posture.temporal_coherence_index;
 
     ledger_.record_entry(entry);
     state.last_ledger_entry = ledger_.get_latest_entry();

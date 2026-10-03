@@ -11,7 +11,6 @@ from pydantic import BaseModel, Field
 from api.routers.v37 import (
     PostureEvaluationRequest,
     PostureResponse,
-    ApprovalFactorsRequest,
     GateDecisionResponse,
     AlcoaEntryModel,
     CompartmentModel,
@@ -33,6 +32,19 @@ class V36StatusResponse(BaseModel):
     v37_bridge_active: bool = True
 
 
+class V36ApprovalFactorsRequest(BaseModel):
+    """The governance request contract exposed by v36 before v38 hardening."""
+
+    quorum_count: int = Field(4, ge=0)
+    total_validators: int = Field(5, ge=1)
+    operator_signature_valid: bool = True
+    system_signature_valid: bool = True
+    zk_state_consistent: bool = True
+    posture_score: float = Field(1.5, ge=0.0)
+    temporal_coherence_index: float = Field(0.95, ge=0.0, le=1.0)
+    zk_recursion_root: str = "0x123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0"
+
+
 @router.post("/posture/evaluate", response_model=PostureResponse)
 async def evaluate_posture_v36(req: PostureEvaluationRequest):
     """
@@ -43,7 +55,7 @@ async def evaluate_posture_v36(req: PostureEvaluationRequest):
 
 
 @router.post("/governance/gate/evaluate", response_model=GateDecisionResponse)
-async def evaluate_approval_gate_v36(factors: ApprovalFactorsRequest):
+async def evaluate_approval_gate_v36(factors: V36ApprovalFactorsRequest):
     """
     V36 backward-compatible approval gate endpoint.
     Delegates to v37 governance gate core.

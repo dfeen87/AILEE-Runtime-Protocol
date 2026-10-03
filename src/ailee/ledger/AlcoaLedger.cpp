@@ -4,11 +4,15 @@
 #include <iomanip>
 #include <chrono>
 #include <cmath>
+#include <limits>
+#include <locale>
 
 namespace ailee::ledger {
 
 std::string AlcoaLedger::compute_entry_hash(const AlcoaEntry& entry) {
     std::stringstream ss;
+    ss.imbue(std::locale::classic());
+    ss << std::setprecision(std::numeric_limits<double>::max_digits10);
     ss << entry.parent_entry_id << "|"
        << entry.operator_id << "|"
        << entry.system_id << "|"

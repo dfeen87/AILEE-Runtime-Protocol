@@ -57,19 +57,21 @@ TEST(EnergyRuntimeTest, FallbackScalingAndBlendingCases) {
         EXPECT_TRUE(blended.allow_fast_charge);
     }
 
-    // Case 2: Grace band (e.g. 0.15f, which is exactly halfway between 0.10f and 0.20f)
+    // Case 2: Grace band. Derive alpha with the production float semantics;
+    // decimal threshold literals are not an exact binary midpoint.
     {
-        // alpha = (0.15 - 0.10) / (0.20 - 0.10) = 0.5f
-        // final = 0.5 * raw + 0.5 * fallback * 0.1
-        BatteryAdvisory blended = engine.compute_blended_advisory(raw, 0.15f);
+        const float confidence = 0.15f;
+        const float alpha = (confidence - config.grace_confidence_threshold) /
+                            (config.min_confidence_threshold - config.grace_confidence_threshold);
+        BatteryAdvisory blended = engine.compute_blended_advisory(raw, confidence);
 
-        float expected_torque = 0.5f * raw.torque_scale + 0.5f * fallback.torque_scale * config.fallback_position_scale;
+        float expected_torque = alpha * raw.torque_scale + (1.0f - alpha) * fallback.torque_scale * config.fallback_position_scale;
         EXPECT_FLOAT_EQ(blended.torque_scale, expected_torque);
 
-        float expected_current = 0.5f * raw.recommended_charge_current_a + 0.5f * fallback.recommended_charge_current_a * config.fallback_position_scale;
+        float expected_current = alpha * raw.recommended_charge_current_a + (1.0f - alpha) * fallback.recommended_charge_current_a * config.fallback_position_scale;
         EXPECT_FLOAT_EQ(blended.recommended_charge_current_a, expected_current);
 
-        float expected_voltage = 0.5f * raw.recommended_voltage_v + 0.5f * fallback.recommended_voltage_v * config.fallback_position_scale;
+        float expected_voltage = alpha * raw.recommended_voltage_v + (1.0f - alpha) * fallback.recommended_voltage_v * config.fallback_position_scale;
         EXPECT_FLOAT_EQ(blended.recommended_voltage_v, expected_voltage);
     }
 
@@ -84,6 +86,12 @@ TEST(EnergyRuntimeTest, FallbackScalingAndBlendingCases) {
         EXPECT_TRUE(blended.require_derating);
         EXPECT_FALSE(blended.allow_fast_charge);
     }
+
+    // Threshold equality deterministically selects the upper regime.
+    EXPECT_FLOAT_EQ(engine.compute_blended_advisory(raw, config.min_confidence_threshold).recommended_voltage_v,
+                    raw.recommended_voltage_v);
+    EXPECT_FLOAT_EQ(engine.compute_blended_advisory(raw, config.grace_confidence_threshold).recommended_voltage_v,
+                    fallback.recommended_voltage_v * config.fallback_position_scale);
 }
 
 TEST(EnergyRuntimeTest, PhysicsModelOutputEvolution) {

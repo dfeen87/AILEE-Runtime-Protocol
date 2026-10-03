@@ -12,7 +12,8 @@ PostureResult PostureEngine::evaluate(const PostureEvaluationInput& input) const
                            !std::isfinite(input.signal_coherence);
     if (malformed) {
         return {10.0, PostureRegime::STRESS, "stress",
-                "Malformed non-finite telemetry; operations fail closed.", 0.0, 0.0};
+                "Malformed non-finite telemetry; operations fail closed.", 0.0, 0.0,
+                std::nullopt};
     }
 
     // Sanitize and clamp inputs
@@ -86,7 +87,8 @@ PostureResult PostureEngine::evaluate(const PostureEvaluationInput& input) const
         confidence = 0.5;
     }
 
-    return {score, regime, regime_id, summary, confidence, signal_coherence};
+    return {score, regime, regime_id, summary, confidence, signal_coherence,
+            current_fee_rate};
 }
 
 std::string PostureEngine::regime_to_string(PostureRegime regime) {

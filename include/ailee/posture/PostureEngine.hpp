@@ -2,6 +2,7 @@
 
 #include <string>
 #include <cstdint>
+#include <optional>
 
 namespace ailee::posture {
 
@@ -31,6 +32,9 @@ struct PostureResult {
     std::string summary;
     double confidence{1.0};
     double temporal_coherence_index{1.0};
+    // The normalized fee evidence actually consumed by posture evaluation.
+    // Absent when the caller supplied malformed, non-finite telemetry.
+    std::optional<double> canonical_signal_energy{0.0};
 };
 
 class PostureEngine {

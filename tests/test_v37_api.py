@@ -47,6 +47,13 @@ def test_v37_approval_gate_evaluate():
     assert data["quorum_passed"] is True
     assert len(data["evaluated_factors"]) == 5
 
+def test_v37_approval_gate_rejects_legacy_short_root():
+    response = client.post(
+        "/v37/governance/gate/evaluate",
+        json={"zk_recursion_root": "0x123456789abcdef"},
+    )
+    assert response.status_code == 422
+
 @pytest.mark.parametrize("root", ["", "0x1", "not-a-root", "0x" + "g" * 64])
 def test_v37_approval_gate_rejects_malformed_roots(root):
     response = client.post("/v37/governance/gate/evaluate", json={"zk_recursion_root": root})
