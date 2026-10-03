@@ -6,6 +6,7 @@ Production-ready FastAPI implementation with deterministic, safe, read-only endp
 
 import asyncio
 import logging
+import math
 import os
 import platform
 import psutil
@@ -15,6 +16,8 @@ from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 
 from fastapi import FastAPI, Request
+from fastapi.encoders import jsonable_encoder
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -229,6 +232,27 @@ app = FastAPI(
     redoc_url="/redoc",
     openapi_url="/openapi.json"
 )
+
+
+def _sanitize_non_finite_values(value):
+    """Recursively make validation diagnostics safe for strict JSON encoders."""
+    if isinstance(value, float) and not math.isfinite(value):
+        if math.isnan(value):
+            return "NaN"
+        return "Infinity" if value > 0 else "-Infinity"
+    if isinstance(value, dict):
+        return {key: _sanitize_non_finite_values(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_sanitize_non_finite_values(item) for item in value]
+    return value
+
+
+@app.exception_handler(RequestValidationError)
+async def request_validation_exception_handler(request: Request, exc: RequestValidationError):
+    """Return useful validation errors without echoing JSON-invalid float values."""
+    del request  # The response is deliberately deterministic and request-independent.
+    detail = _sanitize_non_finite_values(jsonable_encoder(exc.errors()))
+    return JSONResponse(status_code=422, content={"detail": detail})
 
 
 # Add rate limiting middleware
