@@ -67,17 +67,26 @@ jobs:
 
       - name: Mempool integration test
         env:
+          AILEE_NODE_URL: http://127.0.0.1:8080
           AILEE_NETFLOW_ENABLE: '0'
           AILEE_ORCHESTRATION_ENABLE: '0'
         run: |
           set -euo pipefail
           ./build/ailee_node > ailee-node.log 2>&1 &
           node_pid=$!
-          trap 'kill "$node_pid" 2>/dev/null || true; wait "$node_pid" 2>/dev/null || true' EXIT
+          cleanup() {
+            status=$?
+            trap - EXIT
+            kill "$node_pid" 2>/dev/null || true
+            wait "$node_pid" 2>/dev/null || true
+            cat ailee-node.log
+            exit "$status"
+          }
+          trap cleanup EXIT
 
           ready=0
           for attempt in $(seq 1 60); do
-            if curl --fail --silent http://127.0.0.1:8080/api/l2/state >/dev/null; then
+            if curl --fail --silent "${AILEE_NODE_URL}/api/l2/state" >/dev/null; then
               ready=1
               break
             fi

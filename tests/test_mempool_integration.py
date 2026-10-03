@@ -10,6 +10,25 @@ import time
 
 import pytest
 import requests
+from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.hazmat.primitives.asymmetric import ec, utils
+
+
+# Test-only key material. Never use this deterministic private key in production.
+TEST_PRIVATE_KEY = ec.derive_private_key(1, ec.SECP256K1())
+TEST_PUBLIC_KEY_HEX = TEST_PRIVATE_KEY.public_key().public_bytes(
+    serialization.Encoding.X962,
+    serialization.PublicFormat.CompressedPoint,
+).hex()
+
+
+def _sign_transaction_hash(tx_hash: str) -> str:
+    """Sign the hash bytes expected by BlockProducer and return a DER signature."""
+    digest = bytes.fromhex(tx_hash)
+    return TEST_PRIVATE_KEY.sign(
+        digest,
+        ec.ECDSA(utils.Prehashed(hashes.SHA256())),
+    ).hex()
 
 
 @pytest.mark.integration
@@ -35,8 +54,8 @@ def test_mempool_to_block_producer():
     print("2. Submitting test transactions...")
     test_txs = []
     for i in range(3):
-        # Create deterministic transaction hash
-        tx_data = f"test-tx-{i}-{time.time()}"
+        # Make each hash unique to this node run, then sign those exact 32 bytes.
+        tx_data = f"test-tx-{i}-{initial_height}-{initial_txs}"
         tx_hash = hashlib.sha256(tx_data.encode()).hexdigest()
         
         payload = {
@@ -44,7 +63,9 @@ def test_mempool_to_block_producer():
             "to_address": f"bob{i}",
             "amount": (i + 1) * 1000,
             "data": f"Test payment {i}",
-            "tx_hash": tx_hash
+            "tx_hash": tx_hash,
+            "public_key": TEST_PUBLIC_KEY_HEX,
+            "signature": _sign_transaction_hash(tx_hash),
         }
         
         response = requests.post(
@@ -54,22 +75,28 @@ def test_mempool_to_block_producer():
         )
         
         assert response.status_code == 202, response.text
+        submission = response.json()
+        assert submission["status"] == "accepted"
+        assert submission["tx_hash"] == tx_hash
         print(f"   ✓ Transaction {i+1} submitted: {tx_hash[:16]}...")
         test_txs.append(tx_hash)
     
     print()
     
-    # Step 3: Wait for block production
+    # Step 3: Poll until BlockProducer has verified and confirmed every transaction.
     print("3. Waiting for transactions to be included in blocks...")
-    # Note: Block interval is 1 second. Wait for at least 3 blocks to ensure all txs are processed.
-    # In production, consider polling L2 state until expected blocks are produced.
-    time.sleep(3)
-    
-    # Step 4: Check L2 state after
+    deadline = time.monotonic() + 15
+    final_state = initial_state
+    while time.monotonic() < deadline:
+        response = requests.get(f"{cpp_node_url}/api/l2/state", timeout=5)
+        response.raise_for_status()
+        final_state = response.json()
+        if final_state.get("total_transactions", 0) - initial_txs >= len(test_txs):
+            break
+        time.sleep(0.25)
+
+    # Step 4: Check the resulting L2 state
     print("4. Checking final L2 state...")
-    response = requests.get(f"{cpp_node_url}/api/l2/state", timeout=5)
-    response.raise_for_status()
-    final_state = response.json()
     final_height = final_state.get("block_height", 0)
     final_txs = final_state.get("total_transactions", 0)
     print(f"   Final block height: {final_height}")
@@ -82,6 +109,7 @@ def test_mempool_to_block_producer():
     
     print(f"   Blocks produced: {blocks_produced}")
     print(f"   Transactions processed: {txs_processed}")
+    assert blocks_produced > 0, "BlockProducer did not produce a block while polling"
     
     if txs_processed >= len(test_txs):
         print(f"   ✓ All {len(test_txs)} transactions were included in blocks!")
