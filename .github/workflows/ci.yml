@@ -65,6 +65,37 @@ jobs:
           python -m pip install -e '.[dev]'
           pytest
 
+      - name: Mempool integration test
+        env:
+          AILEE_NETFLOW_ENABLE: '0'
+          AILEE_ORCHESTRATION_ENABLE: '0'
+        run: |
+          set -euo pipefail
+          ./build/ailee_node > ailee-node.log 2>&1 &
+          node_pid=$!
+          trap 'kill "$node_pid" 2>/dev/null || true; wait "$node_pid" 2>/dev/null || true' EXIT
+
+          ready=0
+          for attempt in $(seq 1 60); do
+            if curl --fail --silent http://127.0.0.1:8080/api/l2/state >/dev/null; then
+              ready=1
+              break
+            fi
+            if ! kill -0 "$node_pid" 2>/dev/null; then
+              echo "AILEE node exited before becoming ready"
+              cat ailee-node.log
+              exit 1
+            fi
+            sleep 1
+          done
+          if [ "$ready" -ne 1 ]; then
+            echo "Timed out waiting for the AILEE node"
+            cat ailee-node.log
+            exit 1
+          fi
+
+          pytest -m integration tests/test_mempool_integration.py
+
       - name: TypeScript build and tests
         run: |
           npm ci

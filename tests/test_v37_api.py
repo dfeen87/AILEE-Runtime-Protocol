@@ -1,3 +1,5 @@
+import json
+
 import pytest
 from fastapi.testclient import TestClient
 from api.main import app
@@ -59,13 +61,21 @@ def test_v37_approval_gate_rejects_malformed_roots(root):
     response = client.post("/v37/governance/gate/evaluate", json={"zk_recursion_root": root})
     assert response.status_code == 422
 
-def test_v37_posture_rejects_non_finite_telemetry():
+@pytest.mark.parametrize("non_finite", ["NaN", "Infinity", "-Infinity"])
+def test_v37_posture_rejects_non_finite_telemetry(non_finite):
     response = client.post(
         "/v37/posture/evaluate",
-        content='{"current_fee_rate": NaN}',
+        content=f'{{"current_fee_rate": {non_finite}}}',
         headers={"content-type": "application/json"},
     )
     assert response.status_code == 422
+    # Reject non-standard constants while decoding to prove the error response is strict JSON.
+    body = json.loads(
+        response.text,
+        parse_constant=lambda value: (_ for _ in ()).throw(ValueError(value)),
+    )
+    assert body["detail"]
+    assert body["detail"][0]["input"] == non_finite
 
 def test_v37_ledger_and_compartments():
     resp_ledger = client.get("/v37/ledger/entries")

@@ -4,21 +4,27 @@ Integration test for Mempool to BlockProducer wiring
 Tests that transactions submitted via API land in blocks and get anchored to Bitcoin
 """
 
-import time
-import requests
 import hashlib
+import os
+import time
 
+import pytest
+import requests
+
+
+@pytest.mark.integration
 def test_mempool_to_block_producer():
     """Test that transactions flow from mempool to blocks"""
     
     print("=== Mempool to BlockProducer Integration Test ===\n")
     
     # Test configuration
-    cpp_node_url = "http://localhost:8080"
+    cpp_node_url = os.getenv("AILEE_NODE_URL", "http://localhost:8080")
     
     # Step 1: Check L2 state before
     print("1. Checking initial L2 state...")
-    response = requests.get(f"{cpp_node_url}/api/l2/state")
+    response = requests.get(f"{cpp_node_url}/api/l2/state", timeout=5)
+    response.raise_for_status()
     initial_state = response.json()
     initial_height = initial_state.get("block_height", 0)
     initial_txs = initial_state.get("total_transactions", 0)
@@ -43,15 +49,13 @@ def test_mempool_to_block_producer():
         
         response = requests.post(
             f"{cpp_node_url}/api/transactions/submit",
-            json=payload
+            json=payload,
+            timeout=5,
         )
         
-        if response.status_code == 202:
-            result = response.json()
-            print(f"   ✓ Transaction {i+1} submitted: {tx_hash[:16]}...")
-            test_txs.append(tx_hash)
-        else:
-            print(f"   ✗ Transaction {i+1} failed: {response.status_code}")
+        assert response.status_code == 202, response.text
+        print(f"   ✓ Transaction {i+1} submitted: {tx_hash[:16]}...")
+        test_txs.append(tx_hash)
     
     print()
     
@@ -63,7 +67,8 @@ def test_mempool_to_block_producer():
     
     # Step 4: Check L2 state after
     print("4. Checking final L2 state...")
-    response = requests.get(f"{cpp_node_url}/api/l2/state")
+    response = requests.get(f"{cpp_node_url}/api/l2/state", timeout=5)
+    response.raise_for_status()
     final_state = response.json()
     final_height = final_state.get("block_height", 0)
     final_txs = final_state.get("total_transactions", 0)
@@ -84,7 +89,7 @@ def test_mempool_to_block_producer():
         return True
     else:
         print(f"   ✗ Expected {len(test_txs)} transactions, but only {txs_processed} were processed")
-        return False
+        pytest.fail(f"Expected {len(test_txs)} transactions, but only {txs_processed} were processed")
 
 if __name__ == "__main__":
     try:
