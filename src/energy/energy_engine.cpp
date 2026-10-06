@@ -44,13 +44,6 @@ BatteryAdvisory EnergyEngine::update(float voltage, float current, float tempera
 
     auto logger = ailee::log::getLogger("EnergyEngine");
 
-    // Developer Assertions
-    assert(std::isfinite(voltage) && "voltage must be finite");
-    assert(std::isfinite(current) && "current must be finite");
-    assert(std::isfinite(temperature) && "temperature must be finite");
-    assert(std::isfinite(soc) && "soc must be finite");
-    assert(std::isfinite(dt) && "dt must be finite");
-
     // Runtimeguards / checks for invalid or non-finite inputs
     if (!std::isfinite(voltage) || !std::isfinite(current) || !std::isfinite(temperature) ||
         !std::isfinite(soc) || !std::isfinite(dt) || dt <= 0.0f) {

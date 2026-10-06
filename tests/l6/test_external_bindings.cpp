@@ -105,6 +105,21 @@ TEST(ExternalBindingsTest, FederationExportCorrectness) {
     EXPECT_EQ(ext_view.envelopes[1].timestamp, 100);
 }
 
+TEST(ExternalBindingsTest, ReplayExportDefaultInit) {
+    // ReplayTick default constructor should zero-initialize primitive fields
+    ReplayTick internal_tick;
+
+    ReplayExport replay_export;
+    // Export should not crash or produce NaN/uninitialized fields in JSON
+    ExternalReplayTick ext_tick = replay_export.export_tick(0, internal_tick);
+
+    std::string json = JsonBindings::to_json(ext_tick);
+    EXPECT_NE(json.find("\"coherence\":0.00"), std::string::npos);
+    EXPECT_NE(json.find("\"height\":0"), std::string::npos);
+    EXPECT_NE(json.find("\"consensus_time\":0.0"), std::string::npos);
+    EXPECT_NE(json.find("\"interval_seconds\":0.0"), std::string::npos);
+}
+
 TEST(ExternalBindingsTest, ReplayExportCorrectness) {
     ReplayTick internal_tick;
     internal_tick.telemetry.total_nodes = 4;

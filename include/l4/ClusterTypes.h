@@ -34,27 +34,27 @@ struct alignas(64) ClusterNodeState {
 static_assert(sizeof(ClusterNodeState) == 1088, "ClusterNodeState must be 1088 bytes");
 
 struct alignas(64) ClusterCoherenceSummary {
-    uint64_t in_sync_count;                 // 8 bytes
-    uint64_t ahead_count;                   // 8 bytes
-    uint64_t behind_count;                  // 8 bytes
-    uint64_t needs_recovery_count;          // 8 bytes
-    uint64_t stale_count;                   // 8 bytes
-    uint64_t global_coherence_score;        // 8 bytes
-    uint64_t recovered_nodes_count;         // 8 bytes
-    uint64_t unrecoverable_nodes_count;     // 8 bytes
-    uint64_t consistent_state_root_nodes;   // 8 bytes
-    uint64_t inconsistent_state_root_nodes; // 8 bytes
+    uint64_t in_sync_count = 0;                 // 8 bytes
+    uint64_t ahead_count = 0;                   // 8 bytes
+    uint64_t behind_count = 0;                  // 8 bytes
+    uint64_t needs_recovery_count = 0;          // 8 bytes
+    uint64_t stale_count = 0;                   // 8 bytes
+    uint64_t global_coherence_score = 0;        // 8 bytes
+    uint64_t recovered_nodes_count = 0;         // 8 bytes
+    uint64_t unrecoverable_nodes_count = 0;     // 8 bytes
+    uint64_t consistent_state_root_nodes = 0;   // 8 bytes
+    uint64_t inconsistent_state_root_nodes = 0; // 8 bytes
     // Total size: 64 + 16 = 80 bytes
     // Next multiple of 64 is 128. Padding needed: 48 bytes
-    uint8_t padding[48];
+    uint8_t padding[48] = {0};
 };
 static_assert(sizeof(ClusterCoherenceSummary) == 128, "ClusterCoherenceSummary must be 128 bytes");
 
 struct alignas(64) ClusterView {
     std::vector<ClusterNodeState> nodes; // 24 bytes
     std::vector<MeshPropagationEnvelope> mesh_envelopes; // 24 bytes
-    uint64_t total_nodes;                // 8 bytes
-    uint64_t total_steps;                // 8 bytes
+    uint64_t total_nodes = 0;                // 8 bytes
+    uint64_t total_steps = 0;                // 8 bytes
     TransportQueue transport_queue;      // 64 bytes
     ClusterCoherenceSummary coherence_summary; // 128 bytes
     l1_sync::BitcoinClockState clock;    // 24 bytes
